@@ -47,6 +47,16 @@ export type ResultadoGoogle =
   | { tipo: "sesion"; sesion: Sesion }
   | { tipo: "onboarding"; idToken: string; email: string };
 
+export interface Perfil {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: number;
+  telefono?: string;
+  cedula?: string;
+  estado?: string;
+}
+
 export interface AuthRepositoryPort {
   registrar(data: RegistroData): Promise<{ email: string }>;
   verificarCuenta(data: VerificarData): Promise<void>;
@@ -57,4 +67,5 @@ export interface AuthRepositoryPort {
   solicitarRecuperacion(email: string): Promise<void>;
   restablecerPassword(data: RestablecerData): Promise<void>;
   cambiarPassword(token: string, data: CambiarPasswordData): Promise<void>;
+  obtenerPerfil(token: string): Promise<Perfil>;
 }

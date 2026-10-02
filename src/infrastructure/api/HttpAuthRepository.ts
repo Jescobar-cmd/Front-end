@@ -3,6 +3,7 @@ import type {
   CambiarPasswordData,
   CompletarPerfilGoogleData,
   LoginData,
+  Perfil,
   RegistroData,
   RestablecerData,
   ResultadoGoogle,
@@ -32,6 +33,9 @@ interface PerfilDto {
   nombre: string;
   email: string;
   rol: number;
+  telefono?: string;
+  cedula?: string;
+  estado?: string;
 }
 
 async function request<T>(
@@ -56,7 +60,12 @@ async function request<T>(
   }
 
   const texto = await res.text();
-  const data = (texto ? JSON.parse(texto) : {}) as T & ErrorDto;
+  let data: T & ErrorDto;
+  try {
+    data = (texto ? JSON.parse(texto) : {}) as T & ErrorDto;
+  } catch {
+    throw new Error(mensajeError);
+  }
 
   if (!res.ok) {
     throw new Error(data.error ?? data.message ?? mensajeError);
@@ -135,5 +144,10 @@ export class HttpAuthRepository implements AuthRepositoryPort {
 
   async cambiarPassword(token: string, data: CambiarPasswordData): Promise<void> {
     await request("PATCH", "/auth/me/password", data, "No se pudo cambiar la contraseña", token);
+  }
+
+  async obtenerPerfil(token: string): Promise<Perfil> {
+    const { data } = await request<Perfil>("GET", "/auth/me", undefined, "Sesión expirada", token);
+    return data;
   }
 }

@@ -46,12 +46,12 @@ export function Registro() {
     const resultado = await registrar(
       rol === "freelancer"
         ? { ...base, rol, telefono: form.telefono, documento: form.documento }
-        : { ...base, rol }
+        : { ...base, rol, telefono: form.telefono, ...(form.documento.trim() ? { documento: form.documento } : {}) }
     );
 
     if (!resultado) return;
     sessionStorage.setItem("first_gig_email_pendiente", resultado.email);
-    navigate("/verificar-cuenta", { state: { email: resultado.email, password: form.password } });
+    navigate("/verificar-cuenta", { state: { email: resultado.email } });
   };
 
   return (
@@ -126,23 +126,28 @@ export function Registro() {
           required
         />
 
-        {rol === "freelancer" && (
-          <>
-            <Input
-              name="telefono"
-              type="tel"
-              placeholder="Teléfono"
-              value={form.telefono}
-              onChange={handleChange}
-            />
-            <Input
-              name="documento"
-              placeholder="Número de documento"
-              value={form.documento}
-              onChange={handleChange}
-              required
-            />
-          </>
+        <Input
+          name="telefono"
+          type="tel"
+          placeholder="Teléfono (opcional)"
+          value={form.telefono}
+          onChange={handleChange}
+        />
+        {rol === "freelancer" ? (
+          <Input
+            name="documento"
+            placeholder="Número de documento"
+            value={form.documento}
+            onChange={handleChange}
+            required
+          />
+        ) : (
+          <Input
+            name="documento"
+            placeholder="Número de documento (opcional)"
+            value={form.documento}
+            onChange={handleChange}
+          />
         )}
 
         <label>

@@ -48,6 +48,7 @@ export class RegistroUseCase {
       ...base,
       rolId: 3,
       ...(input.telefono?.trim() ? { telefono: new Telefono(input.telefono).value } : {}),
+      ...(input.documento?.trim() ? { cedula: new DocumentoIdentidad(input.documento).value } : {}),
     });
   }
 }

@@ -7,8 +7,9 @@ import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
 import { useAuth } from "../../../context/AuthContext";
 import { useCompletarPerfilGoogle } from "../../../hooks/useCompletarPerfilGoogle";
-import { DocumentoIdentidad } from "../../../core/domain/value-objects/documento";
-import { Telefono } from "../../../core/domain/value-objects/telefono";
+import { dashboardPorRol } from "../../../routes/rutasPorRol";
+
+const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
 
 export function CompletarPerfilGoogle() {
   const navigate = useNavigate();
@@ -16,31 +17,38 @@ export function CompletarPerfilGoogle() {
   const state = useLocation().state as { idToken?: string; email?: string } | null;
   const { completar, loading, error } = useCompletarPerfilGoogle();
 
+  const pendiente = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(GOOGLE_PENDIENTE_KEY) ?? "null") as {
+        idToken?: string;
+        email?: string;
+      } | null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const idToken = state?.idToken ?? pendiente?.idToken;
+  const email = state?.email ?? pendiente?.email;
+
   const [rol, setRol] = useState<"cliente" | "freelancer">("cliente");
   const [telefono, setTelefono] = useState("");
   const [documento, setDocumento] = useState("");
-  const [errorLocal, setErrorLocal] = useState<string | null>(null);
 
-  // Sin idToken (recarga de página) hay que volver a iniciar con Google
-  if (!state?.idToken) return <Navigate to="/login" replace />;
+  // Sin idToken (ni state ni sessionStorage) hay que volver a iniciar con Google
+  if (!idToken) return <Navigate to="/login" replace />;
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrorLocal(null);
-    try {
-      const datos = {
-        idToken: state.idToken as string,
-        rolId: (rol === "freelancer" ? 2 : 3) as 2 | 3,
-        telefono: telefono ? new Telefono(telefono).value : undefined,
-        cedula: documento ? new DocumentoIdentidad(documento).value : undefined,
-      };
-      const sesion = await completar(datos);
-      if (sesion) {
-        guardarSesion(sesion);
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setErrorLocal(err instanceof Error ? err.message : "Datos inválidos");
+    const sesion = await completar(
+      rol === "freelancer"
+        ? { idToken, rol, telefono, documento }
+        : { idToken, rol, telefono, ...(documento.trim() ? { documento } : {}) }
+    );
+    if (sesion) {
+      sessionStorage.removeItem(GOOGLE_PENDIENTE_KEY);
+      guardarSesion(sesion);
+      navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
 
@@ -49,7 +57,7 @@ export function CompletarPerfilGoogle() {
       <Brand />
       <form onSubmit={handleSubmit} className="registro">
         <h1>Completa tu perfil</h1>
-        <p>{state.email ? `Cuenta de Google: ${state.email}` : "Cuenta de Google"}</p>
+        <p>{email ? `Cuenta de Google: ${email}` : "Cuenta de Google"}</p>
 
         <div className="roles">
           <Button type="button" variant={rol === "cliente" ? "primary" : "secondary"} onClick={() => setRol("cliente")}>
@@ -60,14 +68,15 @@ export function CompletarPerfilGoogle() {
           </Button>
         </div>
 
-        <Input type="tel" placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+        <Input type="tel" placeholder="Teléfono (opcional)" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         <Input
           placeholder={rol === "freelancer" ? "Número de documento" : "Número de documento (opcional)"}
           value={documento}
           onChange={(e) => setDocumento(e.target.value)}
+          required={rol === "freelancer"}
         />
 
-        {(errorLocal || error) && <p className="error">{errorLocal ?? error}</p>}
+        {error && <p className="error">{error}</p>}
 
         <Button type="submit" disabled={loading}>
           {loading ? <Spinner size="small" /> : "Continuar"}

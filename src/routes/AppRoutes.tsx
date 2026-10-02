@@ -8,6 +8,14 @@ import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerf
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
 import { Dashboard } from "../pages/dashboard/dashboard";
+import { useAuth } from "../context/AuthContext";
+import { dashboardPorRol } from "./rutasPorRol";
+
+function RedireccionDashboard() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={dashboardPorRol(user.rol)} replace />;
+}
 
 export function AppRoutes() {
   return (
@@ -22,10 +30,19 @@ export function AppRoutes() {
       <Route path="/confirm" element={<VerificarCuenta />} />
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
+      <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
       <Route
-        path="/dashboard"
+        path="/dashboard/freelancer"
         element={
-          <RutaProtegida>
+          <RutaProtegida roles={["freelancer"]}>
+            <Dashboard />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/dashboard/cliente"
+        element={
+          <RutaProtegida roles={["cliente"]}>
             <Dashboard />
           </RutaProtegida>
         }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/button";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
@@ -10,10 +10,19 @@ import { useRestablecerPassword } from "../../../hooks/useRestablecerPassword";
 export function RestablecerPassword() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
   const state = location.state as { email?: string } | null;
 
+  const emailInicial = state?.email ?? params.get("email") ?? "";
+  const codigoInicial = params.get("token") ?? params.get("code") ?? "";
+
   const { restablecer, loading, error } = useRestablecerPassword();
-  const [form, setForm] = useState({ email: state?.email ?? "", code: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({
+    email: emailInicial,
+    code: codigoInicial,
+    password: "",
+    confirmPassword: "",
+  });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.name === "code" ? e.target.value.replace(/\D/g, "").slice(0, 6) : e.target.value;
@@ -23,7 +32,7 @@ export function RestablecerPassword() {
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const ok = await restablecer(form);
-    if (ok) navigate("/login");
+    if (ok) navigate("/login", { replace: true });
   };
 
   return (

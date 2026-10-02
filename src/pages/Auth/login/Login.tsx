@@ -7,8 +7,11 @@ import { Spinner } from "../../../components/spinner";
 import { useLogin } from "../../../hooks/UserLogin";
 import { useGoogleLogin } from "../../../hooks/useGoogleLogin";
 import { useAuth } from "../../../context/AuthContext";
-import type { ResultadoGoogle, Sesion } from "../../../core/application/ports/AuthRepositoryPort";
+import type { ResultadoGoogle } from "../../../core/application/ports/AuthRepositoryPort";
 import { Brand } from "../../../components/Brand";
+import { dashboardPorRol } from "../../../routes/rutasPorRol";
+
+const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
 
 export function Login() {
   const navigate = useNavigate();
@@ -18,11 +21,12 @@ export function Login() {
 
   const handleResultadoGoogle = useCallback((resultado: ResultadoGoogle) => {
     if (resultado.tipo === "onboarding") {
+      sessionStorage.setItem(GOOGLE_PENDIENTE_KEY, JSON.stringify({ idToken: resultado.idToken, email: resultado.email }));
       navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
       return;
     }
     guardarSesion(resultado.sesion);
-    navigate("/dashboard");
+    navigate(dashboardPorRol(resultado.sesion.user.rol), { replace: true });
   }, [guardarSesion, navigate]);
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleResultadoGoogle);
 
@@ -34,7 +38,7 @@ export function Login() {
     const sesion = await iniciarSesion(form);
     if (sesion) {
       guardarSesion(sesion);
-      navigate("/dashboard");
+      navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
 

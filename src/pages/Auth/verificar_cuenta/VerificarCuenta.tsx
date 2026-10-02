@@ -6,18 +6,12 @@ import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
 import { useVerificarCuenta } from "../../../hooks/useVerificarCuenta";
-import { useLogin } from "../../../hooks/UserLogin";
-import { useAuth } from "../../../context/AuthContext";
 
 export function VerificarCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
   const { verificar, reenviar, loading, error, info } = useVerificarCuenta();
-  const { iniciarSesion } = useLogin();
-  const { guardarSesion } = useAuth();
-  // La contraseña solo viaja en memoria desde el registro (no se guarda en ningún storage)
-  const passwordRegistro = (location.state as { password?: string } | null)?.password;
 
   // El correo llega desde el registro; si recargan la página se recupera de sessionStorage
   const emailInicial =
@@ -25,8 +19,8 @@ export function VerificarCuenta() {
     params.get("email") ??
     sessionStorage.getItem("first_gig_email_pendiente") ??
     "";
-  // El enlace del correo trae ?token=CODIGO
-  const codigoInicial = params.get("token") ?? "";
+  // El enlace del correo puede traer ?token=CODIGO o ?code=CODIGO
+  const codigoInicial = params.get("token") ?? params.get("code") ?? "";
 
   const [email, setEmail] = useState(emailInicial);
   const [code, setCode] = useState(codigoInicial);
@@ -39,16 +33,6 @@ export function VerificarCuenta() {
     e.preventDefault();
     if (await verificar(email, code)) {
       sessionStorage.removeItem("first_gig_email_pendiente");
-
-      // Si venimos del registro, se inicia sesión solo y se muestra la página principal
-      if (passwordRegistro) {
-        const sesion = await iniciarSesion({ email, password: passwordRegistro });
-        if (sesion) {
-          guardarSesion(sesion);
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-      }
       setExito(true);
     }
   };
@@ -58,7 +42,7 @@ export function VerificarCuenta() {
       <div className="verificar">
         <h1>¡Cuenta confirmada!</h1>
         <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
-        <Button type="button" onClick={() => navigate("/login")}>
+        <Button type="button" onClick={() => navigate("/login", { replace: true })}>
           Ir a iniciar sesión
         </Button>
       </div>
