@@ -1,23 +1,14 @@
-import type { RolId } from "../../domain/entities/user";
+import type { User } from "../../domain/entities/user";
 
-export interface RegistroData {
-  nombre: string;
-  apellido: string;
+export interface RegistroClienteData {
+  username: string;
   email: string;
   password: string;
-  rolId: RolId;
-  telefono?: string;
-  cedula?: string;
 }
 
-export interface RegistroResultado {
-  id: string;
-  email: string;
-}
-
-export interface VerificarCodigoData {
-  email: string;
-  code: string;
+export interface RegistroFreelancerData extends RegistroClienteData {
+  telefono: string;
+  documento: string;
 }
 
 export interface LoginData {
@@ -25,53 +16,22 @@ export interface LoginData {
   password: string;
 }
 
-export interface SesionSimple {
-  token: string;
-  rol: RolId;
-  nombre: string;
-}
-
-export type GoogleLoginResultado =
-  | { tipo: "sesion"; sesion: SesionSimple }
-  | { tipo: "onboarding"; email: string; idToken: string };
-
-export interface CompletarPerfilGoogleData {
-  idToken: string;
-  rolId: RolId;
-  telefono?: string;
-  cedula?: string;
-}
-
 export interface RestablecerData {
-  email: string;
-  code: string;
+  token: string;
   password: string;
 }
 
-export interface CambiarPasswordData {
-  currentPassword: string;
-  newPassword: string;
-}
-
-export interface PerfilUsuario {
-  id: string;
-  nombre: string;
-  email: string;
-  rol: RolId;
-  telefono?: string | null;
-  cedula?: string | null;
-  estado: string;
+export interface Sesion {
+  user: User;
+  token: string;
 }
 
 export interface AuthRepositoryPort {
-  registrar(data: RegistroData): Promise<RegistroResultado>;
-  verificarCodigo(data: VerificarCodigoData): Promise<void>;
-  reenviarCodigo(email: string): Promise<void>;
-  login(data: LoginData): Promise<SesionSimple>;
-  loginConGoogle(idToken: string): Promise<GoogleLoginResultado>;
-  completarPerfilGoogle(data: CompletarPerfilGoogleData): Promise<SesionSimple>;
+  registrarCliente(data: RegistroClienteData): Promise<User>;
+  registrarFreelancer(data: RegistroFreelancerData): Promise<User>;
+  login(data: LoginData): Promise<Sesion>;
+  loginConGoogle(idToken: string): Promise<Sesion>;
   solicitarRecuperacion(email: string): Promise<void>;
   restablecerPassword(data: RestablecerData): Promise<void>;
-  obtenerPerfil(token: string): Promise<PerfilUsuario>;
-  cambiarPassword(token: string, data: CambiarPasswordData): Promise<void>;
+  verificarCuenta(token: string): Promise<void>;
 }
