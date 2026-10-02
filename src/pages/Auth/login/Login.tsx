@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
@@ -7,7 +7,7 @@ import { Spinner } from "../../../components/spinner";
 import { useLogin } from "../../../hooks/UserLogin";
 import { useGoogleLogin } from "../../../hooks/useGoogleLogin";
 import { useAuth } from "../../../context/AuthContext";
-import type { Sesion } from "../../../core/application/ports/AuthRepositoryPort";
+import type { ResultadoGoogle, Sesion } from "../../../core/application/ports/AuthRepositoryPort";
 import { Brand } from "../../../components/Brand";
 
 export function Login() {
@@ -16,11 +16,15 @@ export function Login() {
   const { iniciarSesion, loading, error } = useLogin();
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleSesionGoogle = (sesion: Sesion) => {
-    guardarSesion(sesion);
+  const handleResultadoGoogle = useCallback((resultado: ResultadoGoogle) => {
+    if (resultado.tipo === "onboarding") {
+      navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
+      return;
+    }
+    guardarSesion(resultado.sesion);
     navigate("/dashboard");
-  };
-  const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleSesionGoogle);
+  }, [guardarSesion, navigate]);
+  const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleResultadoGoogle);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });

@@ -1,10 +1,11 @@
-import { User } from "../../domain/entities/user";
+import { Email } from "../../domain/value-objects/Email";
 import { Telefono } from "../../domain/value-objects/telefono";
 import { DocumentoIdentidad } from "../../domain/value-objects/documento";
 import type { AuthRepositoryPort } from "../ports/AuthRepositoryPort";
 
 interface DatosBase {
-  username: string;
+  nombre: string;
+  apellido: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -13,44 +14,40 @@ interface DatosBase {
 
 export type RegistroInput = DatosBase &
   (
-    | { rol: "cliente" }
-    | { rol: "freelancer"; telefono: string; documento: string }
+    | { rol: "cliente"; telefono?: string; documento?: string }
+    | { rol: "freelancer"; telefono?: string; documento: string }
   );
 
 export class RegistroUseCase {
   constructor(private readonly authRepository: AuthRepositoryPort) {}
 
-  async execute(input: RegistroInput): Promise<User> {
-    if (!input.mayorDeEdad) {
-      throw new Error("Debes confirmar que eres mayor de 18 años");
-    }
-    if (input.password.length < 8) {
-      throw new Error("La contraseña debe tener al menos 8 caracteres");
-    }
-    if (input.password !== input.confirmPassword) {
-      throw new Error("Las contraseñas no coinciden");
-    }
+  async execute(input: RegistroInput): Promise<{ email: string }> {
+    if (!input.mayorDeEdad) throw new Error("Debes confirmar que eres mayor de 18 años");
+    if (input.nombre.trim().length < 2) throw new Error("El nombre debe tener al menos 2 caracteres");
+    if (input.apellido.trim().length < 2) throw new Error("El apellido debe tener al menos 2 caracteres");
+    if (input.password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres");
+    if (input.password !== input.confirmPassword) throw new Error("Las contraseñas no coinciden");
 
-    const user = new User({
-      username: input.username,
-      email: input.email,
-      rol: input.rol,
-    });
-
+    const correo = new Email(input.email);
     const base = {
-      username: user.username,
-      email: user.email.value,
+      nombre: input.nombre.trim(),
+      apellido: input.apellido.trim(),
+      email: correo.value,
       password: input.password,
     };
 
     if (input.rol === "freelancer") {
-      return this.authRepository.registrarFreelancer({
+      return this.authRepository.registrar({
         ...base,
-        telefono: new Telefono(input.telefono).value,
-        documento: new DocumentoIdentidad(input.documento).value,
+        rolId: 2,
+        ...(input.telefono?.trim() ? { telefono: new Telefono(input.telefono).value } : {}),
+        cedula: new DocumentoIdentidad(input.documento).value,
       });
     }
-
-    return this.authRepository.registrarCliente(base);
+    return this.authRepository.registrar({
+      ...base,
+      rolId: 3,
+      ...(input.telefono?.trim() ? { telefono: new Telefono(input.telefono).value } : {}),
+    });
   }
 }

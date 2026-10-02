@@ -1,0 +1,1 @@
+export { CompletarPerfilGoogle } from "./CompletarPerfilGoogle";

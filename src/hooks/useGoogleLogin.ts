@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { loginConGoogleUseCase } from "../di/container";
-import type { Sesion } from "../core/application/ports/AuthRepositoryPort";
+import type { ResultadoGoogle } from "../core/application/ports/AuthRepositoryPort";
 
 declare global {
   interface Window {
@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-export function useGoogleLogin(onSesion: (sesion: Sesion) => void) {
+export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,8 +32,8 @@ export function useGoogleLogin(onSesion: (sesion: Sesion) => void) {
         client_id: clientId,
         callback: async (response) => {
           try {
-            const sesion = await loginConGoogleUseCase.execute(response.credential);
-            onSesion(sesion);
+            const resultado = await loginConGoogleUseCase.execute(response.credential);
+            onResultado(resultado);
           } catch (e) {
             setError(e instanceof Error ? e.message : "Error inesperado");
           }
@@ -57,7 +57,7 @@ export function useGoogleLogin(onSesion: (sesion: Sesion) => void) {
     }, 200);
 
     return () => clearInterval(intervalo);
-  }, [onSesion]);
+  }, [onResultado]);
 
   return { contenedorRef, error };
 }

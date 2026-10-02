@@ -17,11 +17,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 function leerSesionGuardada(): { user: User | null; token: string | null } {
   try {
-    const guardado = localStorage.getItem(STORAGE_KEY);
-    if (!guardado) return { user: null, token: null };
-
-    const datos = JSON.parse(guardado);
-    return { user: datos.user, token: datos.token };
+    const almacenada = localStorage.getItem(STORAGE_KEY);
+    if (!almacenada) return { user: null, token: null };
+    const sesion = JSON.parse(almacenada) as Sesion;
+    return { user: sesion.user ?? null, token: sesion.token ?? null };
   } catch {
     return { user: null, token: null };
   }
@@ -33,9 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const { user: usuarioGuardado, token: tokenGuardado } = leerSesionGuardada();
-    setUser(usuarioGuardado);
-    setToken(tokenGuardado);
+    const sesion = leerSesionGuardada();
+    setUser(sesion.user);
+    setToken(sesion.token);
     setCargando(false);
   }, []);
 
@@ -60,8 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe usarse dentro de <AuthProvider>");
-  }
+  if (!context) throw new Error("useAuth debe usarse dentro de <AuthProvider>");
   return context;
 }

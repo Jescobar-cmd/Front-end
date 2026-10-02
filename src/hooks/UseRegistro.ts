@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { registroUseCase } from "../di/container";
 import type { RegistroInput } from "../core/application/use-cases/RegistroUseCase";
-import type { User } from "../core/domain/entities/user";
 
 export function useRegistro() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const registrar = async (datos: RegistroInput): Promise<User | null> => {
+  const registrar = async (datos: RegistroInput): Promise<{ email: string } | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -20,5 +19,7 @@ export function useRegistro() {
     }
   };
 
-  return { registrar, loading, error };
+  const limpiarError = () => setError(null);
+
+  return { registrar, loading, error, limpiarError };
 }

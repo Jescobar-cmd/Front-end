@@ -11,12 +11,13 @@ type Rol = "cliente" | "freelancer";
 
 export function Registro() {
   const navigate = useNavigate();
-  const { registrar, loading, error } = useRegistro();
+  const { registrar, loading, error, limpiarError } = useRegistro();
 
   const [rol, setRol] = useState<Rol>("cliente");
   const [mayorDeEdad, setMayorDeEdad] = useState(false);
   const [form, setForm] = useState({
-    username: "",
+    nombre: "",
+    apellido: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -24,29 +25,33 @@ export function Registro() {
     documento: "",
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((actual) => ({ ...actual, [name]: value }));
+    limpiarError();
+  };
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const base = {
-      username: form.username,
+      nombre: form.nombre,
+      apellido: form.apellido,
       email: form.email,
       password: form.password,
       confirmPassword: form.confirmPassword,
       mayorDeEdad,
     };
 
-    const user = await registrar(
+    const resultado = await registrar(
       rol === "freelancer"
         ? { ...base, rol, telefono: form.telefono, documento: form.documento }
         : { ...base, rol }
     );
 
-    if (user) {
-      navigate("/verificar-enviado", { state: { email: form.email } });
-    }
+    if (!resultado) return;
+    sessionStorage.setItem("first_gig_email_pendiente", resultado.email);
+    navigate("/verificar-cuenta", { state: { email: resultado.email, password: form.password } });
   };
 
   return (
@@ -75,11 +80,20 @@ export function Registro() {
         </div>
 
         <Input
-          name="username"
-          placeholder="Nombre de usuario"
-          value={form.username}
+          name="nombre"
+          placeholder="Nombre"
+          value={form.nombre}
           onChange={handleChange}
           className={error ? "input--error" : ""}
+          required
+        />
+        <Input
+          name="apellido"
+          placeholder="Apellido"
+          value={form.apellido}
+          onChange={handleChange}
+          className={error ? "input--error" : ""}
+          required
         />
         <Input
           name="email"
@@ -92,18 +106,24 @@ export function Registro() {
         <Input
           name="password"
           type="password"
-          placeholder="Contraseña"
+          placeholder="Contraseña (mínimo 8 caracteres)"
+          autoComplete="new-password"
           value={form.password}
           onChange={handleChange}
           className={error ? "input--error" : ""}
+          minLength={8}
+          required
         />
         <Input
           name="confirmPassword"
           type="password"
           placeholder="Confirmar contraseña"
+          autoComplete="new-password"
           value={form.confirmPassword}
           onChange={handleChange}
           className={error ? "input--error" : ""}
+          minLength={8}
+          required
         />
 
         {rol === "freelancer" && (
@@ -120,6 +140,7 @@ export function Registro() {
               placeholder="Número de documento"
               value={form.documento}
               onChange={handleChange}
+              required
             />
           </>
         )}
