@@ -1,0 +1,349 @@
+/* Inicio cliente — estilo Apple, misma paleta del proyecto.
+   Sin hex nuevos: solo var(--cream, --rock, --venice, --ink, --error) con opacidad. */
+
+.ic-page {
+  width: min(100%, 1080px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barra superior */
+.ic-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 16px;
+  background: rgba(245, 238, 221, 0.72);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 12px 40px rgba(8, 24, 37, 0.1);
+}
+
+.ic-logo {
+  text-decoration: none;
+  border-radius: 12px;
+}
+
+.ic-logo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.ic-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.ic-username {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ic-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--venice);
+  color: var(--cream);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* Banner */
+.ic-banner {
+  padding: clamp(1.5rem, 5vw, 2.25rem);
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 60% 55% at 85% 105%, var(--venice), transparent 70%),
+    linear-gradient(160deg, var(--rock), var(--venice));
+  color: var(--cream);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 12px 40px rgba(8, 24, 37, 0.1);
+}
+
+.ic-banner-tag {
+  margin: 0 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ic-banner-title {
+  margin: 0 0 0.375rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ic-banner-text {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  opacity: 0.9;
+}
+
+.ic-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ic-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(245, 238, 221, 0.45);
+  cursor: pointer;
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.ic-dot--activo {
+  width: 24px;
+  background: var(--cream);
+}
+
+/* Layout + menú lateral */
+.ic-layout {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.ic-menu {
+  flex: 0 0 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 16px;
+  background: rgba(245, 238, 221, 0.72);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 12px 40px rgba(8, 24, 37, 0.1);
+}
+
+.ic-menu-btn {
+  padding: 0.75rem 0.875rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.ic-menu-btn--activo {
+  background: rgba(22, 88, 123, 0.12);
+  color: var(--venice);
+  font-weight: 700;
+}
+
+/* Contenido */
+.ic-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ic-section-title {
+  margin: 0 0 0.875rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.ic-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ic-card {
+  margin: 0;
+  padding: 1.25rem;
+  border-radius: 14px;
+  background: rgba(245, 238, 221, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 8px 24px rgba(8, 24, 37, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.ic-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 12px 32px rgba(8, 24, 37, 0.12);
+}
+
+.ic-card-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.625rem;
+  border-radius: 50%;
+  background: rgba(22, 88, 123, 0.12);
+  color: var(--venice);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.ic-card-name {
+  margin: 0 0 0.125rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ic-card-service {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  opacity: 0.75;
+}
+
+.ic-card-price {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--venice);
+}
+
+.ic-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.ic-post {
+  padding: 1.125rem 1.25rem;
+  border-radius: 14px;
+  background: rgba(245, 238, 221, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 2px rgba(8, 24, 37, 0.06),
+    0 8px 24px rgba(8, 24, 37, 0.08);
+}
+
+.ic-post-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.ic-post-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(22, 88, 123, 0.12);
+  color: var(--venice);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.ic-post-author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ic-post-time {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink);
+  opacity: 0.6;
+}
+
+.ic-post-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.ic-cta {
+  margin-top: 0.25rem;
+}
+
+/* Celular: menú inferior fijo + 1 columna */
+@media (max-width: 860px) {
+  .ic-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .ic-layout {
+    flex-direction: column;
+  }
+
+  .ic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ic-page {
+    padding-bottom: 5.5rem;
+  }
+
+  .ic-menu {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    z-index: 10;
+    flex: 0 0 auto;
+    flex-direction: row;
+    padding: 0.5rem;
+  }
+
+  .ic-menu-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .ic-username {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ic-card,
+  .ic-dot,
+  .ic-menu-btn {
+    transition: none !important;
+  }
+}

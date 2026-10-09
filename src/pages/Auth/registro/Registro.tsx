@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
+import { RoleSelector } from "../../../components/role-selector";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
@@ -58,99 +59,117 @@ export function Registro() {
     <div className="auth-page">
       <Brand />
 
-      <form onSubmit={handleSubmit} className="registro">
-        <h1>Crear cuenta</h1>
-        <p>Completa tus datos para comenzar.</p>
-
-        <div className="roles">
-          <Button
-            type="button"
-            variant={rol === "cliente" ? "primary" : "secondary"}
-            onClick={() => setRol("cliente")}
-          >
-            Soy cliente
-          </Button>
-          <Button
-            type="button"
-            variant={rol === "freelancer" ? "primary" : "secondary"}
-            onClick={() => setRol("freelancer")}
-          >
-            Soy freelancer
-          </Button>
+      <form onSubmit={handleSubmit} className="registro apple-card" aria-busy={loading}>
+        <div className="apple-head">
+          <p className="apple-eyebrow">First Gig</p>
+          <h1 className="apple-title">Crear cuenta</h1>
+          <p className="apple-subtitle">Completa tus datos para comenzar.</p>
         </div>
 
-        <Input
-          name="nombre"
-          placeholder="Nombre"
-          value={form.nombre}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-          required
-        />
-        <Input
-          name="apellido"
-          placeholder="Apellido"
-          value={form.apellido}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-          required
-        />
-        <Input
-          name="email"
-          type="email"
-          placeholder="Correo electrónico"
-          value={form.email}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-        />
-        <Input
-          name="password"
-          type="password"
-          placeholder="Contraseña (mínimo 8 caracteres)"
-          autoComplete="new-password"
-          value={form.password}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-          minLength={8}
-          required
-        />
-        <Input
-          name="confirmPassword"
-          type="password"
-          placeholder="Confirmar contraseña"
-          autoComplete="new-password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-          minLength={8}
-          required
-        />
+        <RoleSelector value={rol} onChange={setRol} />
 
-        <Input
-          name="telefono"
-          type="tel"
-          placeholder="Teléfono (opcional)"
-          value={form.telefono}
-          onChange={handleChange}
-        />
-        {rol === "freelancer" ? (
+        <div className="apple-row-2">
+          <div className="apple-field">
+            <label className="apple-label" htmlFor="reg-nombre">Nombre</label>
+            <Input
+              id="reg-nombre"
+              name="nombre"
+              autoComplete="given-name"
+              placeholder="Tu nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              className={error ? "input--error" : ""}
+              required
+            />
+          </div>
+          <div className="apple-field">
+            <label className="apple-label" htmlFor="reg-apellido">Apellido</label>
+            <Input
+              id="reg-apellido"
+              name="apellido"
+              autoComplete="family-name"
+              placeholder="Tu apellido"
+              value={form.apellido}
+              onChange={handleChange}
+              className={error ? "input--error" : ""}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="apple-field">
+          <label className="apple-label" htmlFor="reg-email">Correo electrónico</label>
           <Input
-            name="documento"
-            placeholder="Número de documento"
-            value={form.documento}
+            id="reg-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="tu@correo.com"
+            value={form.email}
             onChange={handleChange}
+            className={error ? "input--error" : ""}
+          />
+        </div>
+        <div className="apple-field">
+          <label className="apple-label" htmlFor="reg-pass">Contraseña</label>
+          <Input
+            id="reg-pass"
+            name="password"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={handleChange}
+            className={error ? "input--error" : ""}
+            minLength={8}
             required
           />
-        ) : (
+          <span className="apple-hint">Usa al menos 8 caracteres.</span>
+        </div>
+        <div className="apple-field">
+          <label className="apple-label" htmlFor="reg-pass2">Confirmar contraseña</label>
           <Input
-            name="documento"
-            placeholder="Número de documento (opcional)"
-            value={form.documento}
+            id="reg-pass2"
+            name="confirmPassword"
+            type="password"
+            placeholder="Repite tu contraseña"
+            autoComplete="new-password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className={error ? "input--error" : ""}
+            minLength={8}
+            required
+          />
+        </div>
+
+        <div className="apple-field">
+          <label className="apple-label" htmlFor="reg-tel">Teléfono</label>
+          <Input
+            id="reg-tel"
+            name="telefono"
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder="Teléfono (opcional)"
+            value={form.telefono}
             onChange={handleChange}
           />
-        )}
+        </div>
+        <div className="apple-field">
+          <label className="apple-label" htmlFor="reg-doc">Documento</label>
+          <Input
+            id="reg-doc"
+            name="documento"
+            inputMode="numeric"
+            placeholder={rol === "freelancer" ? "Número de documento" : "Número de documento (opcional)"}
+            value={form.documento}
+            onChange={handleChange}
+            required={rol === "freelancer"}
+          />
+          <span className="apple-hint">{rol === "freelancer" ? "Obligatorio para freelancers." : "Solo si deseas agregarlo ahora."}</span>
+        </div>
 
-        <label>
+        <label className="checkbox apple-check">
           <input
             type="checkbox"
             checked={mayorDeEdad}
@@ -159,13 +178,13 @@ export function Registro() {
           Tengo 18 años o más
         </label>
 
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error apple-alert" role="alert">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
-          {loading ? <Spinner size="small" /> : "Registrarme"}
+        <Button type="submit" disabled={loading} className="apple-submit" aria-busy={loading}>
+          {loading ? (<><Spinner size="small" /> Creando cuenta…</>) : "Registrarme"}
         </Button>
 
-        <div className="links">
+        <div className="links apple-links">
           <p>
             ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
           </p>

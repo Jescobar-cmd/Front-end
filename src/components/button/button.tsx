@@ -4,9 +4,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary";
 }
 
-export function Button({ variant = "primary", children, ...rest }: ButtonProps) {
+export function Button({ variant = "primary", className, children, ...rest }: ButtonProps) {
+  const clases = ["btn", `btn--${variant}`, variant === "primary" ? "btn-primary" : "", className]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <button className={`btn btn--${variant}`} {...rest}>
+    <button className={clases} {...rest}>
       {children}
     </button>
   );

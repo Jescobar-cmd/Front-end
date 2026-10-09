@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { loginConGoogleUseCase } from "../di/container";
 import type { ResultadoGoogle } from "../core/application/ports/AuthRepositoryPort";
 
@@ -11,41 +11,47 @@ declare global {
             client_id: string;
             callback: (response: { credential: string }) => void;
           }) => void;
-          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+          prompt: (
+            listener?: (notification: { isNotDisplayed: () => boolean }) => void
+          ) => void;
         };
       };
     };
   }
 }
 
+// Bandera a nivel de módulo: initialize() debe correr una sola vez por carga,
+// aunque StrictMode monte el efecto dos veces en desarrollo.
+let googleYaInicializado = false;
+
 export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void) {
-  const contenedorRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  // Ref con el callback más reciente para no re-inicializar si cambia su identidad.
+  const callbackRef = useRef(onResultado);
+
+  useEffect(() => {
+    callbackRef.current = onResultado;
+  }, [onResultado]);
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
     const intentarInicializar = () => {
-      if (!window.google || !contenedorRef.current) return false;
+      if (!window.google) return false;
+      if (googleYaInicializado) return true;
 
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async (response) => {
           try {
             const resultado = await loginConGoogleUseCase.execute(response.credential);
-            onResultado(resultado);
+            await callbackRef.current(resultado);
           } catch (e) {
             setError(e instanceof Error ? e.message : "Error inesperado");
           }
         },
       });
-
-      window.google.accounts.id.renderButton(contenedorRef.current, {
-        theme: "outline",
-        size: "large",
-        width: 320,
-        text: "continue_with",
-      });
+      googleYaInicializado = true;
 
       return true;
     };
@@ -57,7 +63,22 @@ export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void
     }, 200);
 
     return () => clearInterval(intervalo);
-  }, [onResultado]);
+  }, []);
 
-  return { contenedorRef, error };
+  const iniciarConGoogle = useCallback(() => {
+    setError(null);
+    if (!window.google) {
+      setError("No se pudo cargar Google. Revisa tu conexión e inténtalo de nuevo.");
+      return;
+    }
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        setError(
+          "Google no mostró el selector de cuenta (quizá el navegador lo bloqueó). Permite accounts.google.com o inicia sesión con tu correo."
+        );
+      }
+    });
+  }, []);
+
+  return { error, iniciarConGoogle };
 }

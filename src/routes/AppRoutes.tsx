@@ -8,6 +8,7 @@ import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerf
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
 import { Dashboard } from "../pages/dashboard/dashboard";
+import { InicioCliente } from "../pages/inicio";
 import { useAuth } from "../context/AuthContext";
 import { dashboardPorRol } from "./rutasPorRol";
 
@@ -44,6 +45,14 @@ export function AppRoutes() {
         element={
           <RutaProtegida roles={["cliente"]}>
             <Dashboard />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/inicio"
+        element={
+          <RutaProtegida roles={["cliente"]}>
+            <InicioCliente />
           </RutaProtegida>
         }
       />
