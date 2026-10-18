@@ -56,6 +56,7 @@ export function AppRoutes() {
           </RutaProtegida>
         }
       />
+      <Route path="/preview-inicio" element={<InicioCliente />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
