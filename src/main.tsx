@@ -6,8 +6,6 @@ import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 import "./styles/brand.css";
 import "./styles/responsive.css";
-import "./styles/auth-apple.css";
-import "./styles/inicio.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

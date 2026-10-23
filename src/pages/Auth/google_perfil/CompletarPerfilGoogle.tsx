@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { SyntheticEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../../components/button";
-import { RoleSelector } from "../../../components/role-selector";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
@@ -56,36 +55,31 @@ export function CompletarPerfilGoogle() {
   return (
     <div className="auth-page">
       <Brand />
-      <form onSubmit={handleSubmit} className="registro apple-card" aria-busy={loading}>
-        <div className="apple-head">
-          <p className="apple-eyebrow">Ya casi terminas</p>
-          <h1 className="apple-title">Completa tu perfil</h1>
-          <p className="apple-subtitle">{email ? <>Cuenta de Google: <strong>{email}</strong></> : "Cuenta de Google"}</p>
+      <form onSubmit={handleSubmit} className="registro">
+        <h1>Completa tu perfil</h1>
+        <p>{email ? `Cuenta de Google: ${email}` : "Cuenta de Google"}</p>
+
+        <div className="roles">
+          <Button type="button" variant={rol === "cliente" ? "primary" : "secondary"} onClick={() => setRol("cliente")}>
+            Soy cliente
+          </Button>
+          <Button type="button" variant={rol === "freelancer" ? "primary" : "secondary"} onClick={() => setRol("freelancer")}>
+            Soy freelancer
+          </Button>
         </div>
 
-        <RoleSelector value={rol} onChange={setRol} />
+        <Input type="tel" placeholder="Teléfono (opcional)" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+        <Input
+          placeholder={rol === "freelancer" ? "Número de documento" : "Número de documento (opcional)"}
+          value={documento}
+          onChange={(e) => setDocumento(e.target.value)}
+          required={rol === "freelancer"}
+        />
 
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="gp-tel">Teléfono</label>
-          <Input id="gp-tel" type="tel" autoComplete="tel" inputMode="tel" placeholder="Teléfono (opcional)" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
-        </div>
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="gp-doc">Documento</label>
-          <Input
-            id="gp-doc"
-            inputMode="numeric"
-            placeholder={rol === "freelancer" ? "Número de documento" : "Número de documento (opcional)"}
-            value={documento}
-            onChange={(e) => setDocumento(e.target.value)}
-            required={rol === "freelancer"}
-          />
-          <span className="apple-hint">{rol === "freelancer" ? "Obligatorio para freelancers." : "Puedes agregarlo después."}</span>
-        </div>
+        {error && <p className="error">{error}</p>}
 
-        {error && <p className="error apple-alert" role="alert">{error}</p>}
-
-        <Button type="submit" disabled={loading} className="apple-submit" aria-busy={loading}>
-          {loading ? (<><Spinner size="small" /> Guardando…</>) : "Continuar"}
+        <Button type="submit" disabled={loading}>
+          {loading ? <Spinner size="small" /> : "Continuar"}
         </Button>
       </form>
     </div>

@@ -39,12 +39,9 @@ export function VerificarCuenta() {
 
   if (exito) {
     return (
-      <div className="verificar apple-card" role="status">
-        <div className="apple-head">
-          <p className="apple-eyebrow">Verificación exitosa</p>
-          <h1 className="apple-title">¡Cuenta confirmada!</h1>
-          <p className="apple-subtitle">Ya puedes iniciar sesión con tu correo y contraseña.</p>
-        </div>
+      <div className="verificar">
+        <h1>¡Cuenta confirmada!</h1>
+        <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
         <Button type="button" onClick={() => navigate("/login", { replace: true })}>
           Ir a iniciar sesión
         </Button>
@@ -55,55 +52,38 @@ export function VerificarCuenta() {
   return (
     <div className="auth-page">
       <Brand />
-      <form onSubmit={handleSubmit} className="login apple-card" aria-busy={loading}>
-        <div className="apple-head">
-          <p className="apple-eyebrow">Paso 2 de 2</p>
-          <h1 className="apple-title">Confirma tu cuenta</h1>
-          <p className="apple-subtitle">
-            Te enviamos un código de 6 dígitos {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
-          </p>
-        </div>
+      <form onSubmit={handleSubmit} className="login">
+        <h1>Confirma tu cuenta</h1>
+        <p>
+          Te enviamos un código de 6 dígitos {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
+        </p>
 
         {!emailInicial && (
-          <div className="apple-field">
-            <label className="apple-label" htmlFor="ver-email">Correo electrónico</label>
-            <Input
-              id="ver-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="tu@correo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        )}
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="ver-code">Código de verificación</label>
           <Input
-            id="ver-code"
-            name="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="6 dígitos"
-            value={code}
-            onChange={handleCode}
-            maxLength={6}
-            className={error ? "input--error" : ""}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? "ver-error" : undefined}
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-          <span className="apple-hint">Revisa tu bandeja y spam. Solo números.</span>
-        </div>
+        )}
+        <Input
+          name="code"
+          inputMode="numeric"
+          placeholder="Código de 6 dígitos"
+          value={code}
+          onChange={handleCode}
+          className={error ? "input--error" : ""}
+        />
 
-        {error && <p className="error apple-alert" role="alert" id="ver-error">{error}</p>}
-        {info && <p className="success apple-success" role="status">{info}</p>}
+        {error && <p className="error">{error}</p>}
+        {info && <p className="success">{info}</p>}
 
-        <Button type="submit" disabled={loading} className="apple-submit" aria-busy={loading}>
-          {loading ? (<><Spinner size="small" /> Confirmando…</>) : "Confirmar"}
+        <Button type="submit" disabled={loading}>
+          {loading ? <Spinner size="small" /> : "Confirmar"}
         </Button>
 
-        <div className="links apple-links">
+        <div className="links">
           <p>
             ¿No te llegó?{" "}
             <a href="#" onClick={(e) => { e.preventDefault(); void reenviar(email); }}>

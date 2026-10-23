@@ -23,33 +23,24 @@ export function RecuperarPassword() {
     <div className="auth-page">
       <Brand />
 
-      <form onSubmit={handleSubmit} className="login apple-card" aria-busy={loading}>
-        <div className="apple-head">
-          <p className="apple-eyebrow">Recuperación</p>
-          <h1 className="apple-title">Recupera tu contraseña</h1>
-          <p className="apple-subtitle">Te enviaremos un código de 6 dígitos para restablecerla.</p>
-        </div>
+      <form onSubmit={handleSubmit} className="login">
+        <h1>Recupera tu contraseña</h1>
+        <p>Te enviaremos un código de 6 dígitos para restablecerla.</p>
 
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="rec-email">Correo electrónico</label>
-          <Input
-            id="rec-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@correo.com"
-            value={email}
-            onChange={handleChange}
-            className={error ? "input--error" : ""}
-            aria-invalid={Boolean(error)}
-          />
-        </div>
+        <Input
+          name="email"
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={handleChange}
+          className={error ? "input--error" : ""}
+        />
 
-        {error && <p className="error apple-alert" role="alert">{error}</p>}
-        {enviado && <p className="success apple-success" role="status">Si existe una cuenta con ese correo, te hemos enviado un código.</p>}
+        {error && <p className="error">{error}</p>}
+        {enviado && <p className="success">Si existe una cuenta con ese correo, te hemos enviado un código.</p>}
 
-        <Button type="submit" disabled={loading} className="apple-submit" aria-busy={loading}>
-          {loading ? (<><Spinner size="small" /> Enviando…</>) : "Enviar código"}
+        <Button type="submit" disabled={loading}>
+          {loading ? <Spinner size="small" /> : "Enviar código"}
         </Button>
 
         {enviado && (
@@ -62,11 +53,9 @@ export function RecuperarPassword() {
           </Button>
         )}
 
-        <div className="links apple-links">
-          <p>
-            <Link to="/login">Volver al inicio</Link>
-          </p>
-        </div>
+        <p>
+          <Link to="/login">Volver al inicio</Link>
+        </p>
       </form>
     </div>
   );

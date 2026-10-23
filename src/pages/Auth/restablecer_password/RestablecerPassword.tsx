@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/button";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
@@ -38,77 +38,48 @@ export function RestablecerPassword() {
   return (
     <div className="auth-page">
       <Brand />
-      <form onSubmit={handleSubmit} className="login apple-card" aria-busy={loading}>
-        <div className="apple-head">
-          <p className="apple-eyebrow">Último paso</p>
-          <h1 className="apple-title">Nueva contraseña</h1>
-          <p className="apple-subtitle">Ingresa el código y elige una contraseña segura.</p>
-        </div>
+      <form onSubmit={handleSubmit} className="login">
+        <h1>Nueva contraseña</h1>
 
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="reset-email">Correo electrónico</label>
-          <Input
-            id="reset-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@correo.com"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="reset-code">Código</label>
-          <Input
-            id="reset-code"
-            name="code"
-            placeholder="6 dígitos"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            value={form.code}
-            onChange={handleChange}
-            maxLength={6}
-            required
-          />
-        </div>
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="reset-pass">Nueva contraseña</label>
-          <Input
-            id="reset-pass"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Mínimo 8 caracteres"
-            value={form.password}
-            onChange={handleChange}
-            minLength={8}
-          />
-        </div>
-        <div className="apple-field">
-          <label className="apple-label" htmlFor="reset-pass2">Confirmar contraseña</label>
-          <Input
-            id="reset-pass2"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Repite tu contraseña"
-            value={form.confirmPassword}
-            onChange={handleChange}
-          />
-        </div>
+        <Input
+          name="email"
+          type="email"
+          placeholder="Correo electrónico"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <Input
+          name="code"
+          placeholder="Código de 6 dígitos"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          value={form.code}
+          onChange={handleChange}
+          maxLength={6}
+          required
+        />
+        <Input
+          name="password"
+          type="password"
+          placeholder="Nueva contraseña (mínimo 8 caracteres)"
+          value={form.password}
+          onChange={handleChange}
+          minLength={8}
+        />
+        <Input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirmar contraseña"
+          value={form.confirmPassword}
+          onChange={handleChange}
+        />
 
-        {error && <p className="error apple-alert" role="alert">{error}</p>}
+        {error && <p className="error">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="apple-submit" aria-busy={loading}>
-          {loading ? (<><Spinner size="small" /> Guardando…</>) : "Guardar contraseña"}
+        <Button type="submit" disabled={loading}>
+          {loading ? <Spinner size="small" /> : "Guardar contraseña"}
         </Button>
-
-        <div className="links apple-links">
-          <p>
-            <Link to="/login">Volver al inicio</Link>
-          </p>
-        </div>
       </form>
     </div>
   );
