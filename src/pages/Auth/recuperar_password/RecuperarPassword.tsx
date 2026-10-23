@@ -39,7 +39,7 @@ export function RecuperarPassword() {
         {error && <p className="error">{error}</p>}
         {enviado && <p className="success">Si existe una cuenta con ese correo, te hemos enviado un código.</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Enviar código"}
         </Button>
 
@@ -47,6 +47,7 @@ export function RecuperarPassword() {
           <Button
             type="button"
             variant="secondary"
+            className="btn-secondary"
             onClick={() => navigate("/restablecer-password", { state: { email } })}
           >
             Ya tengo mi código

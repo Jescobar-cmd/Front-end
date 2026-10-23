@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
+import { GoogleButton } from "../../../components/GoogleButton";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
 import { useLogin } from "../../../hooks/UserLogin";
@@ -69,7 +70,7 @@ export function Login() {
 
         {error && <p className="error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Ingresar"}
         </Button>
 
@@ -77,7 +78,7 @@ export function Login() {
           <span>o continúa con</span>
         </div>
 
-        <div className="google-btn-wrap" ref={contenedorRef} />
+        <div className="google-btn-wrap" ref={contenedorRef} role="group" aria-label="Continuar con Google" />
         {errorGoogle && <p className="error">{errorGoogle}</p>}
 
         <div className="links">

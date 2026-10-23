@@ -77,7 +77,7 @@ export function RestablecerPassword() {
 
         {error && <p className="error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Guardar contraseña"}
         </Button>
       </form>

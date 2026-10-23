@@ -62,11 +62,13 @@ export function Registro() {
         <h1>Crear cuenta</h1>
         <p>Completa tus datos para comenzar.</p>
 
-        <div className="roles">
+        <fieldset className="roles">
+          <legend>Tipo de cuenta</legend>
           <Button
             type="button"
             variant={rol === "cliente" ? "primary" : "secondary"}
             onClick={() => setRol("cliente")}
+            aria-pressed={rol === "cliente"}
           >
             Soy cliente
           </Button>
@@ -74,10 +76,11 @@ export function Registro() {
             type="button"
             variant={rol === "freelancer" ? "primary" : "secondary"}
             onClick={() => setRol("freelancer")}
+            aria-pressed={rol === "freelancer"}
           >
             Soy freelancer
           </Button>
-        </div>
+        </fieldset>
 
         <Input
           name="nombre"
@@ -161,7 +164,7 @@ export function Registro() {
 
         {error && <p className="error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Registrarme"}
         </Button>
 

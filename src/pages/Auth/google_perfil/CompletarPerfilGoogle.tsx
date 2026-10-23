@@ -59,14 +59,15 @@ export function CompletarPerfilGoogle() {
         <h1>Completa tu perfil</h1>
         <p>{email ? `Cuenta de Google: ${email}` : "Cuenta de Google"}</p>
 
-        <div className="roles">
-          <Button type="button" variant={rol === "cliente" ? "primary" : "secondary"} onClick={() => setRol("cliente")}>
+        <fieldset className="roles">
+          <legend>Tipo de cuenta</legend>
+          <Button type="button" variant={rol === "cliente" ? "primary" : "secondary"} onClick={() => setRol("cliente")} aria-pressed={rol === "cliente"}>
             Soy cliente
           </Button>
-          <Button type="button" variant={rol === "freelancer" ? "primary" : "secondary"} onClick={() => setRol("freelancer")}>
+          <Button type="button" variant={rol === "freelancer" ? "primary" : "secondary"} onClick={() => setRol("freelancer")} aria-pressed={rol === "freelancer"}>
             Soy freelancer
           </Button>
-        </div>
+        </fieldset>
 
         <Input type="tel" placeholder="Teléfono (opcional)" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         <Input
@@ -78,7 +79,7 @@ export function CompletarPerfilGoogle() {
 
         {error && <p className="error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Continuar"}
         </Button>
       </form>

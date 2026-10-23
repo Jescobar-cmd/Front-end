@@ -79,7 +79,7 @@ export function VerificarCuenta() {
         {error && <p className="error">{error}</p>}
         {info && <p className="success">{info}</p>}
 
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="btn-primary">
           {loading ? <Spinner size="small" /> : "Confirmar"}
         </Button>
 
