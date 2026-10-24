@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
@@ -7,9 +7,10 @@ import { VerificarCuenta } from "../pages/Auth/verificar_cuenta";
 import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerfilGoogle";
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
-import { Dashboard } from "../pages/dashboard/dashboard";
 import { useAuth } from "../context/AuthContext";
 import { dashboardPorRol } from "./rutasPorRol";
+import { InicioCliente } from "../features/feed/InicioCliente";
+import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -17,7 +18,22 @@ function RedireccionDashboard() {
   return <Navigate to={dashboardPorRol(user.rol)} replace />;
 }
 
+function VistaPreviaFeed() {
+  const { tipoCuenta } = useParams();
+
+  if (!import.meta.env.DEV) return <Navigate to="/login" replace />;
+  if (tipoCuenta === "cliente") {
+    return <InicioCliente usuario={{ nombre: "Demo", tipoCuenta: "cliente" }} />;
+  }
+  if (tipoCuenta === "freelancer") {
+    return <InicioFreelancer usuario={{ nombre: "Demo", tipoCuenta: "freelancer" }} />;
+  }
+  return <Navigate to="/feed-preview/cliente" replace />;
+}
+
 export function AppRoutes() {
+  const { user } = useAuth();
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -32,10 +48,22 @@ export function AppRoutes() {
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
       <Route
+        path="/inicio"
+        element={
+          <RutaProtegida roles={["cliente"]}>
+            <InicioCliente
+              usuario={{ nombre: user?.nombre, tipoCuenta: user?.rol ?? "cliente" }}
+            />
+          </RutaProtegida>
+        }
+      />
+      <Route
         path="/dashboard/freelancer"
         element={
           <RutaProtegida roles={["freelancer"]}>
-            <Dashboard />
+            <InicioFreelancer
+              usuario={{ nombre: user?.nombre, tipoCuenta: user?.rol ?? "freelancer" }}
+            />
           </RutaProtegida>
         }
       />
@@ -43,10 +71,13 @@ export function AppRoutes() {
         path="/dashboard/cliente"
         element={
           <RutaProtegida roles={["cliente"]}>
-            <Dashboard />
+            <InicioCliente
+              usuario={{ nombre: user?.nombre, tipoCuenta: user?.rol ?? "cliente" }}
+            />
           </RutaProtegida>
         }
       />
+      <Route path="/feed-preview/:tipoCuenta" element={<VistaPreviaFeed />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
