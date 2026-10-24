@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { Brand } from "../../../components/Brand";
 
 interface LocationState {
   email?: string;
@@ -19,19 +20,22 @@ export function VerificarEnviado() {
   const email = state?.email;
 
   return (
-    <div className="enviado">
-      <div className="illustration">
-        <IconoSobre />
-      </div>
-      <h1>Confirma tu cuenta</h1>
-      <p>
-        Te enviamos un enlace de confirmación {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
-        Ábrelo para activar tu cuenta.
-      </p>
-      <div className="links">
+    <div className="auth-page">
+      <Brand />
+      <div className="enviado">
+        <div className="illustration">
+          <IconoSobre />
+        </div>
+        <h1>Confirma tu cuenta</h1>
         <p>
-          ¿No te llegó? <Link to="/registro">Intenta de nuevo</Link>
+          Te enviamos un enlace de confirmación {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
+          Ábrelo para activar tu cuenta.
         </p>
+        <div className="links">
+          <p>
+            ¿No te llegó? <Link to="/registro">Intenta de nuevo</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

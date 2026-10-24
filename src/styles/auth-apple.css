@@ -95,8 +95,8 @@
 
 .input:focus {
   background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(22, 88, 123, 0.45);
-  box-shadow: 0 0 0 4px rgba(22, 88, 123, 0.12);
+  border-color: rgba(79, 155, 196, 0.72);
+  box-shadow: 0 0 0 4px rgba(79, 155, 196, 0.2);
 }
 
 .input--error,
@@ -166,7 +166,7 @@
   border-radius: 16px;
   padding: 6px;
   background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(79, 155, 196, 0.48);
 }
 
 .roles legend {
