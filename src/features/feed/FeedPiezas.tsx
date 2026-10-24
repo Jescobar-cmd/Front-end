@@ -13,11 +13,7 @@ interface FeedFiltrosProps {
   onChange: (categoria: string) => void;
 }
 
-export function FeedBuscador({
-  valor,
-  onChange,
-  placeholder = "Buscar por tema o habilidad",
-}: FeedBuscadorProps) {
+export function FeedBuscador({ valor, onChange, placeholder = "Buscar por tema o habilidad" }: FeedBuscadorProps) {
   const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
   };
@@ -28,19 +24,9 @@ export function FeedBuscador({
         ⌕
       </span>
       <span className="feed-visually-hidden">Buscar en el feed</span>
-      <input
-        type="search"
-        value={valor}
-        onChange={manejarCambio}
-        placeholder={placeholder}
-      />
+      <input type="search" value={valor} onChange={manejarCambio} placeholder={placeholder} />
       {valor && (
-        <button
-          className="feed-search__clear"
-          type="button"
-          onClick={() => onChange("")}
-          aria-label="Limpiar búsqueda"
-        >
+        <button className="feed-search__clear" type="button" onClick={() => onChange("")} aria-label="Limpiar búsqueda">
           ×
         </button>
       )}
@@ -73,7 +59,7 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
         {pieza.imagenUrl ? (
           <img src={pieza.imagenUrl} alt={`Imagen del servicio: ${pieza.titulo}`} />
         ) : (
-          <span className="feed-card__image-placeholder">Espacio para imagen del servicio</span>
+          <span className="feed-card__image-placeholder">Sin imagen</span>
         )}
         <span className="feed-card__category">{pieza.categoria}</span>
       </div>
@@ -87,6 +73,12 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
         <p className="feed-card__description">{pieza.descripcion}</p>
         <div className="feed-card__bottom">
           <p className="feed-card__detail">{pieza.detalle}</p>
+          {typeof pieza.postulaciones === "number" && (
+            <p className="feed-card__postulaciones">
+              <span aria-hidden="true">◇</span> {pieza.postulaciones}{" "}
+              {pieza.postulaciones === 1 ? "postulación" : "postulaciones"}
+            </p>
+          )}
           <ul className="feed-tags" aria-label="Temas y habilidades">
             {pieza.etiquetas.map((etiqueta) => (
               <li key={etiqueta}>{etiqueta}</li>
@@ -110,6 +102,35 @@ export function FeedVacio({ buscando }: { buscando: boolean }) {
           ? "Prueba con otra palabra o categoría."
           : "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."}
       </p>
+    </section>
+  );
+}
+
+export function FeedLoading() {
+  return (
+    <section className="feed-empty" aria-live="polite">
+      <span className="feed-empty__symbol" aria-hidden="true">
+        ✳
+      </span>
+      <h2>Cargando contenido</h2>
+      <p>Un momento mientras preparamos tu feed.</p>
+    </section>
+  );
+}
+
+export function FeedError({ mensaje, onReintentar }: { mensaje: string; onReintentar?: () => void }) {
+  return (
+    <section className="feed-empty" aria-live="polite">
+      <span className="feed-empty__symbol" aria-hidden="true">
+        ⚠
+      </span>
+      <h2>No pudimos cargar el feed</h2>
+      <p>{mensaje}</p>
+      {onReintentar ? (
+        <button className="feed-retry" type="button" onClick={onReintentar}>
+          Reintentar
+        </button>
+      ) : null}
     </section>
   );
 }

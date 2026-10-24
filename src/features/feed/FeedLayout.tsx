@@ -1,7 +1,19 @@
 import { useMemo, useState } from "react";
-import { Brand } from "../../components/Brand";
-import type { PiezaFeed, TipoCuentaFeed } from "./datosFeed";
-import { FeedBuscador, FeedFiltros, FeedPiezaCard, FeedVacio } from "./FeedPiezas";
+import { useAuth } from "../../context/AuthContext";
+import { FeedTopbar } from "./FeedTopbar";
+import { FeedSidebar } from "./FeedSidebar";
+import {
+  FeedFiltros,
+  FeedPiezaCard,
+  FeedVacio,
+  FeedError,
+  FeedLoading,
+} from "./FeedPiezas";
+import { obtenerProyectosParaFreelancer, obtenerTalentoParaExplorar, ofertaAPieza } from "./datosFeed";
+import type { TipoCuentaFeed } from "./datosFeed";
+import { avisosDemo, resumenDemo } from "./datosDemoFeed";
+import { useCategorias, useMisOfertas } from "./hooks/useOfertas";
+import "./feed.css";
 
 export interface UsuarioFeed {
   nombre?: string;
@@ -10,17 +22,39 @@ export interface UsuarioFeed {
 
 interface FeedLayoutProps {
   usuario: UsuarioFeed;
-  piezas: PiezaFeed[];
 }
 
-export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
+export function FeedLayout({ usuario }: FeedLayoutProps) {
+  const { token } = useAuth();
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todo");
 
-  const categorias = useMemo(
-    () => [...new Set(piezas.map((pieza) => pieza.categoria))],
-    [piezas],
+  const esFreelancer = usuario.tipoCuenta === "freelancer";
+
+  const {
+    categorias,
+    estado: estadoCategorias,
+    error: errorCategorias,
+    recargar: recargarCategorias,
+  } = useCategorias(token);
+
+  const {
+    ofertas,
+    estado: estadoMisOfertas,
+    error: errorMisOfertas,
+    recargar: recargarMisOfertas,
+  } = useMisOfertas(esFreelancer ? undefined : token);
+
+  const categoriasDisponibles = useMemo(
+    () => [...new Set(categorias.map((categoria) => categoria.nombre).filter(Boolean))],
+    [categorias],
   );
+
+  const piezas = useMemo(
+    () => (esFreelancer ? obtenerProyectosParaFreelancer() : obtenerTalentoParaExplorar()),
+    [esFreelancer],
+  );
+
   const piezasVisibles = useMemo(() => {
     const termino = busqueda.trim().toLocaleLowerCase();
     return piezas.filter((pieza) => {
@@ -33,53 +67,29 @@ export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
     });
   }, [busqueda, categoriaActiva, piezas]);
 
+  const misProyectos = useMemo(
+    () => (ofertas && !esFreelancer ? ofertas.items.map(ofertaAPieza) : []),
+    [ofertas, esFreelancer],
+  );
+
   const nombre = usuario.nombre?.trim().split(/\s+/)[0] || "bienvenido";
-  const esFreelancer = usuario.tipoCuenta === "freelancer";
+
+  const placeholder = esFreelancer
+    ? "Buscar proyectos por título o habilidad"
+    : "Buscar servicios o freelancers";
 
   return (
     <div className={`feed-layout feed-layout--${usuario.tipoCuenta}`}>
-      <header className="feed-topbar">
-        <a className="feed-brand" href={esFreelancer ? "/dashboard/freelancer" : "/inicio"} aria-label="FirstGig, ir al inicio">
-          <Brand variant="dark" />
-        </a>
-        <FeedBuscador
-          valor={busqueda}
-          onChange={setBusqueda}
-          placeholder={esFreelancer ? "Buscar proyectos por título o habilidad" : "Buscar servicios o freelancers"}
-        />
-        <div className="feed-topbar__right">
-          <span className="feed-topbar__icon" aria-hidden="true">▢</span>
-          <span className="feed-topbar__icon" aria-hidden="true">♧</span>
-          <div className="feed-account">
-            <span className="feed-account__avatar" aria-hidden="true">
-              {nombre.charAt(0).toLocaleUpperCase()}
-            </span>
-            <span className="feed-account__identity">
-              <strong>{usuario.nombre || "Mi cuenta"}</strong>
-              <small>{esFreelancer ? "Cuenta de freelancer" : "Cuenta de cliente"}</small>
-            </span>
-          </div>
-        </div>
-      </header>
+      <FeedTopbar
+        valor={busqueda}
+        onChange={setBusqueda}
+        placeholder={placeholder}
+        nombre={usuario.nombre}
+        tipoCuenta={usuario.tipoCuenta}
+      />
 
       <div className="feed-app">
-        <aside className="feed-sidebar" aria-label="Navegación principal">
-          <p className="feed-sidebar__label">MI ESPACIO</p>
-          <nav>
-            <a className="is-current" href="#inicio"><span aria-hidden="true">⌂</span>Inicio</a>
-            <a href="#services"><span aria-hidden="true">⌕</span>{esFreelancer ? "Buscar proyectos" : "Explorar talento"}</a>
-            <a href="#activity"><span aria-hidden="true">▤</span>{esFreelancer ? "Mis postulaciones" : "Mis proyectos"}</a>
-            <a href="#summary"><span aria-hidden="true">▦</span>Estadísticas</a>
-            <a href="#services"><span aria-hidden="true">＋</span>{esFreelancer ? "Explorar ofertas" : "Ver talento"}</a>
-          </nav>
-          <div className="feed-sidebar__help">
-            <span aria-hidden="true">?</span>
-            <strong>¿Necesitas una mano?</strong>
-            <p>Estamos aquí para ayudarte a dar el siguiente paso.</p>
-            <a href="#notices">Centro de ayuda ↗</a>
-          </div>
-          <span className="feed-sidebar__copyright">© 2026 First Gig</span>
-        </aside>
+        <FeedSidebar esFreelancer={esFreelancer} activo="inicio" />
 
         <main className="feed-main" id="inicio">
           <div className="feed-workspace">
@@ -87,7 +97,11 @@ export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
               <section className="feed-intro" aria-labelledby="feed-title">
                 <div>
                   <h1 id="feed-title">¡Hola de nuevo, {nombre}!</h1>
-                  <p>{esFreelancer ? "Explora nuevos proyectos y oportunidades para tu carrera." : "Este es el pulso de tus proyectos y tu comunidad."}</p>
+                  <p>
+                    {esFreelancer
+                      ? "Explora nuevos proyectos y oportunidades para tu carrera."
+                      : "Este es el pulso de tus proyectos y tu comunidad."}
+                  </p>
                 </div>
                 <a className="feed-primary-action" href="#services">
                   {esFreelancer ? "Explorar proyectos" : "Explorar talento"}
@@ -96,9 +110,15 @@ export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
 
               <section className="feed-feature" aria-label="Recomendación">
                 <div>
-                  <p className="feed-feature__eyebrow">{esFreelancer ? "TU TALENTO MERECE SER VISTO" : "BUEN TALENTO, GRANDES PROYECTOS"}</p>
+                  <p className="feed-feature__eyebrow">
+                    {esFreelancer ? "TU TALENTO MERECE SER VISTO" : "BUEN TALENTO, GRANDES PROYECTOS"}
+                  </p>
                   <h2>{esFreelancer ? "Un perfil completo abre más puertas" : "Encuentra talento verificado"}</h2>
-                  <p>{esFreelancer ? "Muestra tus habilidades y conecta con mejores oportunidades." : "Explora freelancers con experiencia comprobada y un perfil claro."}</p>
+                  <p>
+                    {esFreelancer
+                      ? "Muestra tus habilidades y conecta con mejores oportunidades."
+                      : "Explora freelancers con experiencia comprobada y un perfil claro."}
+                  </p>
                 </div>
                 <a href={esFreelancer ? "#profile" : "#services"}>
                   {esFreelancer ? "Completar mi perfil" : "Explorar talento"} <span aria-hidden="true">↗</span>
@@ -110,16 +130,30 @@ export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
                 <div className="feed-toolbar">
                   <div>
                     <h2>{esFreelancer ? "Proyectos para ti" : "Ofertas de freelancers"}</h2>
-                    <p>{esFreelancer ? "Oportunidades seleccionadas para tus habilidades." : "Conoce profesionales que pueden sumarse a tu proyecto."}</p>
+                    <p>
+                      {esFreelancer
+                        ? "Oportunidades seleccionadas para tus habilidades."
+                        : "Conoce profesionales que pueden sumarse a tu proyecto."}
+                    </p>
                   </div>
                   <a className="feed-text-link" href="#activity">Ver todas <span aria-hidden="true">→</span></a>
                 </div>
                 <div className="feed-content__filters">
-                  <FeedFiltros categorias={categorias} activa={categoriaActiva} onChange={setCategoriaActiva} />
+                  {errorCategorias ? (
+                    <FeedError mensaje={errorCategorias} onReintentar={recargarCategorias} />
+                  ) : (
+                    <FeedFiltros
+                      categorias={categoriasDisponibles}
+                      activa={categoriaActiva}
+                      onChange={setCategoriaActiva}
+                    />
+                  )}
                 </div>
                 {piezasVisibles.length > 0 ? (
                   <div className="feed-grid">
-                    {piezasVisibles.map((pieza) => <FeedPiezaCard key={pieza.id} pieza={pieza} />)}
+                    {piezasVisibles.map((pieza) => (
+                      <FeedPiezaCard key={pieza.id} pieza={pieza} />
+                    ))}
                   </div>
                 ) : (
                   <FeedVacio buscando={Boolean(busqueda) || categoriaActiva !== "Todo"} />
@@ -134,34 +168,82 @@ export function FeedLayout({ usuario, piezas }: FeedLayoutProps) {
                   </div>
                   <a className="feed-text-link" href="#services">Ver actividad <span aria-hidden="true">→</span></a>
                 </div>
-                <div className="feed-activity__row">
-                  <span className="feed-activity__symbol" aria-hidden="true">◇</span>
-                  <div><strong>{esFreelancer ? "Tu próxima oportunidad comienza aquí" : "Organiza tus proyectos en un solo lugar"}</strong><small>{esFreelancer ? "Explora los proyectos recomendados para ti." : "Publica un proyecto y encuentra el talento indicado."}</small></div>
-                  <a href="#services" aria-label="Ver oportunidades">↗</a>
-                </div>
+
+                {esFreelancer ? (
+                  <div className="feed-activity__row">
+                    <span className="feed-activity__symbol" aria-hidden="true">◇</span>
+                    <div>
+                      <strong>Tu próxima oportunidad comienza aquí</strong>
+                      <small>Explora los proyectos recomendados para ti.</small>
+                    </div>
+                    <a href="#services" aria-label="Ver oportunidades">↗</a>
+                  </div>
+                ) : estadoMisOfertas.estado === "cargando" ? (
+                  <FeedLoading />
+                ) : errorMisOfertas ? (
+                  <FeedError mensaje={errorMisOfertas} onReintentar={recargarMisOfertas} />
+                ) : misProyectos.length > 0 ? (
+                  <div className="feed-activity__list">
+                    {misProyectos.map((proyecto) => (
+                      <FeedPiezaCard key={proyecto.id} pieza={proyecto} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="feed-activity__row">
+                    <span className="feed-activity__symbol" aria-hidden="true">◇</span>
+                    <div>
+                      <strong>Organiza tus proyectos en un solo lugar</strong>
+                      <small>Publica un proyecto y encuentra el talento indicado.</small>
+                    </div>
+                    <a href="#services" aria-label="Ver oportunidades">↗</a>
+                  </div>
+                )}
               </section>
             </div>
 
             <aside className="feed-aside" aria-label="Resumen de cuenta">
               <section className="feed-panel" id="summary">
-                <div className="feed-panel__heading"><h2>Resumen</h2><span>Este mes</span></div>
+                <div className="feed-panel__heading">
+                  <h2>Resumen</h2>
+                  <span>Este mes</span>
+                </div>
                 <p className="feed-panel__caption">Tu actividad en First Gig</p>
-                <div className="feed-stat"><span aria-hidden="true">▤</span><span>{esFreelancer ? "Proyectos nuevos" : "Proyectos publicados"}</span><strong>{piezasVisibles.length}</strong></div>
-                <div className="feed-stat"><span aria-hidden="true">◇</span><span>{esFreelancer ? "Postulaciones" : "Perfiles vistos"}</span><strong>5</strong></div>
-                <div className="feed-stat"><span aria-hidden="true">▢</span><span>Mensajes nuevos</span><strong>2</strong></div>
+                {resumenDemo.map((stat) => (
+                  <div className="feed-stat" key={stat.id}>
+                    <span aria-hidden="true">{stat.icono}</span>
+                    <span>{stat.label}</span>
+                    <strong>{stat.valor}</strong>
+                  </div>
+                ))}
               </section>
 
               <section className="feed-panel" id="notices">
-                <div className="feed-panel__heading"><h2>Avisos</h2><span className="feed-badge">2 nuevos</span></div>
-                <article className="feed-notice"><span className="feed-notice__avatar">FG</span><div><strong>{esFreelancer ? "Nuevo proyecto recomendado" : "Nuevo talento disponible"}</strong><p>{esFreelancer ? "Hay oportunidades que coinciden con tus habilidades." : "Descubre perfiles listos para colaborar en tu proyecto."}</p><a href="#services">Ver detalles ↗</a></div></article>
-                <article className="feed-notice"><span className="feed-notice__avatar">✳</span><div><strong>Tu actividad está al día</strong><p>Vuelve pronto para ver nuevas actualizaciones.</p><a href="#activity">Ver actividad ↗</a></div></article>
+                <div className="feed-panel__heading">
+                  <h2>Avisos</h2>
+                  <span className="feed-badge">2 nuevos</span>
+                </div>
+                {avisosDemo.map((aviso) => (
+                  <article className="feed-notice" key={aviso.id}>
+                    <span className="feed-notice__avatar">{aviso.avatar}</span>
+                    <div>
+                      <strong>{aviso.titulo}</strong>
+                      <p>{aviso.texto}</p>
+                      <a href={aviso.destino}>Ver detalles ↗</a>
+                    </div>
+                  </article>
+                ))}
               </section>
 
               <section className="feed-panel" id="profile">
-                <div className="feed-panel__heading"><h2>{esFreelancer ? "Mi perfil" : "Mi cuenta"}</h2><a className="feed-text-link" href="#inicio">Ver</a></div>
+                <div className="feed-panel__heading">
+                  <h2>{esFreelancer ? "Mi perfil" : "Mi cuenta"}</h2>
+                  <a className="feed-text-link" href="#inicio">Ver</a>
+                </div>
                 <p className="feed-panel__caption">{usuario.nombre || "Completa tu perfil para empezar"}</p>
                 <div className="feed-profile-progress"><span /><span /></div>
-                <a className="feed-panel__link" href="#services">{esFreelancer ? "Completar perfil" : "Explorar servicios"} <span>↗</span></a>
+                <a className="feed-panel__link" href="#services">
+                  {esFreelancer ? "Completar perfil" : "Explorar servicios"} <span>↗</span>
+                </a>
               </section>
 
               <section className="feed-aside-callout">

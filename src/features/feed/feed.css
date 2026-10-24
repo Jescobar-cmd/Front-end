@@ -549,7 +549,7 @@ body:has(.feed-layout) #root {
 .feed-card__image {
   position: relative;
   display: grid;
-  height: 126px;
+  aspect-ratio: 16 / 9;
   place-items: center;
   overflow: hidden;
   color: #76909d;
@@ -661,6 +661,16 @@ body:has(.feed-layout) #root {
   color: var(--feed-blue);
   font-size: 0.57rem;
   font-weight: 750;
+}
+
+.feed-card__postulaciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.3rem 0 0;
+  color: var(--feed-muted);
+  font-size: 0.55rem;
+  font-weight: 700;
 }
 
 .feed-tags {
@@ -930,6 +940,32 @@ body:has(.feed-layout) #root {
   line-height: 1.5;
 }
 
+.feed-retry {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--feed-blue);
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-retry:hover {
+  background: var(--feed-blue-deep);
+}
+
+.feed-activity__list {
+  display: grid;
+  gap: 0.65rem;
+}
+
 .feed-footer {
   display: none;
 }
@@ -969,7 +1005,7 @@ body:has(.feed-layout) #root {
   }
 
   .feed-card__image {
-    height: 108px;
+    aspect-ratio: 16 / 9;
   }
 }
 
@@ -1123,7 +1159,7 @@ body:has(.feed-layout) #root {
   }
 
   .feed-card__image {
-    height: 150px;
+    aspect-ratio: 16 / 9;
   }
 
   .feed-card__body {

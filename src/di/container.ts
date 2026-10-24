@@ -9,8 +9,12 @@ import { CompletarPerfilGoogleUseCase } from "../core/application/use-cases/Comp
 import { CambiarPasswordUseCase } from "../core/application/use-cases/CambiarPasswordUseCase";
 import { ReenviarCodigoUseCase } from "../core/application/use-cases/ReenviarCodigoUseCase";
 import { ObtenerPerfilUseCase } from "../core/application/use-cases/ObtenerPerfilUseCase";
+import { ListarCategoriasUseCase } from "../core/application/use-cases/ListarCategoriasUseCase";
+import { ListarMisOfertasUseCase } from "../core/application/use-cases/ListarMisOfertasUseCase";
+import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
 
 const authRepository = new HttpAuthRepository();
+const ofertasRepository = new HttpOfertasRepository();
 
 export { authRepository };
 export const registroUseCase = new RegistroUseCase(authRepository);
@@ -23,3 +27,5 @@ export const completarPerfilGoogleUseCase = new CompletarPerfilGoogleUseCase(aut
 export const cambiarPasswordUseCase = new CambiarPasswordUseCase(authRepository);
 export const reenviarCodigoUseCase = new ReenviarCodigoUseCase(authRepository);
 export const obtenerPerfilUseCase = new ObtenerPerfilUseCase(authRepository);
+export const listarCategoriasUseCase = new ListarCategoriasUseCase(ofertasRepository);
+export const listarMisOfertasUseCase = new ListarMisOfertasUseCase(ofertasRepository);
