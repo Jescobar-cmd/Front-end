@@ -151,7 +151,11 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                     ))}
                   </div>
                 ) : (
-                  <FeedVacio buscando={Boolean(busqueda) || categoriaActiva !== "Todo"} />
+                  <FeedVacio
+                    buscando={Boolean(busqueda) || categoriaActiva !== "Todo"}
+                    onAccion={busqueda ? () => setBusqueda("") : () => setCategoriaActiva("Todo")}
+                    etiquetaAccion={busqueda ? "Limpiar búsqueda" : "Ver todas las categorías"}
+                  />
                 )}
               </section>
 

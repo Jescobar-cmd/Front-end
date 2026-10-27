@@ -6,7 +6,7 @@
   --feed-mist: #d3e4ee;
   --feed-paper: #eaf1f6;
   --feed-ink: #173746;
-  --feed-muted: #657d89;
+  --feed-muted: #52616e;
   --feed-line: #dce6eb;
 
   min-height: 100vh;
@@ -86,7 +86,7 @@ body:has(.feed-layout) #root {
 }
 
 .feed-search__icon {
-  color: #72909f;
+  color: #5d7280;
   font-size: 1.15rem;
   line-height: 1;
 }
@@ -103,7 +103,7 @@ body:has(.feed-layout) #root {
 }
 
 .feed-search input::placeholder {
-  color: #7b909b;
+  color: #5f7280;
 }
 
 .feed-search__clear {
@@ -134,7 +134,7 @@ body:has(.feed-layout) #root {
 }
 
 .feed-topbar__icon {
-  color: #54707e;
+  color: #4c6070;
   font-size: 1.05rem;
 }
 
@@ -194,8 +194,8 @@ body:has(.feed-layout) #root {
 
 .feed-sidebar__label {
   margin: 0 0 0.55rem 0.65rem;
-  color: #8195a0;
-  font-size: 0.58rem;
+  color: #6b7d88;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.1em;
 }
@@ -207,13 +207,13 @@ body:has(.feed-layout) #root {
 
 .feed-sidebar nav a {
   display: flex;
-  min-height: 37px;
+  min-height: 44px;
   align-items: center;
   gap: 0.65rem;
   padding: 0 0.65rem;
   border-radius: 7px;
-  color: #59717e;
-  font-size: 0.71rem;
+  color: #4c5f6d;
+  font-size: 0.78rem;
   font-weight: 550;
   text-decoration: none;
   transition: color 150ms ease, background 150ms ease;
@@ -221,7 +221,7 @@ body:has(.feed-layout) #root {
 
 .feed-sidebar nav a span {
   width: 16px;
-  color: #5c7b8b;
+  color: #4f6070;
   font-size: 0.95rem;
   text-align: center;
 }
@@ -259,14 +259,14 @@ body:has(.feed-layout) #root {
 }
 
 .feed-sidebar__help strong {
-  font-size: 0.64rem;
+  font-size: 0.78rem;
 }
 
 .feed-sidebar__help p,
 .feed-sidebar__help a {
   margin: 0;
   color: var(--feed-muted);
-  font-size: 0.59rem;
+  font-size: 0.78rem;
   line-height: 1.5;
 }
 
@@ -278,8 +278,8 @@ body:has(.feed-layout) #root {
 
 .feed-sidebar__copyright {
   margin: 0.85rem 0.15rem 0;
-  color: #8a9ba3;
-  font-size: 0.53rem;
+  color: #6b7d88;
+  font-size: 0.75rem;
 }
 
 .feed-main {
@@ -322,12 +322,12 @@ body:has(.feed-layout) #root {
 .feed-intro p {
   margin: 0.35rem 0 0;
   color: var(--feed-muted);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
 }
 
 .feed-primary-action {
   display: inline-flex;
-  min-height: 35px;
+  min-height: 38px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -335,7 +335,7 @@ body:has(.feed-layout) #root {
   border-radius: 7px;
   color: #fff;
   background: var(--feed-blue);
-  font-size: 0.66rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
   transition: background 150ms ease, transform 150ms ease;
@@ -382,7 +382,7 @@ body:has(.feed-layout) #root {
 .feed-feature__eyebrow {
   margin: 0 0 0.35rem;
   color: #a8d7ed;
-  font-size: 0.53rem;
+  font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -397,7 +397,7 @@ body:has(.feed-layout) #root {
 .feed-feature p:not(.feed-feature__eyebrow) {
   margin: 0.35rem 0 0;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.63rem;
+  font-size: 0.78rem;
   line-height: 1.45;
 }
 
@@ -405,7 +405,7 @@ body:has(.feed-layout) #root {
   position: relative;
   z-index: 1;
   display: inline-flex;
-  min-height: 32px;
+  min-height: 36px;
   flex: 0 0 auto;
   align-items: center;
   gap: 0.45rem;
@@ -414,7 +414,7 @@ body:has(.feed-layout) #root {
   border-radius: 7px;
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
-  font-size: 0.59rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -428,11 +428,11 @@ body:has(.feed-layout) #root {
   grid-template-columns: 1fr auto;
   gap: 0.25rem;
   color: #dceff7;
-  font-size: 0.53rem;
+  font-size: 0.78rem;
 }
 
 .feed-feature__progress strong {
-  font-size: 0.56rem;
+  font-size: 0.8rem;
 }
 
 .feed-feature__progress i {
@@ -482,13 +482,13 @@ body:has(.feed-layout) #root {
 .feed-panel__caption {
   margin: 0.3rem 0 0;
   color: var(--feed-muted);
-  font-size: 0.59rem;
+  font-size: 0.78rem;
 }
 
 .feed-text-link {
   flex: 0 0 auto;
   color: var(--feed-blue);
-  font-size: 0.59rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -507,15 +507,15 @@ body:has(.feed-layout) #root {
 }
 
 .feed-filter {
-  min-height: 25px;
+  min-height: 30px;
   padding: 0.25rem 0.6rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  color: #5c7480;
+  color: #4c5f6d;
   background: #f0f5f7;
   cursor: pointer;
   font: inherit;
-  font-size: 0.56rem;
+  font-size: 0.78rem;
   transition: background 150ms ease, color 150ms ease;
 }
 
@@ -552,7 +552,7 @@ body:has(.feed-layout) #root {
   aspect-ratio: 16 / 9;
   place-items: center;
   overflow: hidden;
-  color: #76909d;
+  color: #5f7280;
   background:
     linear-gradient(135deg, rgba(211, 228, 238, 0.8), rgba(234, 241, 246, 0.92)),
     #eaf1f6;
@@ -587,9 +587,9 @@ body:has(.feed-layout) #root {
   padding: 0.35rem 0.55rem;
   border: 1px solid rgba(22, 90, 125, 0.14);
   border-radius: 5px;
-  color: #587785;
+  color: #43565f;
   background: rgba(255, 255, 255, 0.65);
-  font-size: 0.57rem;
+  font-size: 0.78rem;
 }
 
 .feed-card__image img {
@@ -608,7 +608,7 @@ body:has(.feed-layout) #root {
   border-radius: 999px;
   color: var(--feed-blue-deep);
   background: rgba(234, 241, 246, 0.96);
-  font-size: 0.53rem;
+  font-size: 0.78rem;
   font-weight: 750;
 }
 
@@ -629,23 +629,23 @@ body:has(.feed-layout) #root {
 .feed-card h3 {
   margin: 0;
   color: #183b4d;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 760;
   line-height: 1.4;
 }
 
 .feed-card__mark {
   flex: 0 0 auto;
-  color: #6a8795;
-  font-size: 0.7rem;
+  color: #546a76;
+  font-size: 0.8rem;
 }
 
 .feed-card__description {
   display: -webkit-box;
   overflow: hidden;
   margin: 0.38rem 0 0;
-  color: #617783;
-  font-size: 0.59rem;
+  color: #43565f;
+  font-size: 0.78rem;
   line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -659,7 +659,7 @@ body:has(.feed-layout) #root {
 .feed-card__detail {
   margin: 0;
   color: var(--feed-blue);
-  font-size: 0.57rem;
+  font-size: 0.78rem;
   font-weight: 750;
 }
 
@@ -669,7 +669,7 @@ body:has(.feed-layout) #root {
   gap: 0.3rem;
   margin: 0.3rem 0 0;
   color: var(--feed-muted);
-  font-size: 0.55rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -685,9 +685,9 @@ body:has(.feed-layout) #root {
 .feed-tags li {
   padding: 0.22rem 0.38rem;
   border-radius: 4px;
-  color: #4d6875;
+  color: #43565f;
   background: #eff5f7;
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   line-height: 1.25;
 }
 
@@ -722,17 +722,17 @@ body:has(.feed-layout) #root {
 
 .feed-activity__row strong {
   color: #294957;
-  font-size: 0.59rem;
+  font-size: 0.78rem;
 }
 
 .feed-activity__row small {
   color: var(--feed-muted);
-  font-size: 0.54rem;
+  font-size: 0.78rem;
 }
 
 .feed-activity__row > a {
   color: var(--feed-blue);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   text-decoration: none;
 }
 
@@ -752,13 +752,13 @@ body:has(.feed-layout) #root {
 }
 
 .feed-panel__heading h2 {
-  font-size: 0.77rem;
+  font-size: 0.85rem;
 }
 
 .feed-panel__heading > span,
 .feed-badge {
-  color: #6d8793;
-  font-size: 0.52rem;
+  color: #546a76;
+  font-size: 0.78rem;
 }
 
 .feed-badge {
@@ -770,7 +770,7 @@ body:has(.feed-layout) #root {
 
 .feed-panel__caption {
   margin: 0.45rem 0 0.7rem;
-  font-size: 0.55rem;
+  font-size: 0.78rem;
 }
 
 .feed-stat {
@@ -780,8 +780,8 @@ body:has(.feed-layout) #root {
   align-items: center;
   gap: 0.45rem;
   border-top: 1px solid #edf1f3;
-  color: #516d7b;
-  font-size: 0.56rem;
+  color: #43565f;
+  font-size: 0.78rem;
 }
 
 .feed-stat > span:first-child {
@@ -792,7 +792,7 @@ body:has(.feed-layout) #root {
   border-radius: 6px;
   color: var(--feed-blue);
   background: #eef5f8;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 .feed-stat strong {
@@ -828,21 +828,21 @@ body:has(.feed-layout) #root {
 .feed-notice strong {
   display: block;
   color: #294957;
-  font-size: 0.55rem;
+  font-size: 0.78rem;
   line-height: 1.35;
 }
 
 .feed-notice p {
   margin: 0.2rem 0;
   color: var(--feed-muted);
-  font-size: 0.53rem;
+  font-size: 0.78rem;
   line-height: 1.45;
 }
 
 .feed-notice a,
 .feed-panel__link {
   color: var(--feed-blue);
-  font-size: 0.52rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -936,13 +936,34 @@ body:has(.feed-layout) #root {
   max-width: 330px;
   margin: 0.35rem 0 0;
   color: var(--feed-muted);
-  font-size: 0.67rem;
+  font-size: 0.8rem;
   line-height: 1.5;
+}
+
+.feed-empty__cta {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.85rem;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--feed-blue);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-empty__cta:hover {
+  background: var(--feed-blue-deep);
 }
 
 .feed-retry {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 38px;
   align-items: center;
   justify-content: center;
   margin-top: 0.75rem;
@@ -952,13 +973,30 @@ body:has(.feed-layout) #root {
   color: #fff;
   background: var(--feed-blue);
   font: inherit;
-  font-size: 0.64rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
 }
 
 .feed-retry:hover {
   background: var(--feed-blue-deep);
+}
+
+.feed-loading__spinner {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 3px solid var(--feed-mist);
+  border-top-color: var(--feed-blue);
+  border-radius: 50%;
+  animation: feed-spinner-rotate 700ms linear infinite;
+}
+
+@keyframes feed-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .feed-activity__list {
@@ -1043,9 +1081,9 @@ body:has(.feed-layout) #root {
   }
 
   .feed-sidebar nav a {
-    min-height: 34px;
+    min-height: 44px;
     padding-inline: 0.55rem;
-    font-size: 0.64rem;
+    font-size: 0.78rem;
   }
 
   .feed-workspace {
@@ -1109,11 +1147,11 @@ body:has(.feed-layout) #root {
   }
 
   .feed-intro p {
-    font-size: 0.63rem;
+    font-size: 0.78rem;
   }
 
   .feed-primary-action {
-    min-height: 32px;
+    min-height: 38px;
   }
 
   .feed-feature {
@@ -1132,7 +1170,7 @@ body:has(.feed-layout) #root {
   }
 
   .feed-feature > a {
-    min-height: 29px;
+    min-height: 36px;
   }
 
   .feed-feature__progress {
@@ -1177,5 +1215,6 @@ body:has(.feed-layout) #root {
   .feed-layout *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
