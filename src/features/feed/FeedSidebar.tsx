@@ -2,6 +2,7 @@ export interface ItemSidebar {
   id: string;
   icono: string;
   label: string;
+  destino?: string;
 }
 
 interface FeedSidebarProps {
@@ -17,6 +18,7 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
       { id: "activity", icono: "◇", label: "Mis postulaciones" },
       { id: "summary", icono: "▦", label: "Estadísticas" },
       { id: "services", icono: "＋", label: "Explorar ofertas" },
+      { id: "perfil", icono: "◉", label: "Mi perfil", destino: "/perfil/freelancer" },
     ];
   }
   return [
@@ -25,6 +27,7 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
     { id: "activity", icono: "▤", label: "Mis proyectos" },
     { id: "summary", icono: "▦", label: "Estadísticas" },
     { id: "services", icono: "＋", label: "Ver talento" },
+    { id: "perfil", icono: "◉", label: "Mi perfil", destino: "/perfil/cliente" },
   ];
 }
 
@@ -36,7 +39,7 @@ export function FeedSidebar({ esFreelancer, activo }: FeedSidebarProps) {
       <p className="feed-sidebar__label">MI ESPACIO</p>
       <nav>
         {items.map((item) => (
-          <a key={`${item.id}-${item.label}`} href={`#${item.id}`} className={activo === item.id ? "is-current" : undefined}>
+          <a key={`${item.id}-${item.label}`} href={item.destino ?? `#${item.id}`} className={activo === item.id ? "is-current" : undefined}>
             <span aria-hidden="true">{item.icono}</span>
             {item.label}
           </a>

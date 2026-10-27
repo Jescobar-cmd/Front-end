@@ -351,3 +351,72 @@ body {
     transition: none !important;
   }
 }
+
+/* ===== Perfil (cliente / freelancer) ===== */
+.perfil-page {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 560px;
+}
+
+.perfil-page h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.5rem;
+}
+
+.perfil-page p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.perfil-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--feed-line, #dce6eb);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.perfil-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--feed-ink, #173746);
+}
+
+.perfil-form input,
+.perfil-form select {
+  min-height: 38px;
+  padding: 0 0.6rem;
+  border: 1px solid #e0e9ee;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.perfil-view {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border: 1px solid #e2eaee;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.perfil-view p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.perfil-view strong {
+  font-weight: 700;
+}
+
+.error {
+  color: var(--error, #b42318);
+  font-size: 0.8125rem;
+}
