@@ -56,7 +56,7 @@ export function PerfilCliente() {
   return (
     <section className="perfil-page">
       <h1>Mi perfil</h1>
-      <p>Perfil actualizado correctamente.</p>
+      {estadoGuardar.estado === "exito" ? <p>{estadoGuardar.mensaje}</p> : null}
       <form className="perfil-form" onSubmit={(e) => { e.preventDefault(); void guardar(); }}>
         <label>
           Nombre
