@@ -7,9 +7,10 @@ import { VerificarCuenta } from "../pages/Auth/verificar_cuenta";
 import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerfilGoogle";
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
-import { Dashboard } from "../pages/dashboard/dashboard";
 import { useAuth } from "../context/AuthContext";
 import { dashboardPorRol } from "./rutasPorRol";
+import { InicioCliente } from "../features/feed/InicioCliente";
+import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export function AppRoutes() {
         path="/dashboard/freelancer"
         element={
           <RutaProtegida roles={["freelancer"]}>
-            <Dashboard />
+            <InicioFreelancer />
           </RutaProtegida>
         }
       />
@@ -43,7 +44,7 @@ export function AppRoutes() {
         path="/dashboard/cliente"
         element={
           <RutaProtegida roles={["cliente"]}>
-            <Dashboard />
+            <InicioCliente />
           </RutaProtegida>
         }
       />
