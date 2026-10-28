@@ -26,7 +26,7 @@ const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").re
 const TOKEN_KEY = "first_gig_sesion";
 
 interface OpcionesFetch {
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   path: string;
   token?: string;
   body?: unknown;
