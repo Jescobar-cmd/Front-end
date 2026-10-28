@@ -1,11 +1,4 @@
 import { HttpAuthRepository } from "../infrastructure/api/HttpAuthRepository";
-import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
-import { HttpPerfilRepository } from "../infrastructure/api/HttpPerfilRepository";
-import { ListarCategoriasUseCase } from "../core/application/use-cases/ListarCategoriasUseCase";
-import { ListarMisOfertasUseCase } from "../core/application/use-cases/ListarMisOfertasUseCase";
-import { ObtenerMiPerfilUseCase } from "../core/application/use-cases/ObtenerMiPerfilUseCase";
-import { ActualizarMiPerfilUseCase } from "../core/application/use-cases/ActualizarMiPerfilUseCase";
-import { ObtenerPerfilPublicoUseCase } from "../core/application/use-cases/ObtenerPerfilPublicoUseCase";
 import { RegistroUseCase } from "../core/application/use-cases/RegistroUseCase";
 import { LoginUseCase } from "../core/application/use-cases/LoginUseCase";
 import { LoginConGoogleUseCase } from "../core/application/use-cases/LoginConGoogleUseCase";
@@ -16,10 +9,12 @@ import { CompletarPerfilGoogleUseCase } from "../core/application/use-cases/Comp
 import { CambiarPasswordUseCase } from "../core/application/use-cases/CambiarPasswordUseCase";
 import { ReenviarCodigoUseCase } from "../core/application/use-cases/ReenviarCodigoUseCase";
 import { ObtenerPerfilUseCase } from "../core/application/use-cases/ObtenerPerfilUseCase";
+import { ListarCategoriasUseCase } from "../core/application/use-cases/ListarCategoriasUseCase";
+import { ListarMisOfertasUseCase } from "../core/application/use-cases/ListarMisOfertasUseCase";
+import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
 
 const authRepository = new HttpAuthRepository();
 const ofertasRepository = new HttpOfertasRepository();
-const perfilRepository = new HttpPerfilRepository();
 
 export { authRepository };
 export const registroUseCase = new RegistroUseCase(authRepository);
@@ -34,6 +29,3 @@ export const reenviarCodigoUseCase = new ReenviarCodigoUseCase(authRepository);
 export const obtenerPerfilUseCase = new ObtenerPerfilUseCase(authRepository);
 export const listarCategoriasUseCase = new ListarCategoriasUseCase(ofertasRepository);
 export const listarMisOfertasUseCase = new ListarMisOfertasUseCase(ofertasRepository);
-export const obtenerMiPerfilUseCase = new ObtenerMiPerfilUseCase(perfilRepository);
-export const actualizarMiPerfilUseCase = new ActualizarMiPerfilUseCase(perfilRepository);
-export const obtenerPerfilPublicoUseCase = new ObtenerPerfilPublicoUseCase(perfilRepository);

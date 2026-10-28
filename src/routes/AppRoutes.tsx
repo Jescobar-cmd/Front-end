@@ -11,8 +11,6 @@ import { useAuth } from "../context/AuthContext";
 import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
-import { PerfilCliente } from "../pages/Perfil";
-import { PerfilFreelancer } from "../pages/Perfil";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -47,22 +45,6 @@ export function AppRoutes() {
         element={
           <RutaProtegida roles={["cliente"]}>
             <InicioCliente />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/perfil/cliente"
-        element={
-          <RutaProtegida roles={["cliente"]}>
-            <PerfilCliente />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/perfil/freelancer"
-        element={
-          <RutaProtegida roles={["freelancer"]}>
-            <PerfilFreelancer />
           </RutaProtegida>
         }
       />

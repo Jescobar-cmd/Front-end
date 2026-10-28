@@ -236,9 +236,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
               <section className="feed-panel" id="profile">
                 <div className="feed-panel__heading">
                   <h2>{esFreelancer ? "Mi perfil" : "Mi cuenta"}</h2>
-                  <a className="feed-text-link" href={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>
-                    Ver
-                  </a>
+                  <a className="feed-text-link" href="#inicio">Ver</a>
                 </div>
                 <p className="feed-panel__caption">{usuario.nombre || "Completa tu perfil para empezar"}</p>
                 {MOSTRAR_EJEMPLOS ? (
@@ -246,7 +244,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                 ) : (
                   <p className="feed-panel__caption">No hay datos de completitud del perfil disponibles.</p>
                 )}
-                <a className="feed-panel__link" href={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>
+                <a className="feed-panel__link" href="#services">
                   {esFreelancer ? "Completar perfil" : "Explorar servicios"} <span>↗</span>
                 </a>
               </section>
