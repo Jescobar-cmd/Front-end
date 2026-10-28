@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { listarMisOfertasUseCase } from "../../../di/container";
 import { getCategories } from "../../../infrastructure/api/apiCatalogos";
+import { getMyOffers } from "../../../infrastructure/api/apiOfertas";
 import type { Categoria } from "../../../core/domain/entities/categoria";
 import type { FiltrosOferta, OfertaPaginada } from "../../../core/domain/entities/oferta";
 import { MOSTRAR_EJEMPLOS } from "../datosFeed";
@@ -73,8 +73,7 @@ export function useMisOfertas(token?: string, filtros: FiltrosOferta = { page: 1
     let activo = true;
     setEstado({ estado: "cargando" });
 
-    listarMisOfertasUseCase
-      .execute(token, filtros)
+    getMyOffers(token, filtros)
       .then((ofertaPaginada) => {
         if (!activo) return;
         setEstado({ estado: "listo", datos: ofertaPaginada });
