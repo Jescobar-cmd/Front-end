@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { listarCategoriasUseCase, listarMisOfertasUseCase } from "../../../di/container";
+import { listarMisOfertasUseCase } from "../../../di/container";
+import { getCategories } from "../../../infrastructure/api/apiCatalogos";
 import type { Categoria } from "../../../core/domain/entities/categoria";
 import type { FiltrosOferta, OfertaPaginada } from "../../../core/domain/entities/oferta";
 import { MOSTRAR_EJEMPLOS } from "../datosFeed";
@@ -31,8 +32,7 @@ export function useCategorias(token?: string) {
     let activo = true;
     setEstado({ estado: "cargando" });
 
-    listarCategoriasUseCase
-      .execute(token)
+    getCategories(token)
       .then((categorias) => {
         if (!activo) return;
         setEstado({ estado: "listo", datos: categorias });
