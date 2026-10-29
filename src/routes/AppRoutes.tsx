@@ -59,6 +59,8 @@ export function AppRoutes() {
       <Route path="/preview/freelancer/servicios" element={<FreelancerServices token="preview" />} />
       <Route path="/preview/freelancer/marketplace" element={<FreelancerMarketplace token="preview" />} />
       <Route path="/preview/cliente/ofertas" element={<ClientOffers token="preview" onContractPath={() => undefined} />} />
+      <Route path="/preview/chat" element={<ChatPage />} />
+      <Route path="/preview/contratos" element={<ContractsPage />} />
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
       <Route
         path="/dashboard/freelancer"
