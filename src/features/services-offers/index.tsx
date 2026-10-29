@@ -471,10 +471,10 @@ function ProposalCards({
             <div className="so-card__meta"><strong>{money(proposal.monto)}</strong><span>Enviada {date(proposal.fecha)}</span></div>
             {pending && onAccept && onReject && (
               <div className="so-form__actions">
-                <button className="so-button so-button--primary" type="button" disabled={busyId === proposal.id} onClick={() => onAccept(proposal)}>
+                <button className="so-button so-button--primary" type="button" disabled={busyId !== null} onClick={() => onAccept(proposal)}>
                   {busyId === proposal.id ? "Procesando…" : "Aceptar"}
                 </button>
-                <button className="so-button so-button--quiet" type="button" disabled={busyId === proposal.id} onClick={() => onReject(proposal)}>Rechazar</button>
+                <button className="so-button so-button--quiet" type="button" disabled={busyId !== null} onClick={() => onReject(proposal)}>Rechazar</button>
               </div>
             )}
           </article>
@@ -576,37 +576,18 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
     try {
       if (action === "accept") {
         const accepted = await acceptProposal(token, selected.id, proposal.id);
-        const [proposalResult, offerResult, listResult] = await Promise.allSettled([
-          getOfferProposals(token, selected.id),
-          getMyOffer(token, selected.id),
-          getMyOffers(token, { page, limit: Math.min(PAGE_SIZE, MAX_PAGE_SIZE), estado: status || undefined, texto: query.trim() || undefined }),
-        ]);
-        if (proposalResult.status === "fulfilled") {
-          setProposals(proposalResult.value.propuestas);
-          setProposalsCount(proposalResult.value.total);
-        }
-        if (offerResult.status === "fulfilled") setSelected(offerResult.value);
-        if (listResult.status === "fulfilled") {
-          setOffers(listResult.value.items);
-          setTotal(listResult.value.total);
-        }
-        if ([proposalResult, offerResult, listResult].some((result) => result.status === "rejected")) {
-          setActionError("La propuesta se aceptó, pero no se pudo actualizar toda la información. Actualiza la lista para ver los cambios.");
-        }
         const contractId = accepted.contrato && typeof accepted.contrato === "object" && "id" in accepted.contrato
           ? Number(accepted.contrato.id)
           : NaN;
         const path = Number.isInteger(contractId) && contractId > 0 ? `/contracts/${contractId}` : "/contracts";
-        onContractPath?.(path);
         window.dispatchEvent(new CustomEvent("services-offers:contract-path", {
           detail: { path, contractId: Number.isInteger(contractId) && contractId > 0 ? contractId : undefined, offerId: selected.id, proposalId: proposal.id, contract: accepted.contrato },
         }));
-        navigate(path);
+        if (onContractPath) onContractPath(path);
+        else navigate(path);
       } else {
         await rejectProposal(token, selected.id, proposal.id);
-        const result = await getOfferProposals(token, selected.id);
-        setProposals(result.propuestas);
-        setProposalsCount(result.total);
+        setProposals((current) => current.map((item) => item.id === proposal.id ? { ...item, estado: "rechazada" } : item));
         setReload((value) => value + 1);
       }
     } catch (reason) {
