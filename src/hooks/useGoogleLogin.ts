@@ -39,10 +39,7 @@ export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      setError("El inicio con Google no está configurado.");
-      return;
-    }
+    if (!clientId) return;
 
     const intentarInicializar = () => {
       if (!window.google || !contenedorRef.current) return false;

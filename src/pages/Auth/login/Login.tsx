@@ -17,8 +17,9 @@ const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
 export function Login() {
   const navigate = useNavigate();
   const { guardarSesion } = useAuth();
-  const { iniciarSesion, loading, error } = useLogin();
+  const { iniciarSesion, loading, error, limpiarError } = useLogin();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [erroresCampo, setErroresCampo] = useState<{ email?: string; password?: string }>({});
 
   const handleResultadoGoogle = useCallback((resultado: ResultadoGoogle) => {
     if (resultado.tipo === "onboarding") {
@@ -31,12 +32,27 @@ export function Login() {
   }, [guardarSesion, navigate]);
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleResultadoGoogle);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((current) => ({ ...current, [name]: value }));
+    setErroresCampo((current) => ({ ...current, [name]: undefined }));
+    limpiarError();
+  };
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const sesion = await iniciarSesion(form);
+    const emailInput = e.currentTarget.elements.namedItem("email");
+    const nextErrors: { email?: string; password?: string } = {};
+    if (!form.email.trim()) {
+      nextErrors.email = "Ingresa tu correo electrónico.";
+    } else if (emailInput instanceof HTMLInputElement && !emailInput.validity.valid) {
+      nextErrors.email = "Ingresa un correo electrónico válido.";
+    }
+    if (!form.password) nextErrors.password = "Ingresa tu contraseña.";
+    setErroresCampo(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    const sesion = await iniciarSesion({ email: form.email.trim(), password: form.password });
     if (sesion) {
       guardarSesion(sesion);
       navigate(dashboardPorRol(sesion.user.rol), { replace: true });
@@ -47,7 +63,7 @@ export function Login() {
     <div className="auth-page auth-screen auth-screen--login">
       <Brand appearance="auth" onClick={() => navigate("/")} />
 
-      <form onSubmit={handleSubmit} className="login auth-card">
+      <form onSubmit={handleSubmit} className="login auth-card" noValidate>
         <h1>Iniciar sesión</h1>
         <p>Ingresa tus datos para continuar.</p>
 
@@ -61,8 +77,12 @@ export function Login() {
             autoComplete="email"
             value={form.email}
             onChange={handleChange}
-            className={error ? "input--error" : ""}
+            className={erroresCampo.email ? "input--error" : ""}
+            required
+            aria-invalid={Boolean(erroresCampo.email)}
+            aria-describedby={erroresCampo.email ? "login-email-error" : undefined}
           />
+          {erroresCampo.email && <p className="error" id="login-email-error" role="alert">{erroresCampo.email}</p>}
         </div>
         <div className="auth-field">
           <label htmlFor="login-password">Contraseña</label>
@@ -74,8 +94,12 @@ export function Login() {
             autoComplete="current-password"
             value={form.password}
             onChange={handleChange}
-            className={error ? "input--error" : ""}
+            className={erroresCampo.password ? "input--error" : ""}
+            required
+            aria-invalid={Boolean(erroresCampo.password)}
+            aria-describedby={erroresCampo.password ? "login-password-error" : undefined}
           />
+          {erroresCampo.password && <p className="error" id="login-password-error" role="alert">{erroresCampo.password}</p>}
         </div>
 
         {error && <p className="error" role="alert">{error}</p>}
@@ -92,7 +116,9 @@ export function Login() {
           <GoogleLogo size={24} />
           <div className="google-login-button__target" ref={contenedorRef} />
         </div>
-        {errorGoogle && <p className="error" role="alert">{errorGoogle}</p>}
+        {errorGoogle && !errorGoogle.toLocaleLowerCase().includes("configur") && (
+          <p className="error" role="alert">{errorGoogle}</p>
+        )}
 
         <div className="links">
           <p>

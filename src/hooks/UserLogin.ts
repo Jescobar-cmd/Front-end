@@ -20,5 +20,7 @@ export function useLogin() {
     }
   };
 
-  return { iniciarSesion, loading, error };
+  const limpiarError = () => setError(null);
+
+  return { iniciarSesion, loading, error, limpiarError };
 }
