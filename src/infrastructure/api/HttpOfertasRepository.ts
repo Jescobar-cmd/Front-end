@@ -2,8 +2,8 @@ import type { OfertasRepositoryPort } from "../../core/application/ports/Ofertas
 import type { Categoria } from "../../core/domain/entities/categoria";
 import type { FiltrosOferta, OfertaPaginada } from "../../core/domain/entities/oferta";
 
-// Debe incluir el prefijo /api (ej: http://localhost:5173/api)
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:5173/api").replace(/\/+$/, "");
+// Debe incluir el prefijo /api (ej: http://localhost:4000/api)
+const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
 
 interface ErrorDto {
   error?: string;

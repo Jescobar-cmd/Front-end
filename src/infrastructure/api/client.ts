@@ -22,7 +22,7 @@ interface CuerpoError {
 
 type DatosRespuesta<T> = T & Partial<CuerpoError>;
 
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:5173/api").replace(/\/+$/, "");
+const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
 const TOKEN_KEY = "first_gig_sesion";
 
 interface OpcionesFetch {
