@@ -20,26 +20,30 @@ export function RecuperarPassword() {
   };
 
   return (
-    <div className="auth-page">
-      <Brand />
+    <div className="auth-page auth-screen auth-screen--recuperacion">
+      <Brand appearance="auth" onClick={() => navigate("/")} />
 
-      <form onSubmit={handleSubmit} className="login">
+      <form onSubmit={handleSubmit} className="login auth-card">
         <h1>Recupera tu contraseña</h1>
         <p>Te enviaremos un código de 6 dígitos para restablecerla.</p>
 
-        <Input
-          name="email"
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-        />
+        <div className="auth-field">
+          <label htmlFor="recuperacion-email">Correo electrónico</label>
+          <Input
+            id="recuperacion-email"
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={handleChange}
+            className={error ? "input--error" : ""}
+          />
+        </div>
 
-        {error && <p className="error">{error}</p>}
-        {enviado && <p className="success">Si existe una cuenta con ese correo, te hemos enviado un código.</p>}
+        {error && <p className="error" role="alert">{error}</p>}
+        {enviado && <p className="success" role="status">Si existe una cuenta con ese correo, te hemos enviado un código.</p>}
 
-        <Button type="submit" disabled={loading} className="btn-primary">
+        <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Enviar código"}
         </Button>
 

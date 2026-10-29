@@ -28,7 +28,7 @@ export function Dashboard() {
   return (
     <div className="dashboard-page">
       <header className="dashboard-header">
-        <Brand />
+        <Brand onClick={() => navigate("/dashboard")} />
         <div className="dashboard-account">
           <span>{user?.nombre}</span>
           <Button type="button" variant="secondary" onClick={handleLogout}>

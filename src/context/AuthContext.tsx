@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { User } from "../core/domain/entities/user";
 import type { Sesion } from "../core/application/ports/AuthRepositoryPort";
@@ -75,17 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setCargando(false));
   }, []);
 
-  const guardarSesion = (sesion: Sesion) => {
+  const guardarSesion = useCallback((sesion: Sesion) => {
     setUser(sesion.user);
     setToken(sesion.token);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
-  };
+  }, []);
 
-  const cerrarSesion = () => {
+  const cerrarSesion = useCallback(() => {
     setUser(null);
     setToken(null);
     localStorage.removeItem(STORAGE_KEY);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, cargando, guardarSesion, cerrarSesion }}>

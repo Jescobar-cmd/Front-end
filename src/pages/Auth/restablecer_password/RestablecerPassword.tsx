@@ -36,48 +36,65 @@ export function RestablecerPassword() {
   };
 
   return (
-    <div className="auth-page">
-      <Brand />
-      <form onSubmit={handleSubmit} className="login">
+    <div className="auth-page auth-screen auth-screen--restablecer">
+      <Brand appearance="auth" onClick={() => navigate("/")} />
+      <form onSubmit={handleSubmit} className="login auth-card">
         <h1>Nueva contraseña</h1>
 
-        <Input
-          name="email"
-          type="email"
-          placeholder="Correo electrónico"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          name="code"
-          placeholder="Código de 6 dígitos"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          value={form.code}
-          onChange={handleChange}
-          maxLength={6}
-          required
-        />
-        <Input
-          name="password"
-          type="password"
-          placeholder="Nueva contraseña (mínimo 8 caracteres)"
-          value={form.password}
-          onChange={handleChange}
-          minLength={8}
-        />
-        <Input
-          name="confirmPassword"
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={form.confirmPassword}
-          onChange={handleChange}
-        />
+        <div className="auth-field">
+          <label htmlFor="reset-email">Correo electrónico</label>
+          <Input
+            id="reset-email"
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="reset-code">Código de 6 dígitos</label>
+          <Input
+            id="reset-code"
+            name="code"
+            placeholder="Código de 6 dígitos"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={form.code}
+            onChange={handleChange}
+            className="auth-code-input"
+            maxLength={6}
+            required
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="reset-password">Nueva contraseña</label>
+          <Input
+            id="reset-password"
+            name="password"
+            type="password"
+            placeholder="Nueva contraseña (mínimo 8 caracteres)"
+            value={form.password}
+            onChange={handleChange}
+            minLength={8}
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="reset-confirm-password">Confirmar contraseña</label>
+          <Input
+            id="reset-confirm-password"
+            name="confirmPassword"
+            type="password"
+            placeholder="Confirmar contraseña"
+            value={form.confirmPassword}
+            onChange={handleChange}
+          />
+        </div>
 
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="btn-primary">
+        <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Guardar contraseña"}
         </Button>
       </form>

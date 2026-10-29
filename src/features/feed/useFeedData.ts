@@ -16,6 +16,7 @@ function aMensajeError(error: unknown): string {
 export function useFeedData(tipoEsperado: TipoCuentaFeed) {
   const { user: usuarioSesion, token } = useAuth();
   const [indicePerfil, setIndicePerfil] = useState(0);
+  const [indiceFeed, setIndiceFeed] = useState(0);
   const [estadoPerfil, setEstadoPerfil] = useState<EstadoLista<User>>({ estado: "cargando" });
   const [estadoFeed, setEstadoFeed] = useState<EstadoLista<Feed>>({ estado: "cargando" });
   const [feed, setFeed] = useState<Feed | null>(null);
@@ -66,7 +67,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     return () => {
       activo = false;
     };
-  }, [token, indicePerfil]);
+  }, [token, indiceFeed]);
 
   const usuarioActual = estadoPerfil.estado === "listo" ? estadoPerfil.datos : usuarioSesion;
   const tipoCuenta = usuarioActual?.rol ?? tipoEsperado;
@@ -114,6 +115,9 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     usuario: { nombre: usuarioActual?.nombre, tipoCuenta },
     errorUsuario: estadoPerfil.estado === "error" ? estadoPerfil.mensaje : null,
     recargarUsuario: () => setIndicePerfil((indice) => indice + 1),
+    estadoFeed,
+    errorFeed: estadoFeed.estado === "error" ? estadoFeed.mensaje : null,
+    recargarFeed: () => setIndiceFeed((indice) => indice + 1),
     categorias,
     estadoCategorias,
     errorCategorias,

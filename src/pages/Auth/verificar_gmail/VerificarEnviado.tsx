@@ -20,9 +20,9 @@ export function VerificarEnviado() {
   const email = state?.email;
 
   return (
-    <div className="auth-page">
-      <Brand />
-      <div className="enviado">
+    <div className="auth-page auth-screen auth-screen--verificacion">
+      <Brand appearance="auth" />
+      <section className="enviado auth-card">
         <div className="illustration">
           <IconoSobre />
         </div>
@@ -36,7 +36,7 @@ export function VerificarEnviado() {
             ¿No te llegó? <Link to="/registro">Intenta de nuevo</Link>
           </p>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

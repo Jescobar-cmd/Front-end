@@ -25,6 +25,9 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
     usuario,
     errorUsuario,
     recargarUsuario,
+    estadoFeed,
+    errorFeed,
+    recargarFeed,
     categorias,
     estadoCategorias,
     errorCategorias,
@@ -144,18 +147,29 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                     />
                   )}
                 </div>
-                {piezasVisibles.length > 0 ? (
-                  <div className="feed-grid">
-                    {piezasVisibles.map((pieza) => (
-                      <FeedPiezaCard key={pieza.id} pieza={pieza} />
-                    ))}
-                  </div>
+                {estadoFeed.estado === "cargando" && !MOSTRAR_EJEMPLOS ? (
+                  <FeedLoading />
+                ) : errorFeed && !MOSTRAR_EJEMPLOS ? (
+                  <FeedError mensaje={errorFeed} onReintentar={recargarFeed} />
                 ) : (
-                  <FeedVacio
-                    buscando={Boolean(busqueda) || categoriaActiva !== "Todo"}
-                    onAccion={busqueda ? () => setBusqueda("") : () => setCategoriaActiva("Todo")}
-                    etiquetaAccion={busqueda ? "Limpiar búsqueda" : "Ver todas las categorías"}
-                  />
+                  <>
+                    {errorFeed && MOSTRAR_EJEMPLOS && (
+                      <FeedError mensaje={errorFeed} onReintentar={recargarFeed} />
+                    )}
+                    {piezasVisibles.length > 0 ? (
+                      <div className="feed-grid">
+                        {piezasVisibles.map((pieza) => (
+                          <FeedPiezaCard key={pieza.id} pieza={pieza} />
+                        ))}
+                      </div>
+                    ) : (
+                      <FeedVacio
+                        buscando={Boolean(busqueda) || categoriaActiva !== "Todo"}
+                        onAccion={busqueda ? () => setBusqueda("") : () => setCategoriaActiva("Todo")}
+                        etiquetaAccion={busqueda ? "Limpiar búsqueda" : "Ver todas las categorías"}
+                      />
+                    )}
+                  </>
                 )}
               </section>
 

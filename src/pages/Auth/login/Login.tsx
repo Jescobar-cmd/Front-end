@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
-import { GoogleButton } from "../../../components/GoogleButton";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
 import { useLogin } from "../../../hooks/UserLogin";
@@ -10,6 +9,7 @@ import { useGoogleLogin } from "../../../hooks/useGoogleLogin";
 import { useAuth } from "../../../context/AuthContext";
 import type { ResultadoGoogle } from "../../../core/application/ports/AuthRepositoryPort";
 import { Brand } from "../../../components/Brand";
+import { GoogleLogo } from "../../../components/GoogleLogo";
 import { dashboardPorRol } from "../../../routes/rutasPorRol";
 
 const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
@@ -44,42 +44,55 @@ export function Login() {
   };
 
   return (
-    <div className="auth-page">
-      <Brand />
+    <div className="auth-page auth-screen auth-screen--login">
+      <Brand appearance="auth" onClick={() => navigate("/")} />
 
-      <form onSubmit={handleSubmit} className="login">
+      <form onSubmit={handleSubmit} className="login auth-card">
         <h1>Iniciar sesión</h1>
         <p>Ingresa tus datos para continuar.</p>
 
-        <Input
-          name="email"
-          type="email"
-          placeholder="Correo electrónico"
-          value={form.email}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-        />
-        <Input
-          name="password"
-          type="password"
-          placeholder="Contraseña"
-          value={form.password}
-          onChange={handleChange}
-          className={error ? "input--error" : ""}
-        />
+        <div className="auth-field">
+          <label htmlFor="login-email">Correo electrónico</label>
+          <Input
+            id="login-email"
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            autoComplete="email"
+            value={form.email}
+            onChange={handleChange}
+            className={error ? "input--error" : ""}
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="login-password">Contraseña</label>
+          <Input
+            id="login-password"
+            name="password"
+            type="password"
+            placeholder="Contraseña"
+            autoComplete="current-password"
+            value={form.password}
+            onChange={handleChange}
+            className={error ? "input--error" : ""}
+          />
+        </div>
 
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="btn-primary">
+        <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Ingresar"}
         </Button>
 
         <div className="divisor">
-          <span>o continúa con</span>
+          <span>O CONTINÚA CON</span>
         </div>
 
-        <div className="google-btn-wrap" ref={contenedorRef} role="group" aria-label="Continuar con Google" />
-        {errorGoogle && <p className="error">{errorGoogle}</p>}
+        <div className="google-login-button" role="group" aria-label="Continuar con Google">
+          <GoogleLogo size={24} />
+          <div className="google-login-button__target" ref={contenedorRef} />
+        </div>
+        {errorGoogle && <p className="error" role="alert">{errorGoogle}</p>}
 
         <div className="links">
           <p>

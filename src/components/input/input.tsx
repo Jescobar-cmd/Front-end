@@ -37,7 +37,6 @@ export function Input({ type, className, ...rest }: InputHTMLAttributes<HTMLInpu
       <button
         type="button"
         className="toggle-password"
-        tabIndex={-1}
         aria-label={mostrar ? "Ocultar contraseña" : "Mostrar contraseña"}
         onClick={() => setMostrar((s) => !s)}
       >

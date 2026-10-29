@@ -24,6 +24,8 @@ let googleYaInicializado = false;
 
 export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void) {
   const contenedorRef = useRef<HTMLDivElement>(null);
+  const inicializadoRef = useRef(false);
+  const onResultadoRef = useRef(onResultado);
   const [error, setError] = useState<string | null>(null);
   const callbackRef = useRef(onResultado);
 
@@ -32,40 +34,59 @@ export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void
   }, [onResultado]);
 
   useEffect(() => {
+    onResultadoRef.current = onResultado;
+  }, [onResultado]);
+
+  useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError("El inicio con Google no está configurado.");
+      return;
+    }
 
     const intentarInicializar = () => {
       if (!window.google || !contenedorRef.current) return false;
-      if (googleYaInicializado) return true;
 
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response) => {
-          try {
-            const resultado = await loginConGoogleUseCase.execute(response.credential);
-            await callbackRef.current(resultado);
-          } catch (e) {
-            setError(e instanceof Error ? e.message : "Error inesperado");
-          }
-        },
-      });
+      if (!googleYaInicializado) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response) => {
+            try {
+              const resultado = await loginConGoogleUseCase.execute(response.credential);
+              await callbackRef.current(resultado);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Error inesperado");
+            }
+          },
+        });
+        googleYaInicializado = true;
+      }
 
-      // Solo visual: botón solo-logo de Google (el flujo de login no cambia)
+      contenedorRef.current.innerHTML = "";
       window.google.accounts.id.renderButton(contenedorRef.current, {
-        theme: "outline",
-        size: "large",
         type: "icon",
         shape: "circle",
+        theme: "outline",
+        size: "large",
       });
 
-      googleYaInicializado = true;
+      inicializadoRef.current = true;
       return true;
     };
 
     if (intentarInicializar()) return;
 
+    let intentos = 0;
     const intervalo = setInterval(() => {
-      if (intentarInicializar()) clearInterval(intervalo);
+      intentos += 1;
+      if (intentarInicializar()) {
+        clearInterval(intervalo);
+      } else if (inicializadoRef.current) {
+        clearInterval(intervalo);
+      } else if (intentos >= 50) {
+        clearInterval(intervalo);
+        setError("No se pudo cargar el inicio con Google. Intenta de nuevo.");
+      }
     }, 200);
 
     return () => clearInterval(intervalo);

@@ -42,3 +42,13 @@
   letter-spacing: -0.045em;
   line-height: 1;
 }
+
+.auth-brand--button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}

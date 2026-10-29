@@ -11,7 +11,7 @@ export function VerificarCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const { verificar, reenviar, loading, error, info } = useVerificarCuenta();
+  const { verificar, reenviar, loading, error, info, reenviarEn } = useVerificarCuenta();
 
   // El correo llega desde el registro; si recargan la página se recupera de sessionStorage
   const emailInicial =
@@ -39,57 +39,86 @@ export function VerificarCuenta() {
 
   if (exito) {
     return (
-      <div className="verificar">
-        <h1>¡Cuenta confirmada!</h1>
-        <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
-        <Button type="button" onClick={() => navigate("/login", { replace: true })}>
-          Ir a iniciar sesión
-        </Button>
+      <div className="auth-page auth-screen auth-screen--verificacion">
+        <Brand appearance="auth" onClick={() => navigate("/")} />
+        <section className="verificar auth-card">
+          <h1>¡Cuenta confirmada!</h1>
+          <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
+          <Button
+            type="button"
+            className="btn-primary"
+            onClick={() => navigate("/login", { replace: true })}
+          >
+            Ir a iniciar sesión
+          </Button>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="auth-page">
-      <Brand />
-      <form onSubmit={handleSubmit} className="login">
+    <div className="auth-page auth-screen auth-screen--verificacion">
+      <Brand appearance="auth" onClick={() => navigate("/")} />
+      <form onSubmit={handleSubmit} className="login auth-card">
         <h1>Confirma tu cuenta</h1>
         <p>
           Te enviamos un código de 6 dígitos {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
         </p>
 
         {!emailInicial && (
-          <Input
-            name="email"
-            type="email"
-            placeholder="Correo electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div className="auth-field">
+            <label htmlFor="verificacion-email">Correo electrónico</label>
+            <Input
+              id="verificacion-email"
+              name="email"
+              type="email"
+              placeholder="Correo electrónico"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
         )}
-        <Input
-          name="code"
-          inputMode="numeric"
-          placeholder="Código de 6 dígitos"
-          value={code}
-          onChange={handleCode}
-          className={error ? "input--error" : ""}
-        />
+        <div className="auth-field">
+          <label htmlFor="verificacion-code">Código de 6 dígitos</label>
+          <Input
+            id="verificacion-code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Código de 6 dígitos"
+            value={code}
+            onChange={handleCode}
+            className={`auth-code-input${error ? " input--error" : ""}`}
+          />
+        </div>
 
-        {error && <p className="error">{error}</p>}
-        {info && <p className="success">{info}</p>}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+        {info && (
+          <p className="success" role="status">
+            {info}
+          </p>
+        )}
 
-        <Button type="submit" disabled={loading} className="btn-primary">
+        <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Confirmar"}
         </Button>
 
-        <div className="links">
-          <p>
-            ¿No te llegó?{" "}
-            <a href="#" onClick={(e) => { e.preventDefault(); void reenviar(email); }}>
-              Reenviar código
-            </a>
-          </p>
+        <div className="links auth-verification-links">
+          <p>¿No te llegó?</p>
+          <Button
+            type="button"
+            className="btn-primary"
+            disabled={loading || reenviarEn > 0}
+            onClick={() => void reenviar(email)}
+            aria-busy={loading}
+          >
+            {loading ? <Spinner size="small" /> : reenviarEn > 0 ? `Reenviar código (${reenviarEn}s)` : "Reenviar código"}
+          </Button>
           <p>
             <Link to="/login">Volver al inicio</Link>
           </p>
