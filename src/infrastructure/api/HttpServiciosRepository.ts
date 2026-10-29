@@ -3,8 +3,8 @@ import type { ServiciosRepositoryPort } from "../../core/application/ports/Servi
 import type { EstadoServicio, FiltrosListadoServicio, FiltrosMisServicio, Paginado, RespuestaServicio, Servicio } from "../../core/domain/entities/servicio";
 import type { DatosServicio, DatosActualizacionServicio } from "../../core/domain/entities/servicio";
 
-// Debe incluir el prefijo /api (ej: http://localhost:4000/api)
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
+// Debe incluir el prefijo /api (ej: http://localhost:5173/api)
+const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:5173/api").replace(/\/+$/, "");
 
 function aQuery(filtros: Record<string, number | string | undefined>): string {
   const params = new URLSearchParams();
