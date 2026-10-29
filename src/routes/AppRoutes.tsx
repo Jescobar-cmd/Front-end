@@ -23,6 +23,7 @@ import {
   FreelancerMarketplacePage,
   FreelancerServicesPage,
 } from "../pages/services-offers";
+import { ClientServices, FreelancerServices, FreelancerMarketplace, ClientOffers } from "../features/services-offers";
 import { ClientOffersRoute } from "./ClientOffersRoute";
 
 function VistaPreviaFeed() {
@@ -54,6 +55,10 @@ export function AppRoutes() {
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
       <Route path="/feed-preview/:tipoCuenta" element={<VistaPreviaFeed />} />
+      <Route path="/preview/cliente/servicios" element={<ClientServices token="preview" />} />
+      <Route path="/preview/freelancer/servicios" element={<FreelancerServices token="preview" />} />
+      <Route path="/preview/freelancer/marketplace" element={<FreelancerMarketplace token="preview" />} />
+      <Route path="/preview/cliente/ofertas" element={<ClientOffers token="preview" onContractPath={() => undefined} />} />
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
       <Route
         path="/dashboard/freelancer"

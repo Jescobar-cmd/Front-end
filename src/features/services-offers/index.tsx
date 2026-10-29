@@ -484,7 +484,7 @@ function ProposalCards({
   );
 }
 
-function ClientOffers({ token, onContractPath }: { token: string; onContractPath?: (path: string) => void }) {
+export function ClientOffers({ token, onContractPath }: { token: string; onContractPath?: (path: string) => void }) {
   const navigate = useNavigate();
   const [tab, setTab] = useState("offers");
   const [offers, setOffers] = useState<Oferta[]>([]);
@@ -685,7 +685,7 @@ function ClientOffers({ token, onContractPath }: { token: string; onContractPath
   );
 }
 
-function FreelancerMarketplace({ token }: { token: string }) {
+export function FreelancerMarketplace({ token }: { token: string }) {
   const [tab, setTab] = useState("market");
   const [items, setItems] = useState<OfertaMarketplace[]>([]);
   const [selected, setSelected] = useState<OfertaMarketplace | null>(null);
@@ -984,7 +984,7 @@ function ServiceForm({
   );
 }
 
-function FreelancerServices({ token }: { token: string }) {
+export function FreelancerServices({ token }: { token: string }) {
   const [tab, setTab] = useState("services");
   const [services, setServices] = useState<Servicio[]>([]);
   const [page, setPage] = useState(1);
@@ -1082,7 +1082,7 @@ function FreelancerServices({ token }: { token: string }) {
   );
 }
 
-function ClientServices({ token }: { token: string }) {
+export function ClientServices({ token }: { token: string }) {
   const navigate = useNavigate();
   const [services, setServices] = useState<Servicio[]>([]);
   const [selected, setSelected] = useState<Servicio | null>(null);
