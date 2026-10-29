@@ -11,6 +11,7 @@ export interface AutorPublicacion {
 export interface Publicacion {
   id: number;
   autor: AutorPublicacion;
+  titulo?: string | null;
   contenido: string;
   imagenUrl?: string | null;
   likes?: {

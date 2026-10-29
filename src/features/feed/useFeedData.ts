@@ -13,7 +13,7 @@ function aMensajeError(error: unknown): string {
   return error instanceof Error ? error.message : "No se pudo cargar la información.";
 }
 
-export function useFeedData(tipoEsperado: TipoCuentaFeed) {
+export function useFeedData(tipoEsperado: TipoCuentaFeed, vistaPrevia = false) {
   const { user: usuarioSesion, token } = useAuth();
   const [indicePerfil, setIndicePerfil] = useState(0);
   const [indiceFeed, setIndiceFeed] = useState(0);
@@ -22,6 +22,11 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
   const [feed, setFeed] = useState<Feed | null>(null);
 
   useEffect(() => {
+    if (vistaPrevia) {
+      setEstadoPerfil({ estado: "error", mensaje: "Vista previa local." });
+      return;
+    }
+
     if (!token) {
       setEstadoPerfil({ estado: "error", mensaje: "Sesión no disponible." });
       return;
@@ -42,9 +47,15 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     return () => {
       activo = false;
     };
-  }, [token, indicePerfil]);
+  }, [token, indicePerfil, vistaPrevia]);
 
   useEffect(() => {
+    if (vistaPrevia) {
+      setFeed(null);
+      setEstadoFeed({ estado: "error", mensaje: "Vista previa local." });
+      return;
+    }
+
     if (!token) {
       setEstadoFeed({ estado: "error", mensaje: "Sesión no disponible." });
       return;
@@ -67,18 +78,18 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     return () => {
       activo = false;
     };
-  }, [token, indiceFeed]);
+  }, [token, indiceFeed, vistaPrevia]);
 
   const usuarioActual = estadoPerfil.estado === "listo" ? estadoPerfil.datos : usuarioSesion;
-  const tipoCuenta = usuarioActual?.rol ?? tipoEsperado;
+  const tipoCuenta = vistaPrevia ? tipoEsperado : usuarioActual?.rol ?? tipoEsperado;
   const { categorias, estado: estadoCategorias, error: errorCategorias, recargar: recargarCategorias } =
-    useCategorias(token);
+    useCategorias(token, vistaPrevia);
   const {
     ofertas,
     estado: estadoMisOfertas,
     error: errorMisOfertas,
     recargar: recargarMisOfertas,
-  } = useMisOfertas(tipoCuenta === "cliente" ? token : undefined);
+  } = useMisOfertas(tipoCuenta === "cliente" ? token : undefined, undefined, vistaPrevia);
 
   const proyectosParaTi = useMemo((): PiezaFeed[] => {
     if (estadoFeed.estado === "listo" && feed) {
@@ -103,8 +114,10 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
         imagenUrl: servicio.imagenUrl ?? undefined,
       }));
     }
-    return tipoCuenta === "freelancer" ? obtenerProyectosParaFreelancer() : obtenerTalentoParaExplorar();
-  }, [estadoFeed, feed, tipoCuenta]);
+    return tipoCuenta === "freelancer"
+      ? obtenerProyectosParaFreelancer(vistaPrevia)
+      : obtenerTalentoParaExplorar(vistaPrevia);
+  }, [estadoFeed, feed, tipoCuenta, vistaPrevia]);
 
   const misProyectos = useMemo(() => {
     if (tipoCuenta !== "cliente" || !ofertas) return [];
@@ -112,8 +125,8 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
   }, [tipoCuenta, ofertas]);
 
   return {
-    usuario: { nombre: usuarioActual?.nombre, tipoCuenta },
-    errorUsuario: estadoPerfil.estado === "error" ? estadoPerfil.mensaje : null,
+    usuario: { nombre: vistaPrevia ? "Demo" : usuarioActual?.nombre, tipoCuenta },
+    errorUsuario: !vistaPrevia && estadoPerfil.estado === "error" ? estadoPerfil.mensaje : null,
     recargarUsuario: () => setIndicePerfil((indice) => indice + 1),
     estadoFeed,
     errorFeed: estadoFeed.estado === "error" ? estadoFeed.mensaje : null,
@@ -127,6 +140,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     estadoMisOfertas,
     errorMisOfertas,
     recargarMisOfertas,
+    vistaPrevia,
   };
 }
 

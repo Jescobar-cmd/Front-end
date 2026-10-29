@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
@@ -11,6 +11,28 @@ import { useAuth } from "../context/AuthContext";
 import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
+import { ClientProfilePage, FreelancerProfilePage } from "../features/profile";
+import {
+  ChatPage,
+  ConversationDetailPage,
+  ContractDetailPage,
+  ContractsPage,
+} from "../features/chat-contracts";
+import {
+  ClientServicesPage,
+  FreelancerMarketplacePage,
+  FreelancerServicesPage,
+} from "../pages/services-offers";
+import { ClientOffersRoute } from "./ClientOffersRoute";
+
+function VistaPreviaFeed() {
+  const { tipoCuenta } = useParams();
+
+  if (!import.meta.env.DEV) return <Navigate to="/login" replace />;
+  if (tipoCuenta === "cliente") return <InicioCliente vistaPrevia />;
+  if (tipoCuenta === "freelancer") return <InicioFreelancer vistaPrevia />;
+  return <Navigate to="/feed-preview/cliente" replace />;
+}
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -31,6 +53,7 @@ export function AppRoutes() {
       <Route path="/confirm" element={<VerificarCuenta />} />
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
+      <Route path="/feed-preview/:tipoCuenta" element={<VistaPreviaFeed />} />
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
       <Route
         path="/dashboard/freelancer"
@@ -47,6 +70,53 @@ export function AppRoutes() {
             <InicioCliente />
           </RutaProtegida>
         }
+      />
+      <Route
+        path="/perfil/freelancer"
+        element={
+          <RutaProtegida roles={["freelancer"]}>
+            <FreelancerProfilePage />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/perfil/cliente"
+        element={
+          <RutaProtegida roles={["cliente"]}>
+            <ClientProfilePage />
+          </RutaProtegida>
+        }
+      />
+      <Route path="/chat" element={<RutaProtegida><ChatPage /></RutaProtegida>} />
+      <Route
+        path="/chat/:conversationId"
+        element={
+          <RutaProtegida>
+            <ConversationDetailPage canRespondToOffer={() => false} />
+          </RutaProtegida>
+        }
+      />
+      <Route path="/contracts" element={<RutaProtegida><ContractsPage /></RutaProtegida>} />
+      <Route
+        path="/contracts/:contractId"
+        element={<RutaProtegida><ContractDetailPage /></RutaProtegida>}
+      />
+      <Route path="/servicios" element={<RutaProtegida roles={["cliente"]}><ClientServicesPage /></RutaProtegida>} />
+      <Route
+        path="/dashboard/cliente/servicios"
+        element={<RutaProtegida roles={["cliente"]}><ClientServicesPage /></RutaProtegida>}
+      />
+      <Route
+        path="/dashboard/cliente/ofertas"
+        element={<RutaProtegida roles={["cliente"]}><ClientOffersRoute /></RutaProtegida>}
+      />
+      <Route
+        path="/dashboard/freelancer/ofertas"
+        element={<RutaProtegida roles={["freelancer"]}><FreelancerMarketplacePage /></RutaProtegida>}
+      />
+      <Route
+        path="/dashboard/freelancer/servicios"
+        element={<RutaProtegida roles={["freelancer"]}><FreelancerServicesPage /></RutaProtegida>}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

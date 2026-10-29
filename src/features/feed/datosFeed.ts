@@ -40,8 +40,8 @@ export function ofertaAPieza(oferta: Oferta): ProyectoCliente {
  * Proyectos / oportunidades para el freelancer.
  * TODO(endpoint): reemplazar por el endpoint de listado de oportunidades para freelancers.
  */
-export function obtenerProyectosParaFreelancer(): PiezaFeed[] {
-  if (!MOSTRAR_EJEMPLOS) return [];
+export function obtenerProyectosParaFreelancer(incluirEjemplos = MOSTRAR_EJEMPLOS): PiezaFeed[] {
+  if (!incluirEjemplos) return [];
   return oportunidadesFreelancerDemo;
 }
 
@@ -49,7 +49,7 @@ export function obtenerProyectosParaFreelancer(): PiezaFeed[] {
  * Talento / perfiles para que el cliente explora.
  * TODO(endpoint): reemplazar por el endpoint de perfiles públicos / talento.
  */
-export function obtenerTalentoParaExplorar(): PiezaFeed[] {
-  if (!MOSTRAR_EJEMPLOS) return [];
+export function obtenerTalentoParaExplorar(incluirEjemplos = MOSTRAR_EJEMPLOS): PiezaFeed[] {
+  if (!incluirEjemplos) return [];
   return perfilesClienteDemo;
 }

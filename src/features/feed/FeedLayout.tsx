@@ -11,6 +11,7 @@ import {
 import { MOSTRAR_EJEMPLOS } from "./datosFeed";
 import { avisosDemo, resumenDemo } from "./datosDemoFeed";
 import type { FeedData } from "./useFeedData";
+import { FeedPublicaciones } from "./FeedPublicaciones";
 import "./feed.css";
 
 interface FeedLayoutProps {
@@ -37,8 +38,10 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
     estadoMisOfertas,
     errorMisOfertas,
     recargarMisOfertas,
+    vistaPrevia,
   } = datos;
   const esFreelancer = usuario.tipoCuenta === "freelancer";
+  const mostrarEjemplos = MOSTRAR_EJEMPLOS || vistaPrevia;
 
   const categoriasDisponibles = useMemo(
     () => [...new Set(categorias.map((categoria) => categoria.nombre).filter(Boolean))],
@@ -95,7 +98,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                     </p>
                   )}
                 </div>
-                <a className="feed-primary-action" href="#services">
+                <a className="feed-primary-action" href={esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios"}>
                   {esFreelancer ? "Explorar proyectos" : "Explorar talento"}
                 </a>
               </section>
@@ -112,10 +115,10 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                       : "Explora freelancers con experiencia comprobada y un perfil claro."}
                   </p>
                 </div>
-                <a href={esFreelancer ? "#profile" : "#services"}>
+                <a href={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>
                   {esFreelancer ? "Completar mi perfil" : "Explorar talento"} <span aria-hidden="true">↗</span>
                 </a>
-                {esFreelancer && (MOSTRAR_EJEMPLOS ? (
+                {esFreelancer && (mostrarEjemplos ? (
                   <div className="feed-feature__progress"><span>Tu perfil</span><strong>80%</strong><i><b /></i></div>
                 ) : (
                   <p>No hay datos de completitud del perfil disponibles.</p>
@@ -132,7 +135,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                         : "Conoce profesionales que pueden sumarse a tu proyecto."}
                     </p>
                   </div>
-                  <a className="feed-text-link" href="#activity">Ver todas <span aria-hidden="true">→</span></a>
+                  <a className="feed-text-link" href={esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios"}>Ver todas <span aria-hidden="true">→</span></a>
                 </div>
                 <div className="feed-content__filters">
                   {errorCategorias ? (
@@ -147,13 +150,13 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                     />
                   )}
                 </div>
-                {estadoFeed.estado === "cargando" && !MOSTRAR_EJEMPLOS ? (
+                {estadoFeed.estado === "cargando" && !mostrarEjemplos ? (
                   <FeedLoading />
-                ) : errorFeed && !MOSTRAR_EJEMPLOS ? (
+                ) : errorFeed && !mostrarEjemplos ? (
                   <FeedError mensaje={errorFeed} onReintentar={recargarFeed} />
                 ) : (
                   <>
-                    {errorFeed && MOSTRAR_EJEMPLOS && (
+                    {errorFeed && mostrarEjemplos && !vistaPrevia && (
                       <FeedError mensaje={errorFeed} onReintentar={recargarFeed} />
                     )}
                     {piezasVisibles.length > 0 ? (
@@ -173,23 +176,25 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                 )}
               </section>
 
+              <FeedPublicaciones vistaPrevia={vistaPrevia} />
+
               <section className="feed-activity" id="activity">
                 <div className="feed-toolbar">
                   <div>
                     <h2>{esFreelancer ? "Mis postulaciones" : "Mis proyectos"}</h2>
                     <p>Un vistazo rápido a tu actividad reciente.</p>
                   </div>
-                  <a className="feed-text-link" href="#services">Ver actividad <span aria-hidden="true">→</span></a>
+                  <a className="feed-text-link" href={esFreelancer ? "/dashboard/freelancer/ofertas" : "/dashboard/cliente/ofertas"}>Ver actividad <span aria-hidden="true">→</span></a>
                 </div>
 
                 {esFreelancer ? (
-                  MOSTRAR_EJEMPLOS ? <div className="feed-activity__row">
+                  mostrarEjemplos ? <div className="feed-activity__row">
                     <span className="feed-activity__symbol" aria-hidden="true">◇</span>
                     <div>
                       <strong>Tu próxima oportunidad comienza aquí</strong>
                       <small>Explora los proyectos recomendados para ti.</small>
                     </div>
-                    <a href="#services" aria-label="Ver oportunidades">↗</a>
+                    <a href="/dashboard/freelancer/ofertas" aria-label="Ver oportunidades">↗</a>
                   </div> : <FeedVacio buscando={false} />
                 ) : estadoMisOfertas.estado === "cargando" ? (
                   <FeedLoading />
@@ -208,7 +213,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                       <strong>Organiza tus proyectos en un solo lugar</strong>
                       <small>Publica un proyecto y encuentra el talento indicado.</small>
                     </div>
-                    <a href="#services" aria-label="Ver oportunidades">↗</a>
+                    <a href="/dashboard/cliente/ofertas" aria-label="Gestionar proyectos">↗</a>
                   </div>
                 )}
               </section>
@@ -221,7 +226,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                   <span>Este mes</span>
                 </div>
                 <p className="feed-panel__caption">Tu actividad en First Gig</p>
-                {MOSTRAR_EJEMPLOS ? resumenDemo.map((stat) => (
+                {mostrarEjemplos ? resumenDemo.map((stat) => (
                   <div className="feed-stat" key={stat.id}>
                     <span aria-hidden="true">{stat.icono}</span>
                     <span>{stat.label}</span>
@@ -233,9 +238,9 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
               <section className="feed-panel" id="notices">
                 <div className="feed-panel__heading">
                   <h2>Avisos</h2>
-                  {MOSTRAR_EJEMPLOS && <span className="feed-badge">2 nuevos</span>}
+                  {mostrarEjemplos && <span className="feed-badge">2 nuevos</span>}
                 </div>
-                {MOSTRAR_EJEMPLOS ? avisosDemo.map((aviso) => (
+                {mostrarEjemplos ? avisosDemo.map((aviso) => (
                   <article className="feed-notice" key={aviso.id}>
                     <span className="feed-notice__avatar">{aviso.avatar}</span>
                     <div>
@@ -250,15 +255,15 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
               <section className="feed-panel" id="profile">
                 <div className="feed-panel__heading">
                   <h2>{esFreelancer ? "Mi perfil" : "Mi cuenta"}</h2>
-                  <a className="feed-text-link" href="#inicio">Ver</a>
+                  <a className="feed-text-link" href={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>Ver</a>
                 </div>
                 <p className="feed-panel__caption">{usuario.nombre || "Completa tu perfil para empezar"}</p>
-                {MOSTRAR_EJEMPLOS ? (
+                {mostrarEjemplos ? (
                   <div className="feed-profile-progress"><span /><span /></div>
                 ) : (
                   <p className="feed-panel__caption">No hay datos de completitud del perfil disponibles.</p>
                 )}
-                <a className="feed-panel__link" href="#services">
+                <a className="feed-panel__link" href={esFreelancer ? "/perfil/freelancer" : "#services"}>
                   {esFreelancer ? "Completar perfil" : "Explorar servicios"} <span>↗</span>
                 </a>
               </section>
@@ -267,7 +272,7 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                 <span aria-hidden="true">✧</span>
                 <p>UN BUEN COMIENZO</p>
                 <h2>{esFreelancer ? "Tu próximo proyecto puede estar aquí." : "Una propuesta a tu medida marca la diferencia."}</h2>
-                <a href="#services">{esFreelancer ? "Ver oportunidades" : "Explorar talento"} ↗</a>
+                <a href={esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios"}>{esFreelancer ? "Ver oportunidades" : "Explorar servicios"} ↗</a>
               </section>
             </aside>
           </div>

@@ -19,11 +19,16 @@ function aMensajeError(error: unknown): string {
  * Categorías del catálogo (GET /api/categorias).
  * Sin token (preview) usa el catálogo de ejemplo.
  */
-export function useCategorias(token?: string) {
+export function useCategorias(token?: string, vistaPrevia = false) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<Categoria[]>>({ estado: "cargando" });
 
   useEffect(() => {
+    if (vistaPrevia) {
+      setEstado({ estado: "listo", datos: categoriasDemo });
+      return;
+    }
+
     if (!token) {
       setEstado({ estado: "listo", datos: MOSTRAR_EJEMPLOS ? categoriasDemo : [] });
       return;
@@ -45,7 +50,7 @@ export function useCategorias(token?: string) {
     return () => {
       activo = false;
     };
-  }, [token, indice]);
+  }, [token, indice, vistaPrevia]);
 
   const recargar = () => setIndice((n) => n + 1);
 
@@ -60,11 +65,20 @@ export function useCategorias(token?: string) {
 /**
  * Ofertas (proyectos) registradas por el cliente autenticado.
  */
-export function useMisOfertas(token?: string, filtros: FiltrosOferta = { page: 1, limit: 20 }) {
+export function useMisOfertas(
+  token?: string,
+  filtros: FiltrosOferta = { page: 1, limit: 20 },
+  vistaPrevia = false,
+) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<OfertaPaginada>>({ estado: "cargando" });
 
   useEffect(() => {
+    if (vistaPrevia) {
+      setEstado({ estado: "listo", datos: { page: 1, limit: 20, total: 0, items: [] } });
+      return;
+    }
+
     if (!token) {
       setEstado({ estado: "error", mensaje: "Sesión no disponible." });
       return;
@@ -86,7 +100,7 @@ export function useMisOfertas(token?: string, filtros: FiltrosOferta = { page: 1
     return () => {
       activo = false;
     };
-  }, [token, JSON.stringify(filtros), indice]);
+  }, [token, JSON.stringify(filtros), indice, vistaPrevia]);
 
   const recargar = () => setIndice((n) => n + 1);
 

@@ -2,6 +2,7 @@ export interface ItemSidebar {
   id: string;
   icono: string;
   label: string;
+  href: string;
 }
 
 interface FeedSidebarProps {
@@ -12,19 +13,22 @@ interface FeedSidebarProps {
 function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
   if (esFreelancer) {
     return [
-      { id: "inicio", icono: "⌂", label: "Inicio" },
-      { id: "services", icono: "⌕", label: "Buscar proyectos" },
-      { id: "activity", icono: "◇", label: "Mis postulaciones" },
-      { id: "summary", icono: "▦", label: "Estadísticas" },
-      { id: "services", icono: "＋", label: "Explorar ofertas" },
+      { id: "inicio", icono: "⌂", label: "Inicio", href: "/dashboard/freelancer" },
+      { id: "marketplace", icono: "⌕", label: "Explorar proyectos", href: "/dashboard/freelancer/ofertas" },
+      { id: "propuestas", icono: "◇", label: "Mis postulaciones", href: "/dashboard/freelancer/ofertas" },
+      { id: "servicios", icono: "＋", label: "Mis servicios", href: "/dashboard/freelancer/servicios" },
+      { id: "chat", icono: "▤", label: "Mensajes", href: "/chat" },
+      { id: "contratos", icono: "▦", label: "Contratos", href: "/contracts" },
+      { id: "perfil", icono: "◉", label: "Mi perfil", href: "/perfil/freelancer" },
     ];
   }
   return [
-    { id: "inicio", icono: "⌂", label: "Inicio" },
-    { id: "services", icono: "⌕", label: "Explorar talento" },
-    { id: "activity", icono: "▤", label: "Mis proyectos" },
-    { id: "summary", icono: "▦", label: "Estadísticas" },
-    { id: "services", icono: "＋", label: "Ver talento" },
+    { id: "inicio", icono: "⌂", label: "Inicio", href: "/dashboard/cliente" },
+    { id: "servicios", icono: "⌕", label: "Explorar servicios", href: "/servicios" },
+    { id: "ofertas", icono: "＋", label: "Mis proyectos", href: "/dashboard/cliente/ofertas" },
+    { id: "chat", icono: "▤", label: "Mensajes", href: "/chat" },
+    { id: "contratos", icono: "▦", label: "Contratos", href: "/contracts" },
+    { id: "perfil", icono: "◉", label: "Mi perfil", href: "/perfil/cliente" },
   ];
 }
 
@@ -36,7 +40,7 @@ export function FeedSidebar({ esFreelancer, activo }: FeedSidebarProps) {
       <p className="feed-sidebar__label">MI ESPACIO</p>
       <nav>
         {items.map((item) => (
-          <a key={`${item.id}-${item.label}`} href={`#${item.id}`} className={activo === item.id ? "is-current" : undefined}>
+          <a key={`${item.id}-${item.label}`} href={item.href} className={activo === item.id ? "is-current" : undefined}>
             <span aria-hidden="true">{item.icono}</span>
             {item.label}
           </a>

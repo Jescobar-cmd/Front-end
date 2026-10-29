@@ -1,4 +1,6 @@
 import { HttpAuthRepository } from "../infrastructure/api/HttpAuthRepository";
+import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
+import { HttpServiciosRepository } from "../infrastructure/api/HttpServiciosRepository";
 import { RegistroUseCase } from "../core/application/use-cases/RegistroUseCase";
 import { LoginUseCase } from "../core/application/use-cases/LoginUseCase";
 import { LoginConGoogleUseCase } from "../core/application/use-cases/LoginConGoogleUseCase";
@@ -11,10 +13,16 @@ import { ReenviarCodigoUseCase } from "../core/application/use-cases/ReenviarCod
 import { ObtenerPerfilUseCase } from "../core/application/use-cases/ObtenerPerfilUseCase";
 import { ListarCategoriasUseCase } from "../core/application/use-cases/ListarCategoriasUseCase";
 import { ListarMisOfertasUseCase } from "../core/application/use-cases/ListarMisOfertasUseCase";
-import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
+import { ListarServiciosUseCase } from "../core/application/use-cases/ListarServiciosUseCase";
+import { ObtenerServicioUseCase } from "../core/application/use-cases/ObtenerServicioUseCase";
+import { CrearServicioUseCase } from "../core/application/use-cases/CrearServicioUseCase";
+import { ActualizarServicioUseCase } from "../core/application/use-cases/ActualizarServicioUseCase";
+import { CambiarEstadoServicioUseCase } from "../core/application/use-cases/CambiarEstadoServicioUseCase";
+import { ListarMisServiciosUseCase } from "../core/application/use-cases/ListarMisServiciosUseCase";
 
 const authRepository = new HttpAuthRepository();
 const ofertasRepository = new HttpOfertasRepository();
+const serviciosRepository = new HttpServiciosRepository();
 
 export { authRepository };
 export const registroUseCase = new RegistroUseCase(authRepository);
@@ -29,3 +37,9 @@ export const reenviarCodigoUseCase = new ReenviarCodigoUseCase(authRepository);
 export const obtenerPerfilUseCase = new ObtenerPerfilUseCase(authRepository);
 export const listarCategoriasUseCase = new ListarCategoriasUseCase(ofertasRepository);
 export const listarMisOfertasUseCase = new ListarMisOfertasUseCase(ofertasRepository);
+export const listarServiciosUseCase = new ListarServiciosUseCase(serviciosRepository);
+export const obtenerServicioUseCase = new ObtenerServicioUseCase(serviciosRepository);
+export const crearServicioUseCase = new CrearServicioUseCase(serviciosRepository);
+export const actualizarServicioUseCase = new ActualizarServicioUseCase(serviciosRepository);
+export const cambiarEstadoServicioUseCase = new CambiarEstadoServicioUseCase(serviciosRepository);
+export const listarMisServiciosUseCase = new ListarMisServiciosUseCase(serviciosRepository);
