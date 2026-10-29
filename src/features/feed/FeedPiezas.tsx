@@ -90,7 +90,7 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
   );
 }
 
-export function FeedVacio({ buscando }: { buscando: boolean }) {
+export function FeedVacio({ buscando, onAccion, etiquetaAccion }: { buscando: boolean; onAccion?: () => void; etiquetaAccion?: string }) {
   return (
     <section className="feed-empty" aria-live="polite">
       <span className="feed-empty__symbol" aria-hidden="true">
@@ -102,6 +102,11 @@ export function FeedVacio({ buscando }: { buscando: boolean }) {
           ? "Prueba con otra palabra o categoría."
           : "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."}
       </p>
+      {onAccion ? (
+        <button className="feed-empty__cta" type="button" onClick={onAccion}>
+          {etiquetaAccion ?? (buscando ? "Limpiar búsqueda" : "Explorar oportunidades")}
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -109,9 +114,7 @@ export function FeedVacio({ buscando }: { buscando: boolean }) {
 export function FeedLoading() {
   return (
     <section className="feed-empty" aria-live="polite">
-      <span className="feed-empty__symbol" aria-hidden="true">
-        ✳
-      </span>
+      <span className="feed-loading__spinner" aria-hidden="true" />
       <h2>Cargando contenido</h2>
       <p>Un momento mientras preparamos tu feed.</p>
     </section>

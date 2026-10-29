@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { listarCategoriasUseCase, listarMisOfertasUseCase } from "../../../di/container";
+import { getCategories } from "../../../infrastructure/api/apiCatalogos";
+import { getMyOffers } from "../../../infrastructure/api/apiOfertas";
 import type { Categoria } from "../../../core/domain/entities/categoria";
 import type { FiltrosOferta, OfertaPaginada } from "../../../core/domain/entities/oferta";
+import { MOSTRAR_EJEMPLOS } from "../datosFeed";
 import { categoriasDemo } from "../datosDemoFeed";
 
 export type EstadoLista<T> =
@@ -20,23 +22,19 @@ function aMensajeError(error: unknown): string {
 export function useCategorias(token?: string) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<Categoria[]>>({ estado: "cargando" });
-  const [datos, setDatos] = useState<Categoria[]>([]);
 
   useEffect(() => {
     if (!token) {
-      setDatos(categoriasDemo);
-      setEstado({ estado: "listo", datos: categoriasDemo });
+      setEstado({ estado: "listo", datos: MOSTRAR_EJEMPLOS ? categoriasDemo : [] });
       return;
     }
 
     let activo = true;
     setEstado({ estado: "cargando" });
 
-    listarCategoriasUseCase
-      .execute(token)
+    getCategories(token)
       .then((categorias) => {
         if (!activo) return;
-        setDatos(categorias);
         setEstado({ estado: "listo", datos: categorias });
       })
       .catch((error: unknown) => {
@@ -75,8 +73,7 @@ export function useMisOfertas(token?: string, filtros: FiltrosOferta = { page: 1
     let activo = true;
     setEstado({ estado: "cargando" });
 
-    listarMisOfertasUseCase
-      .execute(token, filtros)
+    getMyOffers(token, filtros)
       .then((ofertaPaginada) => {
         if (!activo) return;
         setEstado({ estado: "listo", datos: ofertaPaginada });

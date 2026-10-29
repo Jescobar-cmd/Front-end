@@ -1,7 +1,8 @@
 import { FeedLayout } from "./FeedLayout";
-import type { UsuarioFeed } from "./FeedLayout";
+import { useFeedData } from "./useFeedData";
 import "./feed.css";
 
-export function InicioCliente({ usuario }: { usuario: UsuarioFeed }) {
-  return <FeedLayout usuario={usuario} />;
+export function InicioCliente() {
+  const datos = useFeedData("cliente");
+  return <FeedLayout datos={datos} />;
 }

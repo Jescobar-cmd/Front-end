@@ -15,13 +15,15 @@ export interface PiezaFeed {
   postulaciones?: number;
 }
 
-const mostrarEjemplos =
-  import.meta.env.DEV || import.meta.env.VITE_MOSTRAR_EJEMPLOS === "true";
+export type ProyectoDisponible = Omit<PiezaFeed, "postulaciones">;
+export type ProyectoCliente = PiezaFeed & { postulaciones: number };
+
+export const MOSTRAR_EJEMPLOS = import.meta.env.VITE_MOSTRAR_EJEMPLOS === "true";
 
 /**
  * Convierte una oferta del backend (Proyecto) al formato de pieza del feed.
  */
-export function ofertaAPieza(oferta: Oferta): PiezaFeed {
+export function ofertaAPieza(oferta: Oferta): ProyectoCliente {
   return {
     id: String(oferta.id),
     categoria: oferta.categoria?.nombre ?? "General",
@@ -39,7 +41,7 @@ export function ofertaAPieza(oferta: Oferta): PiezaFeed {
  * TODO(endpoint): reemplazar por el endpoint de listado de oportunidades para freelancers.
  */
 export function obtenerProyectosParaFreelancer(): PiezaFeed[] {
-  if (!mostrarEjemplos) return [];
+  if (!MOSTRAR_EJEMPLOS) return [];
   return oportunidadesFreelancerDemo;
 }
 
@@ -48,6 +50,6 @@ export function obtenerProyectosParaFreelancer(): PiezaFeed[] {
  * TODO(endpoint): reemplazar por el endpoint de perfiles públicos / talento.
  */
 export function obtenerTalentoParaExplorar(): PiezaFeed[] {
-  if (!mostrarEjemplos) return [];
+  if (!MOSTRAR_EJEMPLOS) return [];
   return perfilesClienteDemo;
 }

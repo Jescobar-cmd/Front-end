@@ -24,7 +24,7 @@ export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }:
         href={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
         aria-label="FirstGig, ir al inicio"
       >
-        <Brand variant="dark" />
+        <Brand />
       </a>
       <label className="feed-search">
         <span className="feed-search__icon" aria-hidden="true">
