@@ -1,5 +1,7 @@
 import type { ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Brand } from "../../components/Brand";
+import { useAuth } from "../../context/AuthContext";
 import type { TipoCuentaFeed } from "./datosFeed";
 
 interface FeedTopbarProps {
@@ -11,8 +13,16 @@ interface FeedTopbarProps {
 }
 
 export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }: FeedTopbarProps) {
+  const navigate = useNavigate();
+  const { cerrarSesion } = useAuth();
+
   const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
+  };
+
+  const manejarCerrarSesion = () => {
+    cerrarSesion();
+    navigate("/login", { replace: true });
   };
 
   const esFreelancer = tipoCuenta === "freelancer";
@@ -59,6 +69,16 @@ export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }:
             <small>{esFreelancer ? "Cuenta de freelancer" : "Cuenta de cliente"}</small>
           </span>
         </div>
+        <button
+          type="button"
+          className="feed-logout"
+          onClick={manejarCerrarSesion}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          <span aria-hidden="true">⏻</span>
+          <span className="feed-logout__label">Cerrar sesión</span>
+        </button>
       </div>
     </header>
   );
