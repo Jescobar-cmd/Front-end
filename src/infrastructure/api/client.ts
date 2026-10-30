@@ -59,8 +59,11 @@ export async function apiFetch<T>(o: OpcionesFetch): Promise<RespuestaApi<T>> {
   if (!res.ok) {
     const error = new Error(data.error ?? data.message ?? o.mensajeError ?? "No se pudo completar la solicitud.") as ApiError;
     error.status = res.status;
+    error.error = data.error;
     error.details = data.details;
-    if (res.status === 401) {
+    // Solo cerramos sesión si el request iba autenticado: un 401 del login
+    // (credenciales incorrectas) debe mostrar el error, no recargar la página.
+    if (res.status === 401 && o.token) {
       localStorage.removeItem(TOKEN_KEY);
       if (typeof window !== "undefined") {
         window.location.replace("/login");

@@ -1,9 +1,17 @@
+export interface CalificadorCalificacion {
+  id: number;
+  nombre: string;
+  fotoPerfil: string | null;
+}
+
 export interface Calificacion {
   id: number;
-  contratoId?: number;
+  contratoId: number;
   puntuacion: number;
-  comentario?: string;
-  fecha?: string;
+  comentario: string | null;
+  fecha: string;
+  calificador: CalificadorCalificacion;
+  calificado: CalificadorCalificacion;
 }
 
 export interface RespuestaCalificacion {

@@ -6,11 +6,17 @@ export interface ClientePerfil {
   descripcion: string | null;
 }
 
+export interface HabilidadAsignada {
+  id: number;
+  nombre: string;
+  nivel: string | null;
+}
+
 export interface FreelancerPerfil {
   tituloProfesional: string | null;
   biografia: string | null;
   calificacionPromedio: number;
-  habilidades: Array<{ id: number; nombre: string }>;
+  habilidades: HabilidadAsignada[];
 }
 
 export interface PerfilCliente {
@@ -43,6 +49,8 @@ export interface PerfilFreelancer {
   email: string;
   telefono: string | null;
   fotoPerfil: string | null;
+  rolId: number;
+  rolNombre: string;
   estado: string;
   fechaRegistro: string;
   freelancer: FreelancerPerfil;
@@ -66,9 +74,14 @@ export interface DatosPerfilFreelancer {
   habilidadIds?: number[];
 }
 
-export interface RespuestaPerfil {
+export interface RespuestaPerfilCliente {
   mensaje: string;
-  perfil: PerfilCliente | PerfilFreelancer;
+  perfil: PerfilCliente;
+}
+
+export interface RespuestaPerfilFreelancer {
+  mensaje: string;
+  perfil: PerfilFreelancer;
 }
 
 function aPayload(datos: Record<string, unknown>): Record<string, unknown> {
@@ -98,8 +111,8 @@ export async function getClientProfile(token: string): Promise<PerfilCliente> {
   return data;
 }
 
-export async function updateClientProfile(token: string, datos: DatosPerfilCliente): Promise<RespuestaPerfil> {
-  const { data } = await apiFetch<RespuestaPerfil>({
+export async function updateClientProfile(token: string, datos: DatosPerfilCliente): Promise<RespuestaPerfilCliente> {
+  const { data } = await apiFetch<RespuestaPerfilCliente>({
     method: "PATCH",
     path: "/cliente/perfil",
     token,
@@ -119,8 +132,8 @@ export async function getFreelancerProfile(token: string): Promise<PerfilFreelan
   return data;
 }
 
-export async function updateFreelancerProfile(token: string, datos: DatosPerfilFreelancer): Promise<RespuestaPerfil> {
-  const { data } = await apiFetch<RespuestaPerfil>({
+export async function updateFreelancerProfile(token: string, datos: DatosPerfilFreelancer): Promise<RespuestaPerfilFreelancer> {
+  const { data } = await apiFetch<RespuestaPerfilFreelancer>({
     method: "PATCH",
     path: "/freelancer/perfil",
     token,
@@ -139,3 +152,4 @@ export async function getPublicProfile(token: string, id: number): Promise<Perfi
   });
   return data;
 }
+

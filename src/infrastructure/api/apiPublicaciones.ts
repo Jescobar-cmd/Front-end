@@ -6,22 +6,24 @@ export interface AutorPublicacion {
   id: number;
   nombre: string;
   fotoPerfil: string | null;
+  rol: number;
 }
 
 export interface Publicacion {
   id: number;
   autor: AutorPublicacion;
-  titulo?: string | null;
+  titulo: string | null;
   contenido: string;
-  imagenUrl?: string | null;
-  likes?: {
-    totalLikes: number;
+  imagenUrl: string | null;
+  fechaPublicacion: string;
+  likes: {
+    total: number;
     meGusta: boolean;
   };
 }
 
 export interface Feed {
-  rol: string;
+  rol: number;
   publicaciones: Publicacion[];
   ofertas: OfertaMarketplace[];
   servicios: Servicio[];

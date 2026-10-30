@@ -3,7 +3,7 @@ import type { Categoria } from "../../core/domain/entities/categoria";
 export interface HabilidadCatalogo {
   id: number;
   nombre: string;
-  categoriaId?: number;
+  categoriaId: number | null;
 }
 
 interface CategorySkillSelectorProps {
@@ -30,7 +30,7 @@ export function CategorySkillSelector({
   const visibleSkills =
     selectedCategoryId === null
       ? skills
-      : skills.filter((skill) => skill.categoriaId === undefined || skill.categoriaId === selectedCategoryId);
+      : skills.filter((skill) => skill.categoriaId === null || skill.categoriaId === selectedCategoryId);
 
   const toggleSkill = (skillId: number, checked: boolean) => {
     const next = checked

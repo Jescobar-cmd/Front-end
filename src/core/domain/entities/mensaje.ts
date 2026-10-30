@@ -1,22 +1,20 @@
-export interface UltimoMensaje {
+export interface OfertaChatResumen {
   id: number;
-  contenido: string;
-  fecha: string;
+  monto: number;
+  descripcion: string | null;
+  estado: string;
+  fechaExpiracion: string | null;
 }
 
 export interface Mensaje {
   id: number;
-  conversacionId?: number;
+  emisorId: number;
   contenido: string;
-  fecha: string;
-  oferta?: {
-    id: number;
-    monto: number;
-    descripcion?: string;
-    fechaExpiracion?: string;
-    estado: string;
-    padreId?: number;
-  };
+  tipo: string;
+  fechaEnvio: string;
+  leido: boolean;
+  /** Si el mensaje es de tipo 'oferta', trae la oferta asociada. */
+  oferta: OfertaChatResumen | null;
 }
 
 export interface DatosMensaje {

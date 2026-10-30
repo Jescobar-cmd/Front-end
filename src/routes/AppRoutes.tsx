@@ -99,7 +99,7 @@ export function AppRoutes() {
         path="/chat/:conversationId"
         element={
           <RutaProtegida>
-            <ConversationDetailPage canRespondToOffer={() => false} />
+            <ConversationDetailPage />
           </RutaProtegida>
         }
       />

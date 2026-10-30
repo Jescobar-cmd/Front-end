@@ -1,10 +1,11 @@
 import { apiFetch } from "./client";
 import type { Categoria } from "../../core/domain/entities/categoria";
 
-interface Habilidad {
+export interface Habilidad {
   id: number;
   nombre: string;
-  categoriaId?: number;
+  categoriaId: number | null;
+  categoria: { id: number; nombre: string } | null;
 }
 
 /**

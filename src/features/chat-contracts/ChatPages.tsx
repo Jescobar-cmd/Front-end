@@ -162,7 +162,7 @@ export function ChatPage({ isProjectClosed }: ChatPageProps) {
                     <span className="cc-conversation-copy">
                       <strong>{conversation.contraparte.nombre}</strong>
                       <span>{conversation.ultimoMensaje?.contenido ?? "Inicia una conversación"}</span>
-                      <small>{conversation.ultimoMensaje ? formatDate(conversation.ultimoMensaje.fecha) : "Sin mensajes"}</small>
+                      <small>{conversation.ultimoMensaje ? formatDate(conversation.ultimoMensaje.fechaEnvio) : "Sin mensajes"}</small>
                     </span>
                     {!!conversation.noLeidos && <span className="cc-unread">{conversation.noLeidos}</span>}
                   </Link>
@@ -226,6 +226,11 @@ export function ConversationDetailPage({
   const { token, user } = useAuth();
   const routeParams = useParams();
   const id = conversationId ?? parseId(routeParams.conversationId);
+  const canRespond = canRespondToOffer ?? ((
+    message: Mensaje,
+    _conversation: Conversacion,
+    userId: number | string | undefined,
+  ) => String(message.emisorId) !== String(userId));
   const [conversation, setConversation] = useState<Conversacion | null>(null);
   const [messages, setMessages] = useState<Mensaje[]>([]);
   const [messageText, setMessageText] = useState("");
@@ -273,7 +278,7 @@ export function ConversationDetailPage({
           setLoading(false);
           if (latest !== null) {
             try {
-              await markRead(token, id, { mensaje: latest, actualizados: 0 });
+              await markRead(token, id);
             } catch (readError) {
               readFailed = true;
               setPollError(errorMessage(readError, "No se pudo marcar la conversación como leída."));
@@ -291,7 +296,7 @@ export function ConversationDetailPage({
             const latest = result.mensajes[result.mensajes.length - 1].id;
             latestMessageRef.current = latest;
             try {
-              await markRead(token, id, { mensaje: latest, actualizados: 0 });
+              await markRead(token, id);
             } catch (readError) {
               readFailed = true;
               setPollError(errorMessage(readError, "No se pudo marcar la conversación como leída."));
@@ -321,7 +326,7 @@ export function ConversationDetailPage({
     void poll(true);
     const onFocus = () => {
       if (document.visibilityState === "visible" && latestMessageRef.current !== null) {
-        void markRead(token, id, { mensaje: latestMessageRef.current, actualizados: 0 }).catch((readError) => {
+        void markRead(token, id).catch((readError) => {
           setPollError(errorMessage(readError, "No se pudo marcar la conversación como leída."));
         });
       }
@@ -404,21 +409,22 @@ export function ConversationDetailPage({
           {pollError && <p className="cc-inline-alert" role="status">{pollError}</p>}
           {conversation?.contexto && (
             <p className="cc-context-label">
-              {conversation.contexto.tipo}{conversation.contexto.proyectoId ? ` · Proyecto ${conversation.contexto.proyectoId}` : ""}
-              {conversation.contexto.servicioId ? ` · Servicio ${conversation.contexto.servicioId}` : ""}
+              {conversation.contexto.tipo}
+              {conversation.contexto.titulo ? ` · ${conversation.contexto.titulo}` : ""}
+              {conversation.contexto.id ? ` (#${conversation.contexto.id})` : ""}
             </p>
           )}
           <div className="cc-message-list" aria-live="polite">
             {messages.length === 0 ? <p className="cc-empty">Aún no hay mensajes. Puedes comenzar aquí.</p> : messages.map((message) => (
               <article className="cc-message" key={message.id}>
-                <div className="cc-message-meta"><span>Mensaje</span><time>{formatDate(message.fecha)}</time></div>
+                <div className="cc-message-meta"><span>Mensaje</span><time>{formatDate(message.fechaEnvio)}</time></div>
                 {message.contenido && <p>{message.contenido}</p>}
                 {message.oferta && (
                   <div className="cc-offer-card">
                     <div className="cc-offer-heading"><strong>Propuesta · {formatMoney(message.oferta.monto)}</strong><span className="cc-status">{statusLabel(message.oferta.estado)}</span></div>
                     {message.oferta.descripcion && <p>{message.oferta.descripcion}</p>}
                     {message.oferta.fechaExpiracion && <small>Vence: {formatDate(message.oferta.fechaExpiracion)}</small>}
-                    {isPending(message.oferta.estado) && canRespondToOffer?.(message, conversation!, user?.id) && (
+                    {isPending(message.oferta.estado) && canRespond(message, conversation!, user?.id) && (
                       <div className="cc-offer-actions">
                         <button className="cc-primary-button" type="button" disabled={busy} onClick={() => void respond(message, "accept")}>Aceptar</button>
                         <button className="cc-danger-button" type="button" disabled={busy} onClick={() => void respond(message, "reject")}>Rechazar</button>
@@ -461,7 +467,7 @@ export function ConversationDetailPage({
               <button className="cc-secondary-button" type="submit" disabled={busy}>Enviar propuesta</button>
             </form>
           </details>
-          {conversation?.contexto?.proyectoId && isProjectClosed?.(conversation.contexto.proyectoId) && (
+          {conversation?.contexto?.tipo === "proyecto" && conversation.contexto.id && isProjectClosed?.(conversation.contexto.id) && (
             <p className="cc-inline-alert">El proyecto está cerrado. No se puede iniciar una nueva conversación para este proyecto.</p>
           )}
         </section>

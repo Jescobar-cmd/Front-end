@@ -1,66 +1,48 @@
 import type { OfertasRepositoryPort } from "../../core/application/ports/OfertasRepositoryPort";
 import type { Categoria } from "../../core/domain/entities/categoria";
-import type { FiltrosOferta, OfertaPaginada } from "../../core/domain/entities/oferta";
+import type {
+  DatosOferta,
+  EstadoOferta,
+  FiltrosOferta,
+  NuevaOferta,
+  Oferta,
+  OfertaPaginada,
+} from "../../core/domain/entities/oferta";
+import { getCategories } from "./apiCatalogos";
+import {
+  changeOfferStatus,
+  createOffer,
+  getMyOffer,
+  getMyOffers,
+  updateOffer,
+} from "./apiOfertas";
 
-// Debe incluir el prefijo /api (ej: http://localhost:4000/api)
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
-
-interface ErrorDto {
-  error?: string;
-  message?: string;
-}
-
-interface RespuestaDto<T> {
-  data: T;
-}
-
-async function request<T>(
-  method: "GET" | "POST" | "PATCH",
-  path: string,
-  token?: string,
-): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-  } catch {
-    throw new Error("No se pudo conectar con el servidor. Verifica que el backend esté encendido.");
-  }
-
-  const texto = await res.text();
-  let data: T & ErrorDto;
-  try {
-    data = (texto ? JSON.parse(texto) : {}) as T & ErrorDto;
-  } catch {
-    throw new Error("El servidor respondió con un formato inesperado.");
-  }
-
-  if (!res.ok) {
-    throw new Error(data.error ?? data.message ?? "No se pudo completar la solicitud.");
-  }
-
-  return data as T;
-}
-
+/** Adaptador HTTP del puerto de ofertas. Delega en `apiOfertas` y `apiCatalogos`. */
 export class HttpOfertasRepository implements OfertasRepositoryPort {
   async listarCategorias(token: string): Promise<Categoria[]> {
-    const data = await request<{ total: number; categorias: Categoria[] }>("GET", "/categorias", token);
-    return data.categorias;
+    return getCategories(token);
   }
 
   async listarMisOfertas(token: string, filtros: FiltrosOferta): Promise<OfertaPaginada> {
-    const params = new URLSearchParams({
-      page: String(filtros.page),
-      limit: String(filtros.limit),
-    });
-    if (filtros.estado) params.set("estado", filtros.estado);
-    if (filtros.texto) params.set("q", filtros.texto);
+    return getMyOffers(token, filtros);
+  }
 
-    return request<OfertaPaginada>("GET", `/cliente/ofertas?${params.toString()}`, token);
+  async obtenerOferta(token: string, id: number): Promise<Oferta> {
+    return getMyOffer(token, id);
+  }
+
+  async crearOferta(token: string, datos: NuevaOferta): Promise<Oferta> {
+    const respuesta = await createOffer(token, datos);
+    return respuesta.oferta;
+  }
+
+  async actualizarOferta(token: string, id: number, datos: DatosOferta): Promise<Oferta> {
+    const respuesta = await updateOffer(token, id, datos);
+    return respuesta.oferta;
+  }
+
+  async cambiarEstadoOferta(token: string, id: number, estado: EstadoOferta): Promise<Oferta> {
+    const respuesta = await changeOfferStatus(token, id, estado);
+    return respuesta.oferta;
   }
 }

@@ -1,5 +1,11 @@
 import type { User } from "../../domain/entities/user";
+import type { DatosPerfilCliente, PerfilCliente, PerfilPublico } from "../../domain/entities/perfil";
 
+export interface PerfilRepositoryPort {
+  obtenerMiPerfil(token: string): Promise<PerfilCliente>;
+  actualizarMiPerfil(token: string, datos: DatosPerfilCliente): Promise<PerfilCliente>;
+  obtenerPerfilPublico(token: string, id: number): Promise<PerfilPublico>;
+}
 export interface RegistroData {
   nombre: string;
   apellido: string;

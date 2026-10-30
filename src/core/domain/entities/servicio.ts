@@ -3,14 +3,17 @@ export interface Servicio {
   titulo: string;
   descripcion: string;
   precio: number;
-  categoriaId?: number | null;
-  imagenUrl?: string | null;
-  estado?: string;
-  freelancer?: {
-    nombre?: string;
-    fotoPerfil?: string | null;
-    calificacionPromedio?: number;
-  } | null;
+  imagenUrl: string | null;
+  estado: string;
+  fechaCreacion: string;
+  categoria: { id: number; nombre: string } | null;
+  freelancer: {
+    id: number;
+    nombre: string;
+    fotoPerfil: string | null;
+    tituloProfesional: string | null;
+    calificacionPromedio: number;
+  };
 }
 
 export interface DatosServicio {

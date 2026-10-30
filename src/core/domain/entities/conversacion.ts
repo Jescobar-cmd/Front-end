@@ -1,37 +1,39 @@
 import type { Mensaje } from "./mensaje";
+import type { Contrato } from "./contrato";
 
-export interface ContextoConversacion {
-  tipo: string;
-  proyectoId?: number;
-  servicioId?: number;
-}
-
-export interface Contraparte {
+export interface ConversacionParticipante {
   id: number;
   nombre: string;
   fotoPerfil: string | null;
-  rol: string;
+}
+
+export interface ContextoConversacion {
+  tipo: "proyecto" | "servicio" | "ninguno";
+  id: number | null;
+  titulo: string | null;
+}
+
+export interface Contraparte extends ConversacionParticipante {
+  rol: number;
+}
+
+export interface UltimoMensaje {
+  contenido: string;
+  fechaEnvio: string;
+  emisorId: number;
+  tipo: string;
 }
 
 export interface Conversacion {
   id: number;
-  contexto?: ContextoConversacion;
-  cliente?: {
-    id: number;
-    nombre: string;
-    fotoPerfil: string | null;
-  };
-  freelancer?: {
-    id: number;
-    nombre: string;
-    fotoPerfil: string | null;
-  };
+  fechaCreacion: string;
+  contexto: ContextoConversacion;
   contraparte: Contraparte;
-  ultimoMensaje?: {
-    id: number;
-    contenido: string;
-    fecha: string;
+  participantes?: {
+    cliente: ConversacionParticipante;
+    freelancer: ConversacionParticipante;
   };
+  ultimoMensaje?: UltimoMensaje | null;
   noLeidos?: number;
 }
 
@@ -54,4 +56,9 @@ export interface RespuestaListadoConversaciones {
 export interface RespuestaMensajes {
   mensajes: Mensaje[];
   ultimoId: number | null;
+}
+
+export interface RespuestaAccionChat {
+  mensaje: string;
+  contrato?: Contrato;
 }

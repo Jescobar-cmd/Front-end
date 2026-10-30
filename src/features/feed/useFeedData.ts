@@ -106,7 +106,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed, vistaPrevia = false) {
       }
       return feed.servicios.map((servicio) => ({
         id: String(servicio.id),
-        categoria: servicio.categoriaId ? String(servicio.categoriaId) : "General",
+        categoria: servicio.categoria?.nombre ?? "General",
         titulo: servicio.titulo,
         descripcion: servicio.descripcion,
         detalle: `Servicio · ${servicio.estado ?? "activo"}`,

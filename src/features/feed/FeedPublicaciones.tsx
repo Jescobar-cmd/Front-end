@@ -29,7 +29,7 @@ function mensajeDeError(error: unknown): string {
 }
 
 function likesDe(publicacion: Publicacion) {
-  return publicacion.likes ?? { totalLikes: 0, meGusta: false };
+  return publicacion.likes ?? { total: 0, meGusta: false };
 }
 
 function validarImagen(url: string): string | null {
@@ -140,7 +140,7 @@ export function FeedPublicaciones({ vistaPrevia = false }: { vistaPrevia?: boole
     if (!token || likesEnCurso.includes(publicacion.id)) return;
     const anterior = likesDe(publicacion);
     const siguiente = {
-      totalLikes: Math.max(0, anterior.totalLikes + (anterior.meGusta ? -1 : 1)),
+      total: Math.max(0, anterior.total + (anterior.meGusta ? -1 : 1)),
       meGusta: !anterior.meGusta,
     };
     setLikesEnCurso((actuales) => [...actuales, publicacion.id]);
@@ -152,7 +152,7 @@ export function FeedPublicaciones({ vistaPrevia = false }: { vistaPrevia?: boole
       setPublicaciones((actuales) =>
         actuales.map((item) =>
           item.id === publicacion.id
-            ? { ...item, likes: { meGusta: respuesta.meGusta, totalLikes: respuesta.totalLikes } }
+            ? { ...item, likes: { meGusta: respuesta.meGusta, total: respuesta.totalLikes } }
             : item,
         ),
       );
@@ -281,7 +281,7 @@ export function FeedPublicaciones({ vistaPrevia = false }: { vistaPrevia?: boole
                     disabled={likesEnCurso.includes(publicacion.id)}
                     onClick={() => void manejarLike(publicacion)}
                   >
-                    {likes.meGusta ? "Te gusta" : "Me gusta"} · {likes.totalLikes}
+                    {likes.meGusta ? "Te gusta" : "Me gusta"} · {likes.total}
                   </button>
                   <button
                     type="button"

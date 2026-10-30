@@ -1,60 +1,68 @@
 import { apiFetch } from "./client";
+import type { Contrato } from "./apiContratos";
 
-export interface UltimoMensaje {
-  id: number;
-  contenido: string;
-  fecha: string;
-}
-
-export interface Contraparte {
+export interface ConversacionParticipante {
   id: number;
   nombre: string;
   fotoPerfil: string | null;
-  rol: string;
+}
+
+export interface Contraparte extends ConversacionParticipante {
+  rol: number;
 }
 
 export interface ContextoConversacion {
-  tipo: string;
-  proyectoId?: number;
-  servicioId?: number;
+  tipo: "proyecto" | "servicio" | "ninguno";
+  id: number | null;
+  titulo: string | null;
 }
 
+export interface UltimoMensaje {
+  contenido: string;
+  fechaEnvio: string;
+  emisorId: number;
+  tipo: string;
+}
+
+/**
+ * Conversación tal como la ve un participante.
+ * En el listado incluye `ultimoMensaje` y `noLeidos`; en el detalle incluye `participantes`.
+ */
 export interface Conversacion {
   id: number;
-  contexto?: ContextoConversacion;
-  cliente?: {
-    id: number;
-    nombre: string;
-    fotoPerfil: string | null;
-  };
-  freelancer?: {
-    id: number;
-    nombre: string;
-    fotoPerfil: string | null;
-  };
+  fechaCreacion: string;
+  contexto: ContextoConversacion;
   contraparte: Contraparte;
-  ultimoMensaje?: UltimoMensaje;
+  participantes?: {
+    cliente: ConversacionParticipante;
+    freelancer: ConversacionParticipante;
+  };
+  ultimoMensaje?: UltimoMensaje | null;
   noLeidos?: number;
+}
+
+export interface OfertaChatResumen {
+  id: number;
+  monto: number;
+  descripcion: string | null;
+  estado: string;
+  fechaExpiracion: string | null;
 }
 
 export interface Mensaje {
   id: number;
-  conversacionId?: number;
+  emisorId: number;
   contenido: string;
-  fecha: string;
-  oferta?: {
-    id: number;
-    monto: number;
-    descripcion?: string;
-    fechaExpiracion?: string;
-    estado: string;
-    padreId?: number;
-  };
+  tipo: string;
+  fechaEnvio: string;
+  leido: boolean;
+  /** Si el mensaje es de tipo 'oferta', trae la oferta asociada. */
+  oferta: OfertaChatResumen | null;
 }
 
 export interface RespuestaAccionChat {
   mensaje: string;
-  contrato?: unknown;
+  contrato?: Contrato;
 }
 
 export interface DatosConversacion {
@@ -67,11 +75,6 @@ export interface DatosMensaje {
   contenido: string;
 }
 
-export interface DatosMarcarLeido {
-  mensaje: number;
-  actualizados: number;
-}
-
 export interface DatosOfertaChat {
   monto: number;
   descripcion?: string;
@@ -81,9 +84,9 @@ export interface DatosOfertaChat {
 /**
  * Módulo de API — Chat (polling, sin WebSockets).
  * Backend: /api/conversaciones, /api/conversaciones/:id, /api/conversaciones/:id/mensajes,
- *         /api/conversaciones/:id/mensajes, /api/conversaciones/:id/leido,
- *         /api/conversaciones/:id/ofertas, /api/ofertas-chat/:id/aceptar,
- *         /api/ofertas-chat/:id/rechazar, /api/ofertas-chat/:id/contraoferta
+ *         /api/conversaciones/:id/leido, /api/conversaciones/:id/ofertas,
+ *         /api/ofertas-chat/:id/aceptar, /api/ofertas-chat/:id/rechazar,
+ *         /api/ofertas-chat/:id/contraoferta
  */
 
 export async function createConversation(token: string, datos: DatosConversacion): Promise<{ mensaje: string; conversacion: Conversacion }> {
@@ -136,8 +139,8 @@ export async function getMessages(
   return data;
 }
 
-export async function sendMessage(token: string, conversacionId: number, datos: DatosMensaje): Promise<{ mensaje: string }> {
-  const { data } = await apiFetch<{ mensaje: string }>({
+export async function sendMessage(token: string, conversacionId: number, datos: DatosMensaje): Promise<Mensaje> {
+  const { data } = await apiFetch<Mensaje>({
     method: "POST",
     path: `/conversaciones/${conversacionId}/mensajes`,
     token,
@@ -147,12 +150,11 @@ export async function sendMessage(token: string, conversacionId: number, datos: 
   return data;
 }
 
-export async function markRead(token: string, conversacionId: number, datos: DatosMarcarLeido): Promise<{ mensaje: string; actualizados: number }> {
+export async function markRead(token: string, conversacionId: number): Promise<{ mensaje: string; actualizados: number }> {
   const { data } = await apiFetch<{ mensaje: string; actualizados: number }>({
     method: "PATCH",
     path: `/conversaciones/${conversacionId}/leido`,
     token,
-    body: datos,
     mensajeError: "No se pudo marcar como leído",
   });
   return data;
@@ -162,8 +164,8 @@ export async function sendChatOffer(
   token: string,
   conversacionId: number,
   datos: DatosOfertaChat,
-): Promise<{ mensaje: string; oferta?: Mensaje["oferta"] }> {
-  const { data } = await apiFetch<{ mensaje: string; oferta?: Mensaje["oferta"] }>({
+): Promise<Mensaje> {
+  const { data } = await apiFetch<Mensaje>({
     method: "POST",
     path: `/conversaciones/${conversacionId}/ofertas`,
     token,
@@ -197,8 +199,8 @@ export async function counterChatOffer(
   token: string,
   id: number,
   datos: DatosOfertaChat,
-): Promise<{ mensaje: string; oferta?: Mensaje["oferta"] }> {
-  const { data } = await apiFetch<{ mensaje: string; oferta?: Mensaje["oferta"] }>({
+): Promise<Mensaje> {
+  const { data } = await apiFetch<Mensaje>({
     method: "POST",
     path: `/ofertas-chat/${id}/contraoferta`,
     token,

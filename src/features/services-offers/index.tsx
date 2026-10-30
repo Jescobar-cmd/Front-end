@@ -28,13 +28,14 @@ import {
 import type { DatosActualizacionServicio, Servicio } from "../../infrastructure/api/apiServicios";
 import { createConversation } from "../../infrastructure/api/apiChat";
 import { getCategories, getSkills } from "../../infrastructure/api/apiCatalogos";
+import type { Habilidad } from "../../infrastructure/api/apiCatalogos";
 import type { Categoria } from "../../core/domain/entities/categoria";
 import type { DatosOferta, EstadoOferta, Oferta } from "../../core/domain/entities/oferta";
 import "./services-offers.css";
 
 const PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
-type CatalogSkill = { id: number; nombre: string; categoriaId?: number };
+type CatalogSkill = Habilidad;
 
 function useCatalogs(token: string) {
   const [categories, setCategories] = useState<Categoria[]>([]);
@@ -332,6 +333,10 @@ function OfferForm({
         if (payload.categoriaId !== (previous.categoriaId ? Number(previous.categoriaId) : null)) changed.categoriaId = payload.categoriaId;
         if (JSON.stringify(payload.habilidadIds) !== JSON.stringify(previous.habilidadIds)) changed.habilidadIds = payload.habilidadIds;
         if (payload.imagenUrl !== (previous.imagenUrl || null)) changed.imagenUrl = payload.imagenUrl;
+        if (Object.keys(changed).length === 0) {
+          onSaved(initial);
+          return;
+        }
         const response = await updateOffer(token, initial.id, changed);
         saved = response.oferta;
       } else {
@@ -468,7 +473,7 @@ function ProposalCards({
               <span className="so-badge">{statusLabel(proposal.estado)}</span>
             </div>
             <p>{proposal.mensaje || "Sin mensaje adicional."}</p>
-            <div className="so-card__meta"><strong>{money(proposal.monto)}</strong><span>Enviada {date(proposal.fecha)}</span></div>
+            <div className="so-card__meta"><strong>{money(proposal.montoPropuesto)}</strong><span>Enviada {date(proposal.fechaEnvio)}</span></div>
             {pending && onAccept && onReject && (
               <div className="so-form__actions">
                 <button className="so-button so-button--primary" type="button" disabled={busyId !== null} onClick={() => onAccept(proposal)}>
@@ -731,11 +736,11 @@ export function FreelancerMarketplace({ token }: { token: string }) {
         if (!active) return;
         setMyProposalList(result.propuestas);
         const identifiedIds = result.propuestas
-          .map((item) => item.ofertaId ?? item.proyecto?.id)
+          .map((item) => item.proyecto?.id)
           .filter((id): id is number => typeof id === "number");
         const pendingIds = result.propuestas
           .filter((item) => item.estado.toLowerCase() === "pendiente")
-          .map((item) => item.ofertaId ?? item.proyecto?.id)
+          .map((item) => item.proyecto?.id)
           .filter((id): id is number => typeof id === "number");
         setSubmittedIds((current) => {
           const next = Array.from(new Set([
@@ -811,7 +816,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
 
   const pendingOfferIds = useMemo(() => new Set([
     ...submittedIds,
-    ...myProposalList.filter((item) => item.estado.toLowerCase() === "pendiente").map((item) => item.ofertaId ?? item.proyecto?.id).filter((id): id is number => typeof id === "number"),
+    ...myProposalList.filter((item) => item.estado.toLowerCase() === "pendiente").map((item) => item.proyecto?.id).filter((id): id is number => typeof id === "number"),
   ]), [submittedIds, myProposalList]);
 
   return (
@@ -859,10 +864,10 @@ export function FreelancerMarketplace({ token }: { token: string }) {
         {myLoading ? <p className="so-loading" role="status">Cargando tus propuestas…</p> : myProposalList.length === 0 ? <p className="so-empty">Aún no has enviado propuestas.</p> : (
           <div className="so-list">{myProposalList.map((proposal) => (
             <article className="so-card" key={proposal.id}>
-              <div className="so-card__top"><span className="so-badge">{statusLabel(proposal.estado)}</span><span className="so-muted">{date(proposal.fecha)}</span></div>
-              <h3>{proposal.proyecto?.titulo ?? `Oferta #${proposal.ofertaId ?? proposal.proyecto?.id ?? "—"}`}</h3>
+              <div className="so-card__top"><span className="so-badge">{statusLabel(proposal.estado)}</span><span className="so-muted">{date(proposal.fechaEnvio)}</span></div>
+              <h3>{proposal.proyecto?.titulo ?? `Oferta #${proposal.proyecto?.id ?? "—"}`}</h3>
               <p>{proposal.mensaje || "Sin mensaje adicional."}</p>
-              <div className="so-card__meta"><strong>{money(proposal.monto)}</strong></div>
+              <div className="so-card__meta"><strong>{money(proposal.montoPropuesto)}</strong></div>
             </article>
           ))}</div>
         )}
@@ -884,7 +889,7 @@ function serviceValues(service?: Servicio): ServiceFormValues {
     titulo: service?.titulo ?? "",
     descripcion: service?.descripcion ?? "",
     precio: service ? String(service.precio) : "",
-    categoriaId: service?.categoriaId ? String(service.categoriaId) : "",
+    categoriaId: service?.categoria?.id ? String(service.categoria.id) : "",
     imagenUrl: service?.imagenUrl ?? "",
   };
 }
@@ -933,6 +938,10 @@ function ServiceForm({
         if (payload.precio !== Number(previous.precio)) changed.precio = payload.precio;
         if (String(payload.categoriaId ?? "") !== previous.categoriaId) changed.categoriaId = payload.categoriaId;
         if (payload.imagenUrl !== (previous.imagenUrl || null)) changed.imagenUrl = payload.imagenUrl;
+        if (Object.keys(changed).length === 0) {
+          onSaved(initial);
+          return;
+        }
         const response = await updateService(token, initial.id, changed);
         saved = response.servicio;
       } else {
@@ -1031,7 +1040,7 @@ export function FreelancerServices({ token }: { token: string }) {
             {loading ? <p className="so-loading" role="status">Cargando tus servicios…</p> : services.length === 0 ? <p className="so-empty">No hay servicios para mostrar.</p> : (
               <div className="so-list">{services.map((service) => (
                 <article className="so-card" key={service.id}>
-                  <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span><span className="so-muted">{service.categoriaId ? `Categoría #${service.categoriaId}` : "Sin categoría"}</span></div>
+                  <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span><span className="so-muted">{service.categoria?.nombre ?? "Sin categoría"}</span></div>
                   <h3>{service.titulo}</h3><p className="so-clamp">{service.descripcion}</p>
                   <div className="so-card__meta"><strong>{money(service.precio)}</strong></div>
                   <div className="so-form__actions">
@@ -1140,7 +1149,7 @@ export function ClientServices({ token }: { token: string }) {
               </div>
               <p className="so-detail__description">{selected.descripcion}</p>
               <dl className="so-facts">
-                <div><dt>Categoría</dt><dd>{selected.categoriaId ? catalogs.categories.find((category) => category.id === selected.categoriaId)?.nombre ?? `Categoría #${selected.categoriaId}` : "Sin categoría"}</dd></div>
+                <div><dt>Categoría</dt><dd>{selected.categoria?.nombre ?? "Sin categoría"}</dd></div>
                 {selected.freelancer?.nombre && <div><dt>Freelancer</dt><dd>{selected.freelancer.nombre}</dd></div>}
                 {selected.freelancer?.calificacionPromedio !== undefined && <div><dt>Calificación</dt><dd>★ {selected.freelancer.calificacionPromedio.toFixed(1)}</dd></div>}
               </dl>
@@ -1168,7 +1177,7 @@ export function ClientServices({ token }: { token: string }) {
           {loading ? <p className="so-loading" role="status">Cargando servicios…</p> : services.length === 0 ? <p className="so-empty">No encontramos servicios para estos filtros.</p> : (
             <div className="so-list">{services.map((service) => (
               <article className="so-card" key={service.id}>
-                <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span>{service.categoriaId && <span className="so-muted">{catalogs.categories.find((category) => category.id === service.categoriaId)?.nombre ?? `Categoría #${service.categoriaId}`}</span>}</div>
+                <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span>{service.categoria && <span className="so-muted">{service.categoria.nombre}</span>}</div>
                 <h3>{service.titulo}</h3>
                 <p className="so-clamp">{service.descripcion}</p>
                 {service.freelancer?.nombre && <span className="so-muted">Por {service.freelancer.nombre}</span>}

@@ -1,40 +1,48 @@
 import { apiFetch } from "./client";
 import type { DatosOferta, EstadoOferta, FiltrosOferta, Oferta, OfertaPaginada } from "../../core/domain/entities/oferta";
+import type { Contrato } from "./apiContratos";
 
 export interface ClienteOferta {
   id: number;
   nombre: string;
   fotoPerfil: string | null;
-  empresa: string | null;
+  nombreEmpresa: string | null;
 }
 
 export interface OfertaMarketplace extends Oferta {
   cliente: ClienteOferta;
 }
 
+export interface OfertaMarketplacePaginada {
+  page: number;
+  limit: number;
+  total: number;
+  items: OfertaMarketplace[];
+}
+
 export interface Propuesta {
   id: number;
-  ofertaId?: number;
+  mensaje: string | null;
+  montoPropuesto: number;
+  estado: string;
+  fechaEnvio: string;
+  freelancer: {
+    id: number;
+    nombre: string;
+    fotoPerfil: string | null;
+    calificacionPromedio: number;
+  };
+  /** Presente en el panel del freelancer ("mis propuestas"). */
   proyecto?: {
     id: number;
     titulo: string;
     estado: string;
   };
-  freelancer: {
-    id: number;
-    nombre: string;
-    fotoPerfil: string | null;
-    calificacionPromedio?: number;
-  };
-  monto: number;
-  mensaje?: string;
-  estado: string;
-  fecha: string;
 }
 
 export interface RespuestaAccionPropuesta {
   mensaje: string;
-  contrato?: unknown;
+  contrato?: Contrato;
 }
 
 export interface DatosPropuesta {
@@ -171,7 +179,7 @@ export async function getMyProposals(token: string): Promise<{ total: number; pr
 export async function getMarketOffers(
   token: string,
   filtros: FiltrosMarketOferta = {},
-): Promise<OfertaPaginada> {
+): Promise<OfertaMarketplacePaginada> {
   const params = new URLSearchParams({
     page: String(filtros.page ?? 1),
     limit: String(filtros.limit ?? 30),
@@ -179,7 +187,7 @@ export async function getMarketOffers(
   if (filtros.categoriaId) params.set("categoriaId", String(filtros.categoriaId));
   if (filtros.q) params.set("q", filtros.q);
 
-  const { data } = await apiFetch<OfertaPaginada>({
+  const { data } = await apiFetch<OfertaMarketplacePaginada>({
     method: "GET",
     path: `/ofertas?${params.toString()}`,
     token,

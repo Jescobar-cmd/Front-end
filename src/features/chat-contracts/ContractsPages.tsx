@@ -207,9 +207,8 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
               <span className={`cc-status ${isActive(contract.estado) ? "cc-status-active" : ""}`}>{statusLabel(contract.estado)}</span>
             </div>
             <dl className="cc-definition-list">
-              <div><dt>Contexto</dt><dd>{contract.contexto?.tipo ?? "Sin especificar"}</dd></div>
-              {contract.contexto?.proyectoId && <div><dt>Proyecto</dt><dd>#{contract.contexto.proyectoId}</dd></div>}
-              {contract.contexto?.servicioId && <div><dt>Servicio</dt><dd>#{contract.contexto.servicioId}</dd></div>}
+              <div><dt>Contexto</dt><dd>{contract.contexto.titulo ?? contract.contexto.tipo}</dd></div>
+              {contract.contexto.id && <div><dt>{contract.contexto.tipo === "servicio" ? "Servicio" : "Proyecto"}</dt><dd>#{contract.contexto.id}</dd></div>}
               <div><dt>Fecha de inicio</dt><dd>{formatDate(contract.fechaInicio)}</dd></div>
               <div><dt>Fecha de término</dt><dd>{formatDate(contract.fechaFin)}</dd></div>
               <div><dt>Estado</dt><dd>{contractStateDescription(contract)}</dd></div>
