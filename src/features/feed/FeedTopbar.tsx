@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Brand } from "../../components/Brand";
-import { ProfileMenu } from "../../components/ProfileMenu";
+import { useAuth } from "../../context/AuthContext";
 import type { TipoCuentaFeed } from "./datosFeed";
 
 interface FeedTopbarProps {
@@ -9,46 +10,25 @@ interface FeedTopbarProps {
   placeholder?: string;
   nombre?: string;
   tipoCuenta: TipoCuentaFeed;
-  onAbrirMenu?: () => void;
-  menuAbierto?: boolean;
 }
 
-export function FeedTopbar({
-  valor,
-  onChange,
-  placeholder,
-  nombre,
-  tipoCuenta,
-  onAbrirMenu,
-  menuAbierto = false,
-}: FeedTopbarProps) {
+export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }: FeedTopbarProps) {
+  const navigate = useNavigate();
+  const { cerrarSesion } = useAuth();
+
   const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
+  };
+
+  const manejarCerrarSesion = () => {
+    cerrarSesion();
+    navigate("/login", { replace: true });
   };
 
   const esFreelancer = tipoCuenta === "freelancer";
 
   return (
     <header className="feed-topbar">
-      <button
-        className="feed-menu-button"
-        type="button"
-        onClick={onAbrirMenu}
-        aria-label="Abrir menú de navegación"
-        aria-controls="feed-sidebar"
-        aria-expanded={menuAbierto}
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        >
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
       <a
         className="feed-brand"
         href={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
@@ -74,11 +54,31 @@ export function FeedTopbar({
         )}
       </label>
       <div className="feed-topbar__right">
-        <ProfileMenu
-          nombre={nombre ?? ""}
-          rol={esFreelancer ? "freelancer" : "cliente"}
-          editarPerfilPath={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}
-        />
+        <span className="feed-topbar__icon" aria-hidden="true">
+          ▢
+        </span>
+        <span className="feed-topbar__icon" aria-hidden="true">
+          ♧
+        </span>
+        <div className="feed-account">
+          <span className="feed-account__avatar" aria-hidden="true">
+            {(nombre ?? "M").trim().charAt(0).toLocaleUpperCase()}
+          </span>
+          <span className="feed-account__identity">
+            <strong>{nombre || "Mi cuenta"}</strong>
+            <small>{esFreelancer ? "Cuenta de freelancer" : "Cuenta de cliente"}</small>
+          </span>
+        </div>
+        <button
+          type="button"
+          className="feed-logout"
+          onClick={manejarCerrarSesion}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          <span aria-hidden="true">⏻</span>
+          <span className="feed-logout__label">Cerrar sesión</span>
+        </button>
       </div>
     </header>
   );
