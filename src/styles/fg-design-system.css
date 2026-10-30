@@ -1,0 +1,101 @@
+/* FirstGig internal design tokens.
+   Only variables and rules scoped to internal app pages.
+   Login and registration do not import this file. */
+:root {
+  --fg-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, "Segoe UI", sans-serif;
+
+  --fg-bg: #f5f5f7;
+  --fg-surface: #ffffff;
+  --fg-surface-2: #fbfbfd;
+  --fg-fill: #f0f0f2;
+  --fg-fill-strong: #e8e8ed;
+  --fg-text: #1d1d1f;
+  --fg-text-secondary: #6e6e73;
+  --fg-text-tertiary: #86868b;
+  --fg-line: #e5e5ea;
+  --fg-line-strong: #d2d2d7;
+
+  --fg-accent: #165a7d;
+  --fg-accent-hover: #0f4560;
+  --fg-accent-soft: #eaf1f6;
+  --fg-accent-soft-strong: #d8e7ef;
+
+  --fg-danger: #b42318;
+  --fg-danger-soft: #fff2f0;
+  --fg-success: #17613e;
+  --fg-success-soft: #edf8f2;
+  --fg-focus: rgba(22, 90, 125, 0.26);
+
+  --fg-r-sm: 8px;
+  --fg-r-md: 12px;
+  --fg-r-lg: 16px;
+  --fg-r-xl: 24px;
+  --fg-r-pill: 999px;
+
+  --fg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --fg-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --fg-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.1);
+
+  --fg-space-1: 4px;
+  --fg-space-2: 8px;
+  --fg-space-3: 12px;
+  --fg-space-4: 16px;
+  --fg-space-5: 20px;
+  --fg-space-6: 24px;
+  --fg-space-7: 28px;
+  --fg-space-8: 32px;
+  --fg-space-10: 40px;
+  --fg-space-12: 48px;
+
+  --fg-control-h: 44px;
+  --fg-ease: cubic-bezier(0.22, 0.8, 0.22, 1);
+  --fg-transition: 200ms var(--fg-ease);
+  --fg-sidebar-width: 240px;
+  --fg-sidebar-collapsed: 72px;
+}
+
+:root[data-fg-theme="dark"] {
+  --fg-bg: #000000;
+  --fg-surface: #1c1c1e;
+  --fg-surface-2: #2c2c2e;
+  --fg-fill: #2c2c2e;
+  --fg-fill-strong: #3a3a3c;
+  --fg-text: #f5f5f7;
+  --fg-text-secondary: #a1a1a6;
+  --fg-text-tertiary: #8e8e93;
+  --fg-line: #38383a;
+  --fg-line-strong: #48484a;
+
+  --fg-accent: #4f9bc4;
+  --fg-accent-hover: #8cc7e6;
+  --fg-accent-soft: rgba(79, 155, 196, 0.16);
+  --fg-accent-soft-strong: rgba(79, 155, 196, 0.26);
+
+  --fg-danger: #ff6961;
+  --fg-danger-soft: rgba(255, 105, 97, 0.12);
+  --fg-success: #6ee7a8;
+  --fg-success-soft: rgba(110, 231, 168, 0.12);
+  --fg-focus: rgba(140, 199, 230, 0.38);
+
+  --fg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.36);
+  --fg-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+  --fg-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.56);
+}
+
+body:has(.profile-page),
+body:has(.so-page),
+body:has(.cc-page) {
+  display: block;
+  padding: 0;
+  background: var(--fg-bg);
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+#root:has(.profile-page),
+#root:has(.so-page),
+#root:has(.cc-page) {
+  display: block;
+  min-height: 100dvh;
+  width: 100%;
+}

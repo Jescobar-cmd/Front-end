@@ -10,9 +10,19 @@ interface FeedTopbarProps {
   placeholder?: string;
   nombre?: string;
   tipoCuenta: TipoCuentaFeed;
+  onAbrirMenu?: () => void;
+  menuAbierto?: boolean;
 }
 
-export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }: FeedTopbarProps) {
+export function FeedTopbar({
+  valor,
+  onChange,
+  placeholder,
+  nombre,
+  tipoCuenta,
+  onAbrirMenu,
+  menuAbierto = false,
+}: FeedTopbarProps) {
   const navigate = useNavigate();
   const { cerrarSesion } = useAuth();
 
@@ -29,6 +39,25 @@ export function FeedTopbar({ valor, onChange, placeholder, nombre, tipoCuenta }:
 
   return (
     <header className="feed-topbar">
+      <button
+        className="feed-menu-button"
+        type="button"
+        onClick={onAbrirMenu}
+        aria-label="Abrir menú de navegación"
+        aria-controls="feed-sidebar"
+        aria-expanded={menuAbierto}
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        >
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
       <a
         className="feed-brand"
         href={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}

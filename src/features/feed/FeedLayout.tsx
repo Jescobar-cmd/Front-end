@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FeedTopbar } from "./FeedTopbar";
 import { FeedSidebar } from "./FeedSidebar";
 import {
@@ -18,9 +18,35 @@ interface FeedLayoutProps {
   datos: FeedData;
 }
 
+const SIDEBAR_KEY = "first_gig_sidebar_colapsada";
+
+function leerSidebarColapsada(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export function FeedLayout({ datos }: FeedLayoutProps) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todo");
+  const [sidebarColapsada, setSidebarColapsada] = useState(leerSidebarColapsada);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+
+  const alternarSidebar = useCallback(() => {
+    setSidebarColapsada((actual) => {
+      const siguiente = !actual;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(siguiente));
+      } catch {
+        // La preferencia sigue funcionando durante la sesión.
+      }
+      return siguiente;
+    });
+  }, []);
+
+  const cerrarMenuMovil = useCallback(() => setMenuMovilAbierto(false), []);
 
   const {
     usuario,
@@ -34,10 +60,6 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
     errorCategorias,
     recargarCategorias,
     proyectosParaTi,
-    misProyectos,
-    estadoMisOfertas,
-    errorMisOfertas,
-    recargarMisOfertas,
     vistaPrevia,
   } = datos;
   const esFreelancer = usuario.tipoCuenta === "freelancer";
@@ -74,10 +96,18 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
         placeholder={placeholder}
         nombre={usuario.nombre}
         tipoCuenta={usuario.tipoCuenta}
+        onAbrirMenu={() => setMenuMovilAbierto(true)}
+        menuAbierto={menuMovilAbierto}
       />
 
       <div className="feed-app">
-        <FeedSidebar esFreelancer={esFreelancer} activo="inicio" />
+        <FeedSidebar
+          esFreelancer={esFreelancer}
+          colapsada={sidebarColapsada}
+          onToggleColapsada={alternarSidebar}
+          abierta={menuMovilAbierto}
+          onCerrar={cerrarMenuMovil}
+        />
 
         <main className="feed-main" id="inicio">
           <div className="feed-workspace">
@@ -178,45 +208,30 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
 
               <FeedPublicaciones vistaPrevia={vistaPrevia} />
 
-              <section className="feed-activity" id="activity">
-                <div className="feed-toolbar">
-                  <div>
-                    <h2>{esFreelancer ? "Mis postulaciones" : "Mis proyectos"}</h2>
-                    <p>Un vistazo rápido a tu actividad reciente.</p>
+              {esFreelancer && (
+                <section className="feed-activity" id="activity">
+                  <div className="feed-toolbar">
+                    <div>
+                      <h2>Mis postulaciones</h2>
+                      <p>Un vistazo rápido a tu actividad reciente.</p>
+                    </div>
+                    <a className="feed-text-link" href="/dashboard/freelancer/ofertas">Ver actividad <span aria-hidden="true">→</span></a>
                   </div>
-                  <a className="feed-text-link" href={esFreelancer ? "/dashboard/freelancer/ofertas" : "/dashboard/cliente/ofertas"}>Ver actividad <span aria-hidden="true">→</span></a>
-                </div>
 
-                {esFreelancer ? (
-                  mostrarEjemplos ? <div className="feed-activity__row">
-                    <span className="feed-activity__symbol" aria-hidden="true">◇</span>
-                    <div>
-                      <strong>Tu próxima oportunidad comienza aquí</strong>
-                      <small>Explora los proyectos recomendados para ti.</small>
+                  {mostrarEjemplos ? (
+                    <div className="feed-activity__row">
+                      <span className="feed-activity__symbol" aria-hidden="true">◇</span>
+                      <div>
+                        <strong>Tu próxima oportunidad comienza aquí</strong>
+                        <small>Explora los proyectos recomendados para ti.</small>
+                      </div>
+                      <a href="/dashboard/freelancer/ofertas" aria-label="Ver oportunidades">↗</a>
                     </div>
-                    <a href="/dashboard/freelancer/ofertas" aria-label="Ver oportunidades">↗</a>
-                  </div> : <FeedVacio buscando={false} />
-                ) : estadoMisOfertas.estado === "cargando" ? (
-                  <FeedLoading />
-                ) : errorMisOfertas ? (
-                  <FeedError mensaje={errorMisOfertas} onReintentar={recargarMisOfertas} />
-                ) : misProyectos.length > 0 ? (
-                  <div className="feed-activity__list">
-                    {misProyectos.map((proyecto) => (
-                      <FeedPiezaCard key={proyecto.id} pieza={proyecto} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="feed-activity__row">
-                    <span className="feed-activity__symbol" aria-hidden="true">◇</span>
-                    <div>
-                      <strong>Organiza tus proyectos en un solo lugar</strong>
-                      <small>Publica un proyecto y encuentra el talento indicado.</small>
-                    </div>
-                    <a href="/dashboard/cliente/ofertas" aria-label="Gestionar proyectos">↗</a>
-                  </div>
-                )}
-              </section>
+                  ) : (
+                    <FeedVacio buscando={false} />
+                  )}
+                </section>
+              )}
             </div>
 
             <aside className="feed-aside" aria-label="Resumen de cuenta">
