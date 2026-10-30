@@ -167,75 +167,8 @@ body:has(.feed-layout) #root {
 .feed-topbar__right {
   display: flex;
   align-items: center;
-  gap: 1.1rem;
+  gap: 0.5rem;
   margin-left: auto;
-}
-
-.feed-topbar__icon {
-  color: #54707e;
-  font-size: 1.05rem;
-}
-
-.feed-account {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--feed-blue-deep);
-}
-
-.feed-account__avatar {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--feed-blue-deep);
-  background: var(--feed-mist);
-  font-size: 0.78rem;
-  font-weight: 750;
-}
-
-.feed-account__identity {
-  display: grid;
-  gap: 0.1rem;
-  white-space: nowrap;
-}
-
-.feed-account__identity strong {
-  font-size: 0.7rem;
-  font-weight: 750;
-}
-
-.feed-account__identity small {
-  color: var(--feed-muted);
-  font-size: 0.6rem;
-}
-
-.feed-logout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid #d7e4ec;
-  border-radius: 999px;
-  color: var(--feed-blue-deep);
-  background: #fff;
-  font: inherit;
-  font-size: 0.68rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.feed-logout:hover {
-  border-color: var(--feed-blue-light);
-  background: var(--feed-mist);
-}
-
-.feed-logout:focus-visible {
-  outline: 2px solid var(--feed-blue);
-  outline-offset: 2px;
 }
 
 .feed-app {
@@ -719,8 +652,7 @@ body:has(.feed-layout) #root {
   text-decoration: none;
 }
 
-.feed-text-link:hover,
-.feed-panel__link:hover {
+.feed-text-link:hover {
   color: var(--feed-blue-deep);
   text-decoration: underline;
 }
@@ -1065,33 +997,11 @@ body:has(.feed-layout) #root {
   line-height: 1.45;
 }
 
-.feed-notice a,
-.feed-panel__link {
+.feed-notice a {
   color: var(--feed-blue);
   font-size: 0.52rem;
   font-weight: 700;
   text-decoration: none;
-}
-
-.feed-profile-progress {
-  height: 5px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: #e8eff2;
-}
-
-.feed-profile-progress span:first-child {
-  display: block;
-  width: 72%;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--feed-blue-light);
-}
-
-.feed-panel__link {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.6rem;
 }
 
 .feed-aside-callout {
@@ -1442,18 +1352,6 @@ body:has(.feed-layout) #root {
 
   .feed-topbar__right {
     gap: 0.55rem;
-  }
-
-  .feed-topbar__icon {
-    display: none;
-  }
-
-  .feed-account__identity {
-    display: none;
-  }
-
-  .feed-logout__label {
-    display: none;
   }
 
   .feed-main {

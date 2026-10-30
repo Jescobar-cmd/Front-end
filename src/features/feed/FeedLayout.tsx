@@ -267,22 +267,6 @@ export function FeedLayout({ datos }: FeedLayoutProps) {
                 )) : <p className="feed-panel__caption">No hay avisos disponibles.</p>}
               </section>
 
-              <section className="feed-panel" id="profile">
-                <div className="feed-panel__heading">
-                  <h2>{esFreelancer ? "Mi perfil" : "Mi cuenta"}</h2>
-                  <a className="feed-text-link" href={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>Ver</a>
-                </div>
-                <p className="feed-panel__caption">{usuario.nombre || "Completa tu perfil para empezar"}</p>
-                {mostrarEjemplos ? (
-                  <div className="feed-profile-progress"><span /><span /></div>
-                ) : (
-                  <p className="feed-panel__caption">No hay datos de completitud del perfil disponibles.</p>
-                )}
-                <a className="feed-panel__link" href={esFreelancer ? "/perfil/freelancer" : "#services"}>
-                  {esFreelancer ? "Completar perfil" : "Explorar servicios"} <span>↗</span>
-                </a>
-              </section>
-
               <section className="feed-aside-callout">
                 <span aria-hidden="true">✧</span>
                 <p>UN BUEN COMIENZO</p>

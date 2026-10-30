@@ -1,7 +1,6 @@
 import type { ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import { Brand } from "../../components/Brand";
-import { useAuth } from "../../context/AuthContext";
+import { ProfileMenu } from "../../components/ProfileMenu";
 import type { TipoCuentaFeed } from "./datosFeed";
 
 interface FeedTopbarProps {
@@ -23,16 +22,8 @@ export function FeedTopbar({
   onAbrirMenu,
   menuAbierto = false,
 }: FeedTopbarProps) {
-  const navigate = useNavigate();
-  const { cerrarSesion } = useAuth();
-
   const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
-  };
-
-  const manejarCerrarSesion = () => {
-    cerrarSesion();
-    navigate("/login", { replace: true });
   };
 
   const esFreelancer = tipoCuenta === "freelancer";
@@ -83,31 +74,11 @@ export function FeedTopbar({
         )}
       </label>
       <div className="feed-topbar__right">
-        <span className="feed-topbar__icon" aria-hidden="true">
-          ▢
-        </span>
-        <span className="feed-topbar__icon" aria-hidden="true">
-          ♧
-        </span>
-        <div className="feed-account">
-          <span className="feed-account__avatar" aria-hidden="true">
-            {(nombre ?? "M").trim().charAt(0).toLocaleUpperCase()}
-          </span>
-          <span className="feed-account__identity">
-            <strong>{nombre || "Mi cuenta"}</strong>
-            <small>{esFreelancer ? "Cuenta de freelancer" : "Cuenta de cliente"}</small>
-          </span>
-        </div>
-        <button
-          type="button"
-          className="feed-logout"
-          onClick={manejarCerrarSesion}
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-        >
-          <span aria-hidden="true">⏻</span>
-          <span className="feed-logout__label">Cerrar sesión</span>
-        </button>
+        <ProfileMenu
+          nombre={nombre ?? ""}
+          rol={esFreelancer ? "freelancer" : "cliente"}
+          editarPerfilPath={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}
+        />
       </div>
     </header>
   );
