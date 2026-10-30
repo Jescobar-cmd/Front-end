@@ -3,7 +3,10 @@ import { Email } from "../value-objects/Email";
 export type Rol = "freelancer" | "cliente";
 export type RolId = 2 | 3; // 2 = freelancer, 3 = cliente
 
-export const rolDesdeId = (id: number): Rol => (id === 2 ? "freelancer" : "cliente");
+export const rolDesdeId = (id: number | string): Rol => {
+  const valor = String(id).trim().toLowerCase();
+  return valor === "2" || valor === "freelancer" ? "freelancer" : "cliente";
+};
 export const idDesdeRol = (rol: Rol): RolId => (rol === "freelancer" ? 2 : 3);
 
 interface UserData {

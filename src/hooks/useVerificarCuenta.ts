@@ -3,6 +3,7 @@ import { verificarCuentaUseCase } from "../di/container";
 
 export function useVerificarCuenta() {
   const [loading, setLoading] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [reenviarEn, setReenviarEn] = useState(0);
@@ -14,6 +15,7 @@ export function useVerificarCuenta() {
   }, [reenviarEn]);
 
   const verificar = async (email: string, code: string): Promise<boolean> => {
+    if (loading || enviando) return false;
     setLoading(true);
     setError(null);
     setInfo(null);
@@ -30,20 +32,20 @@ export function useVerificarCuenta() {
   };
 
   const reenviar = async (email: string): Promise<void> => {
-    if (loading || reenviarEn > 0) return;
-    setLoading(true);
+    if (loading || enviando || reenviarEn > 0) return;
+    setEnviando(true);
     setError(null);
     setInfo(null);
     try {
       await verificarCuentaUseCase.reenviar(email);
-      setInfo("Te enviamos un nuevo código.");
+      setInfo("Si tu cuenta sigue pendiente, te enviamos un código nuevo. Puede tardar unos minutos en llegar.");
       setReenviarEn(30);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo reenviar el código");
     } finally {
-      setLoading(false);
+      setEnviando(false);
     }
   };
 
-  return { verificar, reenviar, loading, error, info, reenviarEn };
+  return { verificar, reenviar, loading, enviando, error, info, reenviarEn };
 }

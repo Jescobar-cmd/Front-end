@@ -83,6 +83,9 @@ export function Registro() {
             Soy freelancer
           </Button>
         </fieldset>
+        <p className="auth-hint" role="status">
+          Crearás una cuenta de {rol === "freelancer" ? "freelancer" : "cliente"}.
+        </p>
 
         <div className="registro-name-row">
           <div className="auth-field">
@@ -211,6 +214,11 @@ export function Registro() {
         <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Registrarme"}
         </Button>
+        {loading && (
+          <p className="auth-hint" role="status">
+            Estamos creando tu cuenta y enviando el código de verificación. Esto puede tardar unos segundos.
+          </p>
+        )}
 
         <div className="links">
           <p>

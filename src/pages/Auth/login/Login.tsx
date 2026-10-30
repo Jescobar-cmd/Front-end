@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
@@ -31,6 +31,16 @@ export function Login() {
     navigate(dashboardPorRol(resultado.sesion.user.rol), { replace: true });
   }, [guardarSesion, navigate]);
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleResultadoGoogle);
+
+  // Si el backend rechaza el login porque la cuenta no está verificada, se lleva
+  // al usuario a la pantalla de verificación con su correo ya cargado.
+  useEffect(() => {
+    if (!error || !/confirma tu cuenta/i.test(error)) return;
+    const email = form.email.trim();
+    if (!email) return;
+    sessionStorage.setItem("first_gig_email_pendiente", email);
+    navigate("/verificar-cuenta", { state: { email, desdeLogin: true }, replace: true });
+  }, [error, form.email, navigate]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

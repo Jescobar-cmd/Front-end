@@ -15,7 +15,7 @@ import { User, rolDesdeId } from "../../core/domain/entities/user";
 
 interface SesionDto {
   token: string;
-  rol: number;
+  rol?: number | string;
   nombre: string;
   id?: number;
   email?: string;
@@ -25,33 +25,44 @@ interface PerfilDto {
   id: number;
   nombre: string;
   email: string;
-  rol: number;
+  rol: number | string;
   telefono?: string;
   cedula?: string;
   estado?: string;
 }
 
 async function sesionDesdeDto(dto: SesionDto): Promise<Sesion> {
-  let email = dto.email;
-  let id = dto.id;
-  let nombre = dto.nombre;
+  let perfil: PerfilDto | null = null;
 
-  // Google no devuelve email/id en la respuesta: se pide el perfil con el JWT
-  if (!email) {
+  // /auth/me es la fuente de verdad del rol. Así una respuesta de login con el
+  // rol en otro formato (por ejemplo "2" o "freelancer") no envía al dashboard
+  // equivocado. Si el endpoint falla, se usa el DTO como respaldo.
+  try {
     const { data } = await apiFetch<PerfilDto>({
       method: "GET",
       path: "/auth/me",
       token: dto.token,
       mensajeError: "No se pudo cargar tu perfil",
     });
-    email = data.email;
-    id = data.id;
-    nombre = data.nombre;
+    perfil = data;
+  } catch (error) {
+    if (!dto.email || dto.rol === undefined || dto.rol === null) {
+      throw error;
+    }
+  }
+
+  const email = perfil?.email ?? dto.email;
+  const id = perfil?.id ?? dto.id;
+  const nombre = perfil?.nombre ?? dto.nombre;
+  const rol = perfil?.rol ?? dto.rol;
+
+  if (!email || rol === undefined || rol === null) {
+    throw new Error("No se pudo cargar tu perfil");
   }
 
   return {
     token: dto.token,
-    user: new User({ id, nombre, email: email as string, rol: rolDesdeId(dto.rol) }),
+    user: new User({ id, nombre, email, rol: rolDesdeId(rol) }),
   };
 }
 

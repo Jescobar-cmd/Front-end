@@ -11,11 +11,12 @@ export function VerificarCuenta() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const { verificar, reenviar, loading, error, info, reenviarEn } = useVerificarCuenta();
+  const { verificar, reenviar, loading, enviando, error, info, reenviarEn } = useVerificarCuenta();
 
   // El correo llega desde el registro; si recargan la página se recupera de sessionStorage
+  const estadoNavegacion = location.state as { email?: string; desdeLogin?: boolean } | null;
   const emailInicial =
-    (location.state as { email?: string } | null)?.email ??
+    estadoNavegacion?.email ??
     params.get("email") ??
     sessionStorage.getItem("first_gig_email_pendiente") ??
     "";
@@ -64,6 +65,11 @@ export function VerificarCuenta() {
         <p>
           Te enviamos un código de 6 dígitos {email ? <>a <strong>{email}</strong></> : "a tu correo"}.
         </p>
+        <p className="auth-hint" role="status">
+          {estadoNavegacion?.desdeLogin
+            ? "Tu cuenta aún no está verificada. Usa el código que enviamos al registrarte o solicita uno nuevo."
+            : "El código puede tardar unos minutos. Si no lo ves, revisa la carpeta de spam."}
+        </p>
 
         {!emailInicial && (
           <div className="auth-field">
@@ -104,7 +110,7 @@ export function VerificarCuenta() {
           </p>
         )}
 
-        <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
+        <Button type="submit" className="btn-primary" disabled={loading || enviando} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Confirmar"}
         </Button>
 
@@ -113,11 +119,11 @@ export function VerificarCuenta() {
           <Button
             type="button"
             className="btn-primary"
-            disabled={loading || reenviarEn > 0}
+            disabled={loading || enviando || reenviarEn > 0}
             onClick={() => void reenviar(email)}
-            aria-busy={loading}
+            aria-busy={enviando}
           >
-            {loading ? <Spinner size="small" /> : reenviarEn > 0 ? `Reenviar código (${reenviarEn}s)` : "Reenviar código"}
+            {enviando ? "Enviando código..." : reenviarEn > 0 ? `Reenviar código (${reenviarEn}s)` : "Reenviar código"}
           </Button>
           <p>
             <Link to="/login">Volver al inicio</Link>
