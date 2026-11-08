@@ -1,1 +1,0 @@
-export { VerificarEnviado } from "./VerificarEnviado";

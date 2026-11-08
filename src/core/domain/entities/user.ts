@@ -5,7 +5,9 @@ export type RolId = 2 | 3; // 2 = freelancer, 3 = cliente
 
 export const rolDesdeId = (id: number | string): Rol => {
   const valor = String(id).trim().toLowerCase();
-  return valor === "2" || valor === "freelancer" ? "freelancer" : "cliente";
+  if (valor === "2" || valor === "freelancer") return "freelancer";
+  if (valor === "3" || valor === "cliente") return "cliente";
+  throw new Error("El servidor devolvió un rol de usuario no válido");
 };
 export const idDesdeRol = (rol: Rol): RolId => (rol === "freelancer" ? 2 : 3);
 

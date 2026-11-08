@@ -1,0 +1,58 @@
+@import "../../styles/fg-design-system.css";
+
+.fg-skip {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--fg-accent, #165a7d);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.fg-skip:focus {
+  transform: translateY(0);
+}
+
+.fg-main {
+  width: min(1440px, 100%);
+  min-width: 0;
+  margin: 0 auto;
+  padding: 1.35rem clamp(1.1rem, 2.2vw, 2rem) 2.5rem;
+}
+
+.fg-main > .so-page,
+.fg-main > .profile-page,
+.fg-main > .cc-page {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.fg-main > .feed-layout {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 0;
+  margin: 0 auto;
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .fg-main {
+    padding-top: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-sidebar,
+  .feed-sidebar__create,
+  .feed-page,
+  .feed-card {
+    transition: none;
+  }
+}

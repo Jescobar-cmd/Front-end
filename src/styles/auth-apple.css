@@ -1,4 +1,4 @@
-.auth-page {
+﻿.auth-page {
   width: min(100%, 480px);
   margin-inline: auto;
   padding-block: 1rem;
@@ -249,5 +249,89 @@
   .auth-page *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Selector de rol para el primer acceso con Google.
+   Reutiliza los colores y controles existentes del login. */
+.google-role-modal {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.google-role-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 58%, transparent);
+  cursor: default;
+}
+
+.google-role-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 460px);
+  max-width: 460px;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  outline: none;
+}
+
+.google-role-modal__eyebrow {
+  margin: 0;
+  color: var(--venice);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.google-role-modal__panel h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.4rem, 5vw, 1.7rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.google-role-modal__hint,
+.google-role-modal__note {
+  color: rgba(8, 24, 37, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.google-role-modal__note {
+  margin: 0;
+}
+
+.google-role-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.google-role-modal__actions .btn {
+  flex: 1 1 140px;
+}
+
+@media (max-width: 420px) {
+  .google-role-modal__panel {
+    padding: 1.25rem;
+  }
+
+  .google-role-modal__actions .btn {
+    flex-basis: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .google-role-modal__backdrop {
+    transition: none;
   }
 }

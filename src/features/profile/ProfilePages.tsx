@@ -42,14 +42,14 @@ function httpsUrlError(value: string): string | undefined {
 
 function ProfileFrame({ heading, description, children }: { heading: string; description: string; children: ReactNode }) {
   return (
-    <main className="profile-page">
+    <div className="profile-page">
       <header className="profile-heading">
         <p className="profile-eyebrow">MI CUENTA</p>
         <h1>{heading}</h1>
         <p>{description}</p>
       </header>
       {children}
-    </main>
+    </div>
   );
 }
 
@@ -73,18 +73,22 @@ function Field({
   label,
   name,
   error,
+  help,
   children,
 }: {
   label: string;
   name: string;
   error?: string;
+  help?: string;
   children: ReactNode;
 }) {
   const errorId = `${name}-error`;
+  const helpId = `${name}-help`;
   return (
     <label className="profile-field" htmlFor={name}>
       <span>{label}</span>
       {children}
+      {help && <small className="profile-field-help" id={helpId}>{help}</small>}
       {error && (
         <span className="profile-field-error" id={errorId} role="alert">
           {error}
@@ -135,13 +139,41 @@ function PhotoUrlField({
   );
 }
 
+function ProfilePreview({
+  nombre,
+  fotoPerfil,
+  rol,
+  email,
+}: {
+  nombre: string;
+  fotoPerfil: string;
+  rol: string;
+  email: string;
+}) {
+  const inicial = nombre.trim().charAt(0).toLocaleUpperCase() || "F";
+  return (
+    <div className="profile-preview">
+      {fotoPerfil.trim() ? (
+        <img className="profile-preview__avatar" src={fotoPerfil.trim()} alt="" />
+      ) : (
+        <span className="profile-preview__avatar profile-preview__avatar--initial" aria-hidden="true">{inicial}</span>
+      )}
+      <div className="profile-preview__copy">
+        <strong>{nombre.trim() || "Tu perfil"}</strong>
+        <span>{rol}</span>
+        <small>{email}</small>
+      </div>
+    </div>
+  );
+}
+
 function useProfileToken() {
-  const { token, user } = useAuth();
-  return { token, user };
+  const { token, user, actualizarNombre } = useAuth();
+  return { token, user, actualizarNombre };
 }
 
 export function ClientProfilePage() {
-  const { token, user } = useProfileToken();
+  const { token, actualizarNombre } = useProfileToken();
   const [profile, setProfile] = useState<PerfilCliente | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -157,6 +189,12 @@ export function ClientProfilePage() {
     nombreEmpresa: "",
     tipoCliente: "natural" as "natural" | "empresa",
   });
+
+  useEffect(() => {
+    if (!saved) return;
+    const timeout = window.setTimeout(() => setSaved(false), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [saved]);
 
   useEffect(() => {
     let active = true;
@@ -196,7 +234,23 @@ export function ClientProfilePage() {
   const updateValue = (name: keyof typeof values, value: string) => {
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: "" }));
+    setSaveError("");
     setSaved(false);
+  };
+
+  const resetValues = () => {
+    if (!profile) return;
+    setValues({
+      nombre: profile.nombre ?? "",
+      telefono: profile.telefono ?? "",
+      fotoPerfil: profile.fotoPerfil ?? "",
+      descripcion: profile.cliente.descripcion ?? "",
+      nombreEmpresa: profile.cliente.nombreEmpresa ?? "",
+      tipoCliente: profile.cliente.tipoCliente === "empresa" ? "empresa" : "natural",
+    });
+    setErrors({});
+    setSaved(false);
+    setSaveError("");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -222,7 +276,19 @@ export function ClientProfilePage() {
         tipoCliente: values.tipoCliente,
       });
       setSaved(true);
-      setProfile((current) => (current ? { ...current, nombre: values.nombre.trim() } : current));
+      setProfile((current) => current ? {
+        ...current,
+        nombre: values.nombre.trim(),
+        telefono: values.telefono.trim() || null,
+        fotoPerfil: values.fotoPerfil.trim() || null,
+        cliente: {
+          ...current.cliente,
+          descripcion: values.descripcion.trim() || null,
+          nombreEmpresa: values.nombreEmpresa.trim() || null,
+          tipoCliente: values.tipoCliente,
+        },
+      } : current);
+      actualizarNombre(values.nombre);
     } catch (error) {
       setErrors(fieldErrors(error));
       setSaveError(errorMessage(error));
@@ -238,84 +304,111 @@ export function ClientProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card" onSubmit={handleSubmit} noValidate>
-          <div className="profile-grid">
-            <Field label="Nombre" name="nombre" error={errors.nombre}>
-              <input
-                id="nombre"
-                name="nombre"
-                autoComplete="name"
-                required
-                value={values.nombre}
-                disabled={saving}
-                aria-invalid={Boolean(errors.nombre)}
-                aria-describedby={errors.nombre ? "nombre-error" : undefined}
-                onChange={(event) => updateValue("nombre", event.target.value)}
-              />
-            </Field>
-            <AccountEmail email={profile.email} />
-            <Field label="Teléfono" name="telefono" error={errors.telefono}>
-              <input
-                id="telefono"
-                name="telefono"
-                type="tel"
-                autoComplete="tel"
-                value={values.telefono}
-                disabled={saving}
-                aria-invalid={Boolean(errors.telefono)}
-                aria-describedby={errors.telefono ? "telefono-error" : undefined}
-                onChange={(event) => updateValue("telefono", event.target.value)}
-              />
-            </Field>
-            <PhotoUrlField
-              value={values.fotoPerfil}
-              error={errors.fotoPerfil}
-              disabled={saving}
-              onChange={(value) => updateValue("fotoPerfil", value)}
-            />
-            <Field label="Tipo de cliente" name="tipoCliente" error={errors.tipoCliente}>
-              <select
-                id="tipoCliente"
-                name="tipoCliente"
-                value={values.tipoCliente}
-                disabled={saving}
-                aria-invalid={Boolean(errors.tipoCliente)}
-                aria-describedby={errors.tipoCliente ? "tipoCliente-error" : undefined}
-                onChange={(event) => updateValue("tipoCliente", event.target.value)}
-              >
-                <option value="natural">Persona</option>
-                <option value="empresa">Empresa</option>
-              </select>
-            </Field>
-            <Field label="Nombre de empresa" name="nombreEmpresa" error={errors.nombreEmpresa}>
-              <input
-                id="nombreEmpresa"
-                name="nombreEmpresa"
-                autoComplete="organization"
-                value={values.nombreEmpresa}
-                disabled={saving}
-                aria-invalid={Boolean(errors.nombreEmpresa)}
-                aria-describedby={errors.nombreEmpresa ? "nombreEmpresa-error" : undefined}
-                onChange={(event) => updateValue("nombreEmpresa", event.target.value)}
-              />
-            </Field>
-            <Field label="Descripción" name="descripcion" error={errors.descripcion}>
-              <textarea
-                id="descripcion"
-                name="descripcion"
-                rows={5}
-                value={values.descripcion}
-                disabled={saving}
-                aria-invalid={Boolean(errors.descripcion)}
-                aria-describedby={errors.descripcion ? "descripcion-error" : undefined}
-                onChange={(event) => updateValue("descripcion", event.target.value)}
-              />
-            </Field>
+        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+          <div className="profile-layout">
+            <div className="profile-main">
+              <section className="profile-section-card">
+                <header className="profile-section-heading">
+                  <h2>Información del cliente</h2>
+                  <p>Los datos que compartes con los freelancers.</p>
+                </header>
+                <div className="profile-grid">
+                  <Field label="Nombre" name="nombre" error={errors.nombre}>
+                    <input
+                      id="nombre"
+                      name="nombre"
+                      autoComplete="name"
+                      required
+                      value={values.nombre}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.nombre)}
+                      aria-describedby={errors.nombre ? "nombre-error" : undefined}
+                      onChange={(event) => updateValue("nombre", event.target.value)}
+                    />
+                  </Field>
+                  <AccountEmail email={profile.email} />
+                  <Field label="Teléfono" name="telefono" error={errors.telefono}>
+                    <input
+                      id="telefono"
+                      name="telefono"
+                      type="tel"
+                      autoComplete="tel"
+                      value={values.telefono}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.telefono)}
+                      aria-describedby={errors.telefono ? "telefono-error" : undefined}
+                      onChange={(event) => updateValue("telefono", event.target.value)}
+                    />
+                  </Field>
+                  <PhotoUrlField
+                    value={values.fotoPerfil}
+                    error={errors.fotoPerfil}
+                    disabled={saving}
+                    onChange={(value) => updateValue("fotoPerfil", value)}
+                  />
+                  <Field label="Tipo de cliente" name="tipoCliente" error={errors.tipoCliente}>
+                    <select
+                      id="tipoCliente"
+                      name="tipoCliente"
+                      value={values.tipoCliente}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.tipoCliente)}
+                      aria-describedby={errors.tipoCliente ? "tipoCliente-error" : undefined}
+                      onChange={(event) => updateValue("tipoCliente", event.target.value)}
+                    >
+                      <option value="natural">Persona</option>
+                      <option value="empresa">Empresa</option>
+                    </select>
+                  </Field>
+                  <Field label="Nombre de empresa" name="nombreEmpresa" error={errors.nombreEmpresa}>
+                    <input
+                      id="nombreEmpresa"
+                      name="nombreEmpresa"
+                      autoComplete="organization"
+                      value={values.nombreEmpresa}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.nombreEmpresa)}
+                      aria-describedby={errors.nombreEmpresa ? "nombreEmpresa-error" : undefined}
+                      onChange={(event) => updateValue("nombreEmpresa", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Descripción" name="descripcion" error={errors.descripcion}>
+                    <textarea
+                      id="descripcion"
+                      name="descripcion"
+                      rows={5}
+                      value={values.descripcion}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.descripcion)}
+                      aria-describedby={errors.descripcion ? "descripcion-error" : undefined}
+                      onChange={(event) => updateValue("descripcion", event.target.value)}
+                    />
+                  </Field>
+                </div>
+              </section>
+            </div>
+
+            <aside className="profile-aside">
+              <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Cliente" email={profile.email} />
+              <div className="profile-savebar">
+                <ProfileFormStatus saving={saving} />
+                <button className="profile-save" type="submit" disabled={saving}>
+                  {saving ? "Guardando…" : "Guardar cambios"}
+                </button>
+                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                  Cancelar
+                </button>
+              </div>
+            </aside>
           </div>
-          <ProfileFormStatus saveError={saveError} saved={saved} saving={saving} />
-          <button className="profile-save" type="submit" disabled={saving}>
-            {saving ? "Guardando…" : "Guardar cambios"}
-          </button>
+          <ProfileFormToast
+            saveError={saveError}
+            saved={saved}
+            onDismiss={() => {
+              setSaveError("");
+              setSaved(false);
+            }}
+          />
         </form>
       ) : null}
     </ProfileFrame>
@@ -323,7 +416,7 @@ export function ClientProfilePage() {
 }
 
 export function FreelancerProfilePage() {
-  const { token } = useProfileToken();
+  const { token, actualizarNombre } = useProfileToken();
   const [profile, setProfile] = useState<PerfilFreelancer | null>(null);
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [skills, setSkills] = useState<HabilidadCatalogo[]>([]);
@@ -344,6 +437,12 @@ export function FreelancerProfilePage() {
     tituloProfesional: "",
     biografia: "",
   });
+
+  useEffect(() => {
+    if (!saved) return;
+    const timeout = window.setTimeout(() => setSaved(false), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [saved]);
 
   useEffect(() => {
     let active = true;
@@ -397,7 +496,24 @@ export function FreelancerProfilePage() {
   const updateValue = (name: keyof typeof values, value: string) => {
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: "" }));
+    setSaveError("");
     setSaved(false);
+  };
+
+  const resetValues = () => {
+    if (!profile) return;
+    setValues({
+      nombre: profile.nombre ?? "",
+      telefono: profile.telefono ?? "",
+      fotoPerfil: profile.fotoPerfil ?? "",
+      tituloProfesional: profile.freelancer.tituloProfesional ?? "",
+      biografia: profile.freelancer.biografia ?? "",
+    });
+    setSelectedSkillIds(profile.freelancer.habilidades.map((skill) => skill.id));
+    setSelectedCategoryId(null);
+    setErrors({});
+    setSaved(false);
+    setSaveError("");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -424,7 +540,28 @@ export function FreelancerProfilePage() {
         habilidadIds: selectedSkillIds,
       });
       setSaved(true);
-      setProfile((current) => (current ? { ...current, nombre: values.nombre.trim() } : current));
+      setProfile((current) => {
+        if (!current) return current;
+        const habilidades = selectedSkillIds.map((skillId) => {
+          const existente = current.freelancer.habilidades.find((skill) => skill.id === skillId);
+          if (existente) return existente;
+          const catalogo = skills.find((skill) => skill.id === skillId);
+          return { id: skillId, nombre: catalogo?.nombre ?? "Habilidad", nivel: null };
+        });
+        return {
+          ...current,
+          nombre: values.nombre.trim(),
+          telefono: values.telefono.trim() || null,
+          fotoPerfil: values.fotoPerfil.trim() || null,
+          freelancer: {
+            ...current.freelancer,
+            tituloProfesional: values.tituloProfesional.trim() || null,
+            biografia: values.biografia.trim() || null,
+            habilidades,
+          },
+        };
+      });
+      actualizarNombre(values.nombre);
     } catch (error) {
       setErrors(fieldErrors(error));
       setSaveError(errorMessage(error));
@@ -440,108 +577,161 @@ export function FreelancerProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card" onSubmit={handleSubmit} noValidate>
-          <div className="profile-grid">
-            <Field label="Nombre" name="nombre" error={errors.nombre}>
-              <input
-                id="nombre"
-                name="nombre"
-                autoComplete="name"
-                required
-                value={values.nombre}
-                disabled={saving}
-                aria-invalid={Boolean(errors.nombre)}
-                aria-describedby={errors.nombre ? "nombre-error" : undefined}
-                onChange={(event) => updateValue("nombre", event.target.value)}
-              />
-            </Field>
-            <AccountEmail email={profile.email} />
-            <Field label="Teléfono" name="telefono" error={errors.telefono}>
-              <input
-                id="telefono"
-                name="telefono"
-                type="tel"
-                autoComplete="tel"
-                value={values.telefono}
-                disabled={saving}
-                aria-invalid={Boolean(errors.telefono)}
-                aria-describedby={errors.telefono ? "telefono-error" : undefined}
-                onChange={(event) => updateValue("telefono", event.target.value)}
-              />
-            </Field>
-            <PhotoUrlField
-              value={values.fotoPerfil}
-              error={errors.fotoPerfil}
-              disabled={saving}
-              onChange={(value) => updateValue("fotoPerfil", value)}
-            />
-            <Field label="Título profesional" name="tituloProfesional" error={errors.tituloProfesional}>
-              <input
-                id="tituloProfesional"
-                name="tituloProfesional"
-                value={values.tituloProfesional}
-                disabled={saving}
-                aria-invalid={Boolean(errors.tituloProfesional)}
-                aria-describedby={errors.tituloProfesional ? "tituloProfesional-error" : undefined}
-                onChange={(event) => updateValue("tituloProfesional", event.target.value)}
-              />
-            </Field>
-            <Field label="Biografía" name="biografia" error={errors.biografia}>
-              <textarea
-                id="biografia"
-                name="biografia"
-                rows={5}
-                value={values.biografia}
-                disabled={saving}
-                aria-invalid={Boolean(errors.biografia)}
-                aria-describedby={errors.biografia ? "biografia-error" : undefined}
-                onChange={(event) => updateValue("biografia", event.target.value)}
-              />
-            </Field>
+        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+          <div className="profile-layout">
+            <div className="profile-main">
+              <section className="profile-section-card">
+                <header className="profile-section-heading">
+                  <h2>Perfil y contacto</h2>
+                  <p>Cuéntales quién eres y cómo pueden contactarte.</p>
+                </header>
+                <div className="profile-grid">
+                  <Field label="Nombre" name="nombre" error={errors.nombre}>
+                    <input
+                      id="nombre"
+                      name="nombre"
+                      autoComplete="name"
+                      required
+                      value={values.nombre}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.nombre)}
+                      aria-describedby={errors.nombre ? "nombre-error" : undefined}
+                      onChange={(event) => updateValue("nombre", event.target.value)}
+                    />
+                  </Field>
+                  <AccountEmail email={profile.email} />
+                  <Field label="Teléfono" name="telefono" error={errors.telefono}>
+                    <input
+                      id="telefono"
+                      name="telefono"
+                      type="tel"
+                      autoComplete="tel"
+                      value={values.telefono}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.telefono)}
+                      aria-describedby={errors.telefono ? "telefono-error" : undefined}
+                      onChange={(event) => updateValue("telefono", event.target.value)}
+                    />
+                  </Field>
+                  <PhotoUrlField
+                    value={values.fotoPerfil}
+                    error={errors.fotoPerfil}
+                    disabled={saving}
+                    onChange={(value) => updateValue("fotoPerfil", value)}
+                  />
+                  <Field label="Título profesional" name="tituloProfesional" error={errors.tituloProfesional}>
+                    <input
+                      id="tituloProfesional"
+                      name="tituloProfesional"
+                      value={values.tituloProfesional}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.tituloProfesional)}
+                      aria-describedby={errors.tituloProfesional ? "tituloProfesional-error" : undefined}
+                      onChange={(event) => updateValue("tituloProfesional", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Biografía" name="biografia" error={errors.biografia}>
+                    <textarea
+                      id="biografia"
+                      name="biografia"
+                      rows={5}
+                      value={values.biografia}
+                      disabled={saving}
+                      aria-invalid={Boolean(errors.biografia)}
+                      aria-describedby={errors.biografia ? "biografia-error" : undefined}
+                      onChange={(event) => updateValue("biografia", event.target.value)}
+                    />
+                  </Field>
+                </div>
+              </section>
+              <section className="profile-section-card profile-section-card--skills">
+                <header className="profile-section-heading">
+                  <h2>Habilidades</h2>
+                  <p>Elige las habilidades que quieres mostrar en tu perfil.</p>
+                </header>
+                {catalogError ? (
+                  <div className="profile-message profile-message--error" role="alert">
+                    No se pudieron cargar las categorías y habilidades: {catalogError}
+                  </div>
+                ) : catalogLoading ? (
+                  <div className="profile-message" role="status">
+                    Cargando categorías y habilidades…
+                  </div>
+                ) : (
+                  <CategorySkillSelector
+                    categories={categories}
+                    skills={skills}
+                    selectedCategoryId={selectedCategoryId}
+                    selectedSkillIds={selectedSkillIds}
+                    disabled={saving}
+                    error={errors.habilidadIds}
+                    onCategoryChange={setSelectedCategoryId}
+                    onSkillsChange={(skillIds) => {
+                      setSelectedSkillIds(skillIds);
+                      setErrors((current) => ({ ...current, habilidadIds: "" }));
+                      setSaveError("");
+                      setSaved(false);
+                    }}
+                  />
+                )}
+              </section>
+            </div>
+
+            <aside className="profile-aside">
+              <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Freelancer" email={profile.email} />
+              <div className="profile-savebar">
+                <ProfileFormStatus saving={saving} />
+                <button className="profile-save" type="submit" disabled={saving || catalogLoading || Boolean(catalogError)}>
+                  {saving ? "Guardando…" : "Guardar cambios"}
+                </button>
+                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                  Cancelar
+                </button>
+              </div>
+            </aside>
           </div>
-          {catalogError ? (
-            <div className="profile-message profile-message--error" role="alert">
-              No se pudieron cargar las categorías y habilidades: {catalogError}
-            </div>
-          ) : catalogLoading ? (
-            <div className="profile-message" role="status">
-              Cargando categorías y habilidades…
-            </div>
-          ) : (
-            <CategorySkillSelector
-              categories={categories}
-              skills={skills}
-              selectedCategoryId={selectedCategoryId}
-              selectedSkillIds={selectedSkillIds}
-              disabled={saving}
-              error={errors.habilidadIds}
-              onCategoryChange={setSelectedCategoryId}
-              onSkillsChange={(skillIds) => {
-                setSelectedSkillIds(skillIds);
-                setErrors((current) => ({ ...current, habilidadIds: "" }));
-                setSaved(false);
-              }}
-            />
-          )}
-          <ProfileFormStatus saveError={saveError} saved={saved} saving={saving} />
-          <button className="profile-save" type="submit" disabled={saving || catalogLoading || Boolean(catalogError)}>
-            {saving ? "Guardando…" : "Guardar cambios"}
-          </button>
+          <ProfileFormToast
+            saveError={saveError}
+            saved={saved}
+            onDismiss={() => {
+              setSaveError("");
+              setSaved(false);
+            }}
+          />
         </form>
       ) : null}
     </ProfileFrame>
   );
 }
 
-function ProfileFormStatus({ saveError, saved, saving }: { saveError: string; saved: boolean; saving: boolean }) {
+function ProfileFormStatus({ saving }: { saving: boolean }) {
   return (
     <div className="profile-status" aria-live="polite">
-      {saveError && (
-        <p className="profile-message profile-message--error" role="alert">
-          {saveError}
-        </p>
-      )}
-      {saved && !saving && <p className="profile-message profile-message--success">Cambios guardados correctamente.</p>}
+      {saving && <p className="profile-message">Guardando tus cambios…</p>}
+    </div>
+  );
+}
+
+function ProfileFormToast({
+  saveError,
+  saved,
+  onDismiss,
+}: {
+  saveError: string;
+  saved: boolean;
+  onDismiss: () => void;
+}) {
+  if (!saveError && !saved) return null;
+  return (
+    <div
+      className={`profile-toast${saveError ? " profile-toast--error" : " profile-toast--success"}`}
+      role={saveError ? "alert" : "status"}
+      aria-live={saveError ? "assertive" : "polite"}
+    >
+      <span>{saveError || "Cambios guardados correctamente."}</span>
+      <button type="button" aria-label="Cerrar notificación" onClick={onDismiss}>
+        ×
+      </button>
     </div>
   );
 }

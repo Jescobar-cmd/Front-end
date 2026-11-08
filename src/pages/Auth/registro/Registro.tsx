@@ -7,13 +7,12 @@ import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
 import { useRegistro } from "../../../hooks/UseRegistro";
 
-type Rol = "cliente" | "freelancer";
+const NEEDS_ROLE_SELECTION_KEY = "first_gig_needs_role_selection";
 
 export function Registro() {
   const navigate = useNavigate();
   const { registrar, loading, error, limpiarError } = useRegistro();
 
-  const [rol, setRol] = useState<Rol>("cliente");
   const [mayorDeEdad, setMayorDeEdad] = useState(false);
   const [form, setForm] = useState({
     nombre: "",
@@ -34,24 +33,22 @@ export function Registro() {
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const base = {
+    const resultado = await registrar({
       nombre: form.nombre,
       apellido: form.apellido,
       email: form.email,
       password: form.password,
       confirmPassword: form.confirmPassword,
       mayorDeEdad,
-    };
-
-    const resultado = await registrar(
-      rol === "freelancer"
-        ? { ...base, rol, telefono: form.telefono, documento: form.documento }
-        : { ...base, rol, telefono: form.telefono, ...(form.documento.trim() ? { documento: form.documento } : {}) }
-    );
+      telefono: form.telefono,
+      ...(form.documento.trim() ? { documento: form.documento } : {}),
+    });
 
     if (!resultado) return;
     sessionStorage.setItem("first_gig_email_pendiente", resultado.email);
-    navigate("/verificar-cuenta", { state: { email: resultado.email } });
+    // Tras verificar e iniciar sesión, el usuario deberá elegir su rol (obligatorio).
+    sessionStorage.setItem(NEEDS_ROLE_SELECTION_KEY, "1");
+    navigate("/verificar-cuenta", { state: { email: resultado.email, needsRoleSelection: true } });
   };
 
   return (
@@ -60,32 +57,7 @@ export function Registro() {
 
       <form onSubmit={handleSubmit} className="registro auth-card">
         <h1>Crear cuenta</h1>
-        <p>Completa tus datos para comenzar.</p>
-
-        <fieldset className="roles roles--pill">
-          <legend>Tipo de cuenta</legend>
-          <Button
-            type="button"
-            variant={rol === "cliente" ? "primary" : "secondary"}
-            className="account-selector__button"
-            aria-pressed={rol === "cliente"}
-            onClick={() => setRol("cliente")}
-          >
-            Soy cliente
-          </Button>
-          <Button
-            type="button"
-            variant={rol === "freelancer" ? "primary" : "secondary"}
-            className="account-selector__button"
-            aria-pressed={rol === "freelancer"}
-            onClick={() => setRol("freelancer")}
-          >
-            Soy freelancer
-          </Button>
-        </fieldset>
-        <p className="auth-hint" role="status">
-          Crearás una cuenta de {rol === "freelancer" ? "freelancer" : "cliente"}.
-        </p>
+        <p>Completa tus datos para comenzar. Después de confirmar tu cuenta elegirás si eres cliente o freelancer.</p>
 
         <div className="registro-name-row">
           <div className="auth-field">
@@ -171,30 +143,17 @@ export function Registro() {
             onChange={handleChange}
           />
         </div>
-        {rol === "freelancer" ? (
-          <div className="auth-field">
-            <label htmlFor="registro-documento">Número de documento</label>
-            <Input
-              id="registro-documento"
-              name="documento"
-              placeholder="Número de documento"
-              value={form.documento}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        ) : (
-          <div className="auth-field">
-            <label htmlFor="registro-documento">Número de documento (opcional)</label>
-            <Input
-              id="registro-documento"
-              name="documento"
-              placeholder="Número de documento (opcional)"
-              value={form.documento}
-              onChange={handleChange}
-            />
-          </div>
-        )}
+        <div className="auth-field">
+          <label htmlFor="registro-documento">Número de documento (opcional)</label>
+          <Input
+            id="registro-documento"
+            name="documento"
+            placeholder="Número de documento (opcional)"
+            value={form.documento}
+            onChange={handleChange}
+          />
+          <p className="auth-hint">Si eliges ser freelancer, te pediremos el documento al seleccionar tu rol.</p>
+        </div>
 
         <label className="auth-checkbox">
           <input

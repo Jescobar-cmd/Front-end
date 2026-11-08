@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { loginConGoogleUseCase } from "../di/container";
-import type { ResultadoGoogle } from "../core/application/ports/AuthRepositoryPort";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -21,21 +19,30 @@ declare global {
 // Bandera de módulo: initialize() debe ejecutarse una sola vez por carga de página,
 // incluso si StrictMode monta el efecto dos veces en desarrollo.
 let googleYaInicializado = false;
+// El callback de initialize() queda registrado a nivel de módulo. Así, si el
+// usuario vuelve al login después de navegar, el botón sigue entregando el
+// credential al callback vigente y no al de un montaje anterior.
+let googleCallbackActual: ((credential: string) => void) | null = null;
 
-export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void) {
+export function useGoogleLogin(onCredential: (credential: string) => void) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const inicializadoRef = useRef(false);
-  const onResultadoRef = useRef(onResultado);
   const [error, setError] = useState<string | null>(null);
-  const callbackRef = useRef(onResultado);
+  const callbackRef = useRef(onCredential);
 
   useEffect(() => {
-    callbackRef.current = onResultado;
-  }, [onResultado]);
+    callbackRef.current = onCredential;
+  }, [onCredential]);
 
   useEffect(() => {
-    onResultadoRef.current = onResultado;
-  }, [onResultado]);
+    googleCallbackActual = (credential) => {
+      setError(null);
+      callbackRef.current(credential);
+    };
+    return () => {
+      googleCallbackActual = null;
+    };
+  }, []);
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -47,13 +54,8 @@ export function useGoogleLogin(onResultado: (resultado: ResultadoGoogle) => void
       if (!googleYaInicializado) {
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: async (response) => {
-            try {
-              const resultado = await loginConGoogleUseCase.execute(response.credential);
-              await callbackRef.current(resultado);
-            } catch (e) {
-              setError(e instanceof Error ? e.message : "Error inesperado");
-            }
+          callback: (response) => {
+            googleCallbackActual?.(response.credential);
           },
         });
         googleYaInicializado = true;

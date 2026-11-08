@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   acceptProposal,
@@ -31,13 +31,14 @@ import { getCategories, getSkills } from "../../infrastructure/api/apiCatalogos"
 import type { Habilidad } from "../../infrastructure/api/apiCatalogos";
 import type { Categoria } from "../../core/domain/entities/categoria";
 import type { DatosOferta, EstadoOferta, Oferta } from "../../core/domain/entities/oferta";
+import { useInternalSearch } from "../layout/InternalSearchContext";
 import "./services-offers.css";
 
 const PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 type CatalogSkill = Habilidad;
 
-function useCatalogs(token: string) {
+export function useCatalogs(token: string) {
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [skills, setSkills] = useState<CatalogSkill[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,18 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado. Inténtalo de nuevo.";
 }
 
+/**
+ * El backend exige rol freelancer (2) para publicar servicios. Si llega un 403
+ * mostramos la causa real en lugar del mensaje genérico del servidor.
+ */
+function serviceErrorMessage(error: unknown): string {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === 403) {
+    return "El servidor rechazó la publicación porque tu cuenta no tiene el rol de freelancer. Inicia sesión con tu cuenta de freelancer o revisa el rol de tu perfil.";
+  }
+  return errorMessage(error);
+}
+
 function money(value: number | null | undefined): string {
   if (value === null || value === undefined) return "Por definir";
   return new Intl.NumberFormat("es", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
@@ -116,17 +129,56 @@ function validImageUrl(value: string): boolean {
 }
 
 function AuthGate({ role, children }: { role: "cliente" | "freelancer"; children: (token: string) => ReactNode }) {
-  const { user, token, cargando } = useAuth();
-  if (cargando) return <main className="so-page"><p role="status">Comprobando tu sesión…</p></main>;
+  const { user, token, cargando, refrescarSesion, cerrarSesion } = useAuth();
+  const navigate = useNavigate();
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
+  if (cargando) return <div className="so-page"><p role="status">Comprobando tu sesión…</p></div>;
   if (!user || !token) {
-    return <main className="so-page"><div className="so-alert" role="alert">Inicia sesión para continuar.</div></main>;
+    return <div className="so-page"><div className="so-alert" role="alert">Inicia sesión para continuar.</div></div>;
   }
   if (user.rol !== role) {
-    return <main className="so-page"><div className="so-alert" role="alert">Esta sección solo está disponible para {role === "cliente" ? "clientes" : "freelancers"}.</div></main>;
+    const rolActual = user.rol === "freelancer" ? "freelancer" : "cliente";
+    const destino = user.rol === "freelancer" ? "servicios" : "proyectos";
+    const onRefresh = async () => {
+      setRefreshing(true);
+      setRefreshError("");
+      try {
+        await refrescarSesion();
+      } catch (e) {
+        setRefreshError(e instanceof Error ? e.message : "No se pudo actualizar la sesión.");
+      } finally {
+        setRefreshing(false);
+      }
+    };
+    return (
+      <div className="so-page">
+        <div className="so-alert" role="alert">
+          <p>
+            Tu sesión actual indica el rol <strong>{rolActual}</strong>, por eso no puedes entrar a esta sección de{" "}
+            {role === "cliente" ? "clientes" : "freelancers"}.
+          </p>
+          <p>
+            Si tu cuenta tiene el rol correcto, actualiza la sesión (puede estar desactualizada). Si no, cierra sesión y entra con la cuenta correcta.
+          </p>
+          {refreshError ? <p className="so-inline-error" role="alert">{refreshError}</p> : null}
+          <div className="so-form__actions">
+            <button className="so-button so-button--outline" type="button" disabled={refreshing} onClick={onRefresh}>
+              {refreshing ? "Actualizando…" : "Actualizar sesión"}
+            </button>
+            <button className="so-button so-button--quiet" type="button" onClick={() => navigate(user.rol === "freelancer" ? "/dashboard/freelancer" : "/dashboard/cliente")}>
+              Ir a mi panel
+            </button>
+            <button className="so-button so-button--quiet" type="button" onClick={() => { cerrarSesion(); navigate("/login", { replace: true }); }}>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
   return <>{children(token)}</>;
 }
-
 function PageShell({
   eyebrow,
   title,
@@ -139,14 +191,14 @@ function PageShell({
   children: ReactNode;
 }) {
   return (
-    <main className="so-page">
+    <div className="so-page">
       <header className="so-heading">
         <p className="so-eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p>{description}</p>
       </header>
       {children}
-    </main>
+    </div>
   );
 }
 
@@ -156,6 +208,181 @@ function Notice({ error, retry }: { error: string; retry?: () => void }) {
       <span>{error}</span>
       {retry && <button className="so-button so-button--quiet" type="button" onClick={retry}>Reintentar</button>}
     </div>
+  );
+}
+
+function DiscoveryCategoryChips({
+  categories,
+  selected,
+  onChange,
+}: {
+  categories: Categoria[];
+  selected: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="so-discovery-categories" role="group" aria-label="Filtrar por categoría">
+      <button
+        className={selected === "" ? "is-active" : undefined}
+        type="button"
+        aria-pressed={selected === ""}
+        onClick={() => onChange("")}
+      >
+        Todas
+      </button>
+      {categories.map((category) => (
+        <button
+          className={selected === String(category.id) ? "is-active" : undefined}
+          key={category.id}
+          type="button"
+          aria-pressed={selected === String(category.id)}
+          onClick={() => onChange(String(category.id))}
+        >
+          {category.nombre}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function DiscoverySkeletons({ label }: { label: string }) {
+  return (
+    <>
+      <p className="so-discovery-status" role="status">{label}</p>
+      <div className="so-discovery-grid" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => (
+          <article className="so-discovery-card so-discovery-card--skeleton" key={index}>
+            <div className="so-discovery-card__image" />
+            <div className="so-discovery-card__body">
+              <span className="so-skeleton-line so-skeleton-line--short" />
+              <span className="so-skeleton-line" />
+              <span className="so-skeleton-line so-skeleton-line--wide" />
+              <span className="so-skeleton-line so-skeleton-line--button" />
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function DiscoveryEmpty({
+  emptyTitle,
+  emptyMessage,
+  filteredTitle,
+  filteredMessage,
+  filtered,
+  onClear,
+  onRefresh,
+}: {
+  emptyTitle: string;
+  emptyMessage: string;
+  filteredTitle: string;
+  filteredMessage: string;
+  filtered: boolean;
+  onClear: () => void;
+  onRefresh?: () => void;
+}) {
+  return (
+    <section className="so-discovery-empty" role="status" aria-live="polite">
+      <span className="so-discovery-empty__mark" aria-hidden="true">{filtered ? "⌕" : "○"}</span>
+      <div className="so-discovery-empty__content">
+        <h2>{filtered ? filteredTitle : emptyTitle}</h2>
+        <p>{filtered ? filteredMessage : emptyMessage}</p>
+      </div>
+      {(filtered || onRefresh) ? (
+        <button
+          className="so-button so-button--quiet"
+          type="button"
+          onClick={filtered ? onClear : onRefresh}
+        >
+          {filtered ? "Limpiar filtros" : "Actualizar"}
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
+function ProjectDiscoveryCard({
+  offer,
+  onOpen,
+}: {
+  offer: OfertaMarketplace;
+  onOpen: () => void;
+}) {
+  return (
+    <article className="so-discovery-card">
+      <div className="so-discovery-card__image">
+        {offer.imagenUrl
+          ? <img src={offer.imagenUrl} alt="" loading="lazy" />
+          : <span>Sin imagen</span>}
+        {offer.categoria?.nombre && <span className="so-discovery-card__category">{offer.categoria.nombre}</span>}
+      </div>
+      <div className="so-discovery-card__body">
+        <div className="so-discovery-card__meta">
+          <span className="so-badge">{statusLabel(offer.estado)}</span>
+          <strong>{money(offer.presupuesto)}</strong>
+        </div>
+        <h2>{offer.titulo}</h2>
+        <p className="so-discovery-card__description">{offer.descripcion}</p>
+        <div className="so-discovery-card__owner">
+          {offer.cliente.fotoPerfil
+            ? <img src={offer.cliente.fotoPerfil} alt="" loading="lazy" />
+            : <span aria-hidden="true">{offer.cliente.nombre.charAt(0).toLocaleUpperCase()}</span>}
+          <span>{offer.cliente.nombre}</span>
+          {offer.plazoDias !== null && <small>{offer.plazoDias} días</small>}
+        </div>
+        <button className="so-button so-button--outline" type="button" onClick={onOpen}>
+          Ver proyecto
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function ServiceDiscoveryCard({
+  service,
+  onOpen,
+}: {
+  service: Servicio;
+  onOpen: () => void;
+}) {
+  const freelancerName = service.freelancer?.nombre ?? "Freelancer";
+
+  return (
+    <article className="so-discovery-card">
+      <div className="so-discovery-card__image">
+        {service.imagenUrl
+          ? <img src={service.imagenUrl} alt="" loading="lazy" />
+          : <span>Sin imagen</span>}
+        {service.categoria?.nombre && <span className="so-discovery-card__category">{service.categoria.nombre}</span>}
+      </div>
+      <div className="so-discovery-card__body">
+        <div className="so-discovery-card__meta">
+          <span className="so-badge">{statusLabel(service.estado)}</span>
+          <strong>{money(service.precio)}</strong>
+        </div>
+        <h2>{service.titulo}</h2>
+        <p className="so-discovery-card__description">{service.descripcion}</p>
+        <div className="so-discovery-card__owner">
+          {service.freelancer?.fotoPerfil
+            ? <img src={service.freelancer.fotoPerfil} alt="" loading="lazy" />
+            : <span aria-hidden="true">{freelancerName.charAt(0).toLocaleUpperCase()}</span>}
+          <span>{freelancerName}</span>
+          {service.freelancer?.calificacionPromedio > 0 && (
+            <small>★ {service.freelancer.calificacionPromedio.toFixed(1)}</small>
+          )}
+        </div>
+        <button
+          className="so-button so-button--outline"
+          type="button"
+          disabled={service.estado?.toLowerCase() !== "activo"}
+          onClick={onOpen}
+        >
+          Ver servicio
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -257,6 +484,56 @@ function CatalogFields({
   );
 }
 
+function ListingPreview({
+  kind,
+  title,
+  description,
+  amountLabel,
+  amount,
+  imageUrl,
+}: {
+  kind: "proyecto" | "servicio";
+  title: string;
+  description: string;
+  amountLabel: string;
+  amount: string;
+  imageUrl: string;
+}) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const imageFailed = failedImageUrl === imageUrl.trim();
+  const hasImage = Boolean(imageUrl.trim() && validImageUrl(imageUrl) && !imageFailed);
+
+  return (
+    <aside className="so-form-preview" aria-label={`Vista previa del ${kind}`}>
+      <h2>Vista previa</h2>
+      <article className="so-preview-card">
+        <div className="so-preview-card__image">
+          {hasImage ? (
+            <img src={imageUrl.trim()} alt="" onError={() => setFailedImageUrl(imageUrl.trim())} />
+          ) : (
+            <span>
+              {imageUrl.trim() && !validImageUrl(imageUrl)
+                ? "Ingresa una URL válida para ver la imagen."
+                : imageFailed
+                  ? "No se pudo cargar esta imagen."
+                  : "La imagen aparecerá aquí."}
+            </span>
+          )}
+        </div>
+        <div className="so-preview-card__content">
+          <span className="so-badge">{kind === "proyecto" ? "Proyecto" : "Servicio"}</span>
+          <h3>{title.trim() || `Título del ${kind}`}</h3>
+          <p>{description.trim() || "La descripción aparecerá aquí."}</p>
+          <div className="so-preview-card__amount">
+            <span>{amountLabel}</span>
+            <strong>{amount}</strong>
+          </div>
+        </div>
+      </article>
+    </aside>
+  );
+}
+
 interface OfferFormValues {
   titulo: string;
   descripcion: string;
@@ -279,7 +556,7 @@ function offerValues(offer?: Oferta): OfferFormValues {
   };
 }
 
-function OfferForm({
+export function OfferForm({
   token,
   categories,
   skills,
@@ -351,44 +628,85 @@ function OfferForm({
     }
   }
 
+  const budgetPreview = values.presupuesto.trim() && Number.isFinite(Number(values.presupuesto))
+    ? money(Number(values.presupuesto))
+    : "Pendiente";
+
   return (
     <form className="so-form" onSubmit={submit} noValidate>
-      <div className="so-form__grid">
-        <label className="so-field so-field--wide">
-          <span>Título <small>5–200 caracteres</small></span>
-          <input value={values.titulo} minLength={5} maxLength={200} required onChange={(event) => set("titulo", event.target.value)} />
-        </label>
-        <label className="so-field so-field--wide">
-          <span>Descripción <small>10–5000 caracteres</small></span>
-          <textarea value={values.descripcion} minLength={10} maxLength={5000} required rows={6} onChange={(event) => set("descripcion", event.target.value)} />
-        </label>
-        <label className="so-field">
-          <span>Presupuesto (USD)</span>
-          <input type="number" min="0" step="0.01" value={values.presupuesto} required onChange={(event) => set("presupuesto", event.target.value)} />
-        </label>
-        <label className="so-field">
-          <span>Plazo (días)</span>
-          <input type="number" min="1" step="1" value={values.plazoDias} required onChange={(event) => set("plazoDias", event.target.value)} />
-        </label>
-        <CatalogFields
-          categories={categories}
-          skills={skills}
-          categoryId={values.categoriaId}
-          onCategoryChange={(value) => set("categoriaId", value)}
-          skillIds={values.habilidadIds}
-          onSkillChange={(value) => set("habilidadIds", value)}
+      <div className="so-form-layout">
+        <div className="so-form-main">
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Sobre el proyecto</h2>
+              <p>Explica con claridad qué trabajo necesitas.</p>
+            </header>
+            <div className="so-form__grid">
+              <label className="so-field so-field--wide">
+                <span>Título <small>5–200 caracteres</small></span>
+                <input value={values.titulo} minLength={5} maxLength={200} required onChange={(event) => set("titulo", event.target.value)} />
+              </label>
+              <label className="so-field so-field--wide">
+                <span>Descripción <small>10–5000 caracteres</small></span>
+                <textarea value={values.descripcion} minLength={10} maxLength={5000} required rows={6} onChange={(event) => set("descripcion", event.target.value)} />
+              </label>
+            </div>
+          </section>
+
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Presupuesto y requisitos</h2>
+              <p>Define el plazo y la experiencia que necesitas.</p>
+            </header>
+            <div className="so-form__grid">
+              <label className="so-field">
+                <span>Presupuesto (USD)</span>
+                <input type="number" min="0" step="0.01" value={values.presupuesto} required onChange={(event) => set("presupuesto", event.target.value)} />
+              </label>
+              <label className="so-field">
+                <span>Plazo (días)</span>
+                <input type="number" min="1" step="1" value={values.plazoDias} required onChange={(event) => set("plazoDias", event.target.value)} />
+              </label>
+              <CatalogFields
+                categories={categories}
+                skills={skills}
+                categoryId={values.categoriaId}
+                onCategoryChange={(value) => set("categoriaId", value)}
+                skillIds={values.habilidadIds}
+                onSkillChange={(value) => set("habilidadIds", value)}
+              />
+            </div>
+          </section>
+
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Imagen del proyecto</h2>
+              <p>Usa una URL pública de imagen para que tu publicación destaque.</p>
+            </header>
+            <div className="so-form__grid">
+              <label className="so-field so-field--wide">
+                <span>URL de imagen <small>El backend guarda una URL; no admite subida de archivos.</small></span>
+                <input type="url" inputMode="url" placeholder="https://…" value={values.imagenUrl} onChange={(event) => set("imagenUrl", event.target.value)} />
+              </label>
+            </div>
+          </section>
+
+          {error && <p className="so-inline-error" role="alert">{error}</p>}
+          <div className="so-form__actions">
+            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
+            <button className="so-button so-button--primary" type="submit" disabled={saving}>
+              {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar oferta"}
+            </button>
+          </div>
+        </div>
+        <ListingPreview
+          kind="proyecto"
+          title={values.titulo}
+          description={values.descripcion}
+          amountLabel="Presupuesto"
+          amount={budgetPreview}
+          imageUrl={values.imagenUrl}
         />
-        <label className="so-field so-field--wide">
-          <span>URL de imagen <small>opcional; no se pueden subir archivos</small></span>
-          <input type="url" inputMode="url" placeholder="https://…" value={values.imagenUrl} onChange={(event) => set("imagenUrl", event.target.value)} />
-        </label>
-      </div>
-      {error && <p className="so-inline-error" role="alert">{error}</p>}
-      <div className="so-form__actions">
-        {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-        <button className="so-button so-button--primary" type="submit" disabled={saving}>
-          {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar oferta"}
-        </button>
       </div>
     </form>
   );
@@ -438,7 +756,16 @@ function OfferDetails({
         <div><dt>Plazo</dt><dd>{offer.plazoDias ? `${offer.plazoDias} días` : "Por definir"}</dd></div>
         <div><dt>Categoría</dt><dd>{offer.categoria?.nombre ?? "Sin categoría"}</dd></div>
         <div><dt>Publicada</dt><dd>{date(offer.fechaPublicacion)}</dd></div>
-        {market && <div><dt>Cliente</dt><dd>{market.cliente.nombre}</dd></div>}
+        {market && (
+          <div>
+            <dt>Cliente</dt>
+            <dd>
+              <Link className="so-profile-link" to={`/perfil/usuario/${market.cliente.id}?proyectoId=${offer.id}`}>
+                {market.cliente.nombre}
+              </Link>
+            </dd>
+          </div>
+        )}
       </dl>
       {offer.habilidades?.length > 0 && <div className="so-tags" aria-label="Habilidades">{offer.habilidades.map((item) => <span key={item.id}>{item.nombre}</span>)}</div>}
       {offer.imagenUrl && <img className="so-cover" src={offer.imagenUrl} alt={`Imagen de ${offer.titulo}`} />}
@@ -449,14 +776,18 @@ function OfferDetails({
 
 function ProposalCards({
   proposals,
+  projectId,
   busyId,
   onAccept,
   onReject,
+  onChat,
 }: {
   proposals: Propuesta[];
+  projectId?: number;
   busyId: number | null;
   onAccept?: (proposal: Propuesta) => void;
   onReject?: (proposal: Propuesta) => void;
+  onChat?: (proposal: Propuesta) => void;
 }) {
   if (proposals.length === 0) return <p className="so-empty">Todavía no hay propuestas para mostrar.</p>;
   return (
@@ -468,12 +799,26 @@ function ProposalCards({
             <div className="so-card__top">
               <div className="so-person">
                 {proposal.freelancer.fotoPerfil && <img src={proposal.freelancer.fotoPerfil} alt="" />}
-                <div><h3>{proposal.freelancer.nombre}</h3><span className="so-muted">{proposal.freelancer.calificacionPromedio ? `★ ${proposal.freelancer.calificacionPromedio.toFixed(1)}` : "Nuevo freelancer"}</span></div>
+                <div>
+                  <h3>
+                    {projectId ? (
+                      <Link className="so-profile-link" to={`/perfil/usuario/${proposal.freelancer.id}?proyectoId=${projectId}`}>
+                        {proposal.freelancer.nombre}
+                      </Link>
+                    ) : proposal.freelancer.nombre}
+                  </h3>
+                  <span className="so-muted">{proposal.freelancer.calificacionPromedio ? `★ ${proposal.freelancer.calificacionPromedio.toFixed(1)}` : "Nuevo freelancer"}</span>
+                </div>
               </div>
               <span className="so-badge">{statusLabel(proposal.estado)}</span>
             </div>
             <p>{proposal.mensaje || "Sin mensaje adicional."}</p>
             <div className="so-card__meta"><strong>{money(proposal.montoPropuesto)}</strong><span>Enviada {date(proposal.fechaEnvio)}</span></div>
+            {onChat && (
+              <button className="so-button so-button--outline" type="button" disabled={busyId !== null} onClick={() => onChat(proposal)}>
+                Abrir chat
+              </button>
+            )}
             {pending && onAccept && onReject && (
               <div className="so-form__actions">
                 <button className="so-button so-button--primary" type="button" disabled={busyId !== null} onClick={() => onAccept(proposal)}>
@@ -495,7 +840,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
   const [offers, setOffers] = useState<Oferta[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useInternalSearch();
   const [status, setStatus] = useState("");
   const [selected, setSelected] = useState<Oferta | null>(null);
   const [editing, setEditing] = useState(false);
@@ -509,6 +854,10 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
   const [busyId, setBusyId] = useState<number | null>(null);
   const [reload, setReload] = useState(0);
   const catalogs = useCatalogs(token);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     let active = true;
@@ -602,6 +951,23 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
     }
   }
 
+  async function handleChatProposal(proposal: Propuesta) {
+    if (!selected) return;
+    setActionError("");
+    setBusyId(proposal.id);
+    try {
+      const result = await createConversation(token, {
+        proyectoId: selected.id,
+        freelancerId: proposal.freelancer.id,
+      });
+      navigate(`/chat/${result.conversacion.id}`);
+    } catch (reason) {
+      setActionError(errorMessage(reason));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const filteredCount = proposalsCount || proposals.length;
 
   return (
@@ -633,7 +999,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
                   </OfferDetails>
                   <section className="so-surface">
                     <div className="so-section-title"><div><h2>Propuestas recibidas</h2><p>{filteredCount} en total</p></div></div>
-                    {proposalsLoading ? <p role="status">Cargando propuestas…</p> : <ProposalCards proposals={proposals} busyId={busyId} onAccept={(proposal) => handleProposal(proposal, "accept")} onReject={(proposal) => handleProposal(proposal, "reject")} />}
+                    {proposalsLoading ? <p role="status">Cargando propuestas…</p> : <ProposalCards proposals={proposals} projectId={selected.id} busyId={busyId} onAccept={(proposal) => handleProposal(proposal, "accept")} onReject={(proposal) => handleProposal(proposal, "reject")} onChat={(proposal) => void handleChatProposal(proposal)} />}
                   </section>
                 </>
               )}
@@ -672,19 +1038,21 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
 }
 
 export function FreelancerMarketplace({ token }: { token: string }) {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("market");
   const [items, setItems] = useState<OfertaMarketplace[]>([]);
   const [selected, setSelected] = useState<OfertaMarketplace | null>(null);
   const [proposals, setProposals] = useState<Propuesta[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useInternalSearch();
   const [categoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
   const [sending, setSending] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const [sendError, setSendError] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
@@ -694,6 +1062,10 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   const [myError, setMyError] = useState("");
   const [myReload, setMyReload] = useState(0);
   const catalogs = useCatalogs(token);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
   const { user } = useAuth();
   const storageKey = `first_gig_pending_proposals_${user?.id ?? user?.email ?? "freelancer"}`;
 
@@ -814,6 +1186,20 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     }
   }
 
+  async function startProjectChat() {
+    if (!selected || chatLoading) return;
+    setChatLoading(true);
+    setSendError("");
+    try {
+      const result = await createConversation(token, { proyectoId: selected.id });
+      navigate(`/chat/${result.conversacion.id}`);
+    } catch (reason) {
+      setSendError(errorMessage(reason));
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
   const pendingOfferIds = useMemo(() => new Set([
     ...submittedIds,
     ...myProposalList.filter((item) => item.estado.toLowerCase() === "pendiente").map((item) => item.proyecto?.id).filter((id): id is number => typeof id === "number"),
@@ -825,6 +1211,12 @@ export function FreelancerMarketplace({ token }: { token: string }) {
       <Panel id="market" active={tab}>
         {selected ? (
           <OfferDetails offer={selected} onBack={() => setSelected(null)}>
+            <div className="so-form__actions">
+              <button className="so-button so-button--outline" type="button" disabled={chatLoading} onClick={() => void startProjectChat()}>
+                {chatLoading ? "Abriendo chat…" : "Abrir chat del proyecto"}
+              </button>
+            </div>
+            {sendError && <p className="so-inline-error" role="alert">{sendError}</p>}
             <section className="so-surface so-proposal-form">
               <h3>Enviar una propuesta</h3>
               {pendingOfferIds.has(selected.id) ? (
@@ -843,25 +1235,58 @@ export function FreelancerMarketplace({ token }: { token: string }) {
           </OfferDetails>
         ) : (
           <>
-            <div className="so-filterbar">
-              <label className="so-field so-search"><span>Buscar proyectos</span><input type="search" placeholder="Palabras clave" value={query} onChange={(event) => { setPage(1); setQuery(event.target.value); }} /></label>
-              <label className="so-field"><span>Categoría</span><select value={categoryId} onChange={(event) => { setPage(1); setCategoryId(event.target.value); }}>
-                <option value="">Todas las categorías</option>{catalogs.categories.map((category) => <option key={category.id} value={category.id}>{category.nombre}</option>)}
-              </select></label>
+            <div className="so-discovery-controls">
+              <label className="so-field so-discovery-search">
+                <span>Buscar proyectos</span>
+                <input
+                  type="search"
+                  placeholder="Título, descripción o habilidad"
+                  value={query}
+                  onChange={(event) => { setPage(1); setQuery(event.target.value); }}
+                />
+              </label>
+              <DiscoveryCategoryChips
+                categories={catalogs.categories}
+                selected={categoryId}
+                onChange={(value) => { setPage(1); setCategoryId(value); }}
+              />
             </div>
-            {catalogs.error && <Notice error={catalogs.error} retry={catalogs.retry} />}
-            {error && <Notice error={error} retry={() => setReload((value) => value + 1)} />}
-            {detailLoading && <p role="status">Cargando los detalles de la oferta…</p>}
-            {loading ? <p className="so-loading" role="status">Buscando ofertas abiertas…</p> : items.length === 0 ? <p className="so-empty">No hay ofertas abiertas que coincidan con tu búsqueda.</p> : (
-              <div className="so-list">{items.map((offer) => <OfferCard key={offer.id} offer={offer} onOpen={() => void openMarketOffer(offer)} />)}</div>
+            {catalogs.error && <Notice error={`No se pudieron cargar las categorías y habilidades: ${catalogs.error}`} retry={catalogs.retry} />}
+            {detailLoading && <p className="so-discovery-status" role="status">Cargando los detalles del proyecto…</p>}
+            {error ? (
+              <Notice error={`No se pudieron cargar los proyectos: ${error}`} retry={() => setReload((value) => value + 1)} />
+            ) : loading ? (
+              <DiscoverySkeletons label="Buscando proyectos disponibles…" />
+            ) : items.length === 0 ? (
+              <DiscoveryEmpty
+                emptyTitle="Aún no hay proyectos"
+                emptyMessage="Vuelve pronto para descubrir nuevas oportunidades."
+                filteredTitle="No encontramos proyectos para esos filtros"
+                filteredMessage="Prueba con otra búsqueda o categoría."
+                filtered={Boolean(query.trim() || categoryId)}
+                onClear={() => { setPage(1); setQuery(""); setCategoryId(""); }}
+                onRefresh={() => { setPage(1); setReload((value) => value + 1); }}
+              />
+            ) : (
+              <section className="so-discovery-grid" aria-label="Proyectos disponibles">
+                {items.map((offer) => (
+                  <ProjectDiscoveryCard key={offer.id} offer={offer} onOpen={() => void openMarketOffer(offer)} />
+                ))}
+              </section>
             )}
-            <Pager page={page} total={total} onChange={setPage} />
+            {!error && !loading && <Pager page={page} total={total} onChange={setPage} />}
           </>
         )}
       </Panel>
       <Panel id="mine" active={tab}>
         {myError && <Notice error={myError} retry={() => setMyReload((value) => value + 1)} />}
-        {myLoading ? <p className="so-loading" role="status">Cargando tus propuestas…</p> : myProposalList.length === 0 ? <p className="so-empty">Aún no has enviado propuestas.</p> : (
+        {myLoading ? <p className="so-loading" role="status">Cargando tus propuestas…</p> : myProposalList.length === 0 ?             <section className="so-discovery-empty" role="status" aria-live="polite">
+              <span className="so-discovery-empty__mark" aria-hidden="true">○</span>
+              <div className="so-discovery-empty__content">
+                <h2>Aún no has enviado propuestas</h2>
+                <p>Cuando postules a un proyecto, tus propuestas aparecerán aquí para que puedas hacer seguimiento.</p>
+              </div>
+            </section> : (
           <div className="so-list">{myProposalList.map((proposal) => (
             <article className="so-card" key={proposal.id}>
               <div className="so-card__top"><span className="so-badge">{statusLabel(proposal.estado)}</span><span className="so-muted">{date(proposal.fechaEnvio)}</span></div>
@@ -894,7 +1319,7 @@ function serviceValues(service?: Servicio): ServiceFormValues {
   };
 }
 
-function ServiceForm({
+export function ServiceForm({
   token,
   categories,
   initial,
@@ -950,25 +1375,69 @@ function ServiceForm({
       }
       onSaved(saved);
     } catch (reason) {
-      setError(errorMessage(reason));
+      setError(serviceErrorMessage(reason));
     } finally {
       setSaving(false);
     }
   }
 
+  const pricePreview = values.precio.trim() && Number.isFinite(Number(values.precio))
+    ? money(Number(values.precio))
+    : "Pendiente";
+
   return (
     <form className="so-form" onSubmit={submit} noValidate>
-      <div className="so-form__grid">
-        <label className="so-field so-field--wide"><span>Título <small>5–150 caracteres</small></span><input value={values.titulo} minLength={5} maxLength={150} required onChange={(event) => set("titulo", event.target.value)} /></label>
-        <label className="so-field so-field--wide"><span>Descripción <small>10–5000 caracteres</small></span><textarea rows={6} minLength={10} maxLength={5000} required value={values.descripcion} onChange={(event) => set("descripcion", event.target.value)} /></label>
-        <label className="so-field"><span>Precio (USD)</span><input type="number" min="0.01" step="0.01" required value={values.precio} onChange={(event) => set("precio", event.target.value)} /></label>
-        <CatalogFields categories={categories} skills={[]} categoryId={values.categoriaId} onCategoryChange={(value) => set("categoriaId", value)} includeSkills={false} />
-        <label className="so-field so-field--wide"><span>URL de imagen <small>opcional; no se pueden subir archivos</small></span><input type="url" inputMode="url" placeholder="https://…" value={values.imagenUrl} onChange={(event) => set("imagenUrl", event.target.value)} /></label>
-      </div>
-      {error && <p className="so-inline-error" role="alert">{error}</p>}
-      <div className="so-form__actions">
-        {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-        <button className="so-button so-button--primary" type="submit" disabled={saving}>{saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
+      <div className="so-form-layout">
+        <div className="so-form-main">
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Detalles del servicio</h2>
+              <p>Presenta de forma directa lo que ofreces.</p>
+            </header>
+            <div className="so-form__grid">
+              <label className="so-field so-field--wide">
+                <span>Título <small>5–150 caracteres</small></span>
+                <input value={values.titulo} minLength={5} maxLength={150} required onChange={(event) => set("titulo", event.target.value)} />
+              </label>
+              <label className="so-field so-field--wide">
+                <span>Descripción <small>10–5000 caracteres</small></span>
+                <textarea rows={6} minLength={10} maxLength={5000} required value={values.descripcion} onChange={(event) => set("descripcion", event.target.value)} />
+              </label>
+              <label className="so-field">
+                <span>Precio (USD)</span>
+                <input type="number" min="0.01" step="0.01" required value={values.precio} onChange={(event) => set("precio", event.target.value)} />
+              </label>
+              <CatalogFields categories={categories} skills={[]} categoryId={values.categoriaId} onCategoryChange={(value) => set("categoriaId", value)} includeSkills={false} />
+            </div>
+          </section>
+
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Imagen del servicio</h2>
+              <p>Usa una URL pública de imagen para mostrar tu trabajo.</p>
+            </header>
+            <div className="so-form__grid">
+              <label className="so-field so-field--wide">
+                <span>URL de imagen <small>El backend guarda una URL; no admite subida de archivos.</small></span>
+                <input type="url" inputMode="url" placeholder="https://…" value={values.imagenUrl} onChange={(event) => set("imagenUrl", event.target.value)} />
+              </label>
+            </div>
+          </section>
+
+          {error && <p className="so-inline-error" role="alert">{error}</p>}
+          <div className="so-form__actions">
+            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
+            <button className="so-button so-button--primary" type="submit" disabled={saving}>{saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
+          </div>
+        </div>
+        <ListingPreview
+          kind="servicio"
+          title={values.titulo}
+          description={values.descripcion}
+          amountLabel="Precio"
+          amount={pricePreview}
+          imageUrl={values.imagenUrl}
+        />
       </div>
     </form>
   );
@@ -980,13 +1449,17 @@ export function FreelancerServices({ token }: { token: string }) {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState("");
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useInternalSearch();
   const [editing, setEditing] = useState<Servicio | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [reload, setReload] = useState(0);
   const catalogs = useCatalogs(token);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     let active = true;
@@ -1078,7 +1551,7 @@ export function ClientServices({ token }: { token: string }) {
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useInternalSearch();
   const [categoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -1087,6 +1560,10 @@ export function ClientServices({ token }: { token: string }) {
   const [actionError, setActionError] = useState("");
   const [reload, setReload] = useState(0);
   const catalogs = useCatalogs(token);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     let active = true;
@@ -1150,7 +1627,16 @@ export function ClientServices({ token }: { token: string }) {
               <p className="so-detail__description">{selected.descripcion}</p>
               <dl className="so-facts">
                 <div><dt>Categoría</dt><dd>{selected.categoria?.nombre ?? "Sin categoría"}</dd></div>
-                {selected.freelancer?.nombre && <div><dt>Freelancer</dt><dd>{selected.freelancer.nombre}</dd></div>}
+                {selected.freelancer?.nombre && (
+                  <div>
+                    <dt>Freelancer</dt>
+                    <dd>
+                      <Link className="so-profile-link" to={`/perfil/usuario/${selected.freelancer.id}?servicioId=${selected.id}`}>
+                        {selected.freelancer.nombre}
+                      </Link>
+                    </dd>
+                  </div>
+                )}
                 {selected.freelancer?.calificacionPromedio !== undefined && <div><dt>Calificación</dt><dd>★ {selected.freelancer.calificacionPromedio.toFixed(1)}</dd></div>}
               </dl>
               {selected.imagenUrl && <img className="so-cover" src={selected.imagenUrl} alt={`Imagen de ${selected.titulo}`} />}
@@ -1165,28 +1651,46 @@ export function ClientServices({ token }: { token: string }) {
         </div>
       ) : (
         <>
-          <div className="so-filterbar">
-            <label className="so-field so-search"><span>Buscar servicios</span><input type="search" placeholder="Palabras clave" value={query} onChange={(event) => { setPage(1); setQuery(event.target.value); }} /></label>
-            <label className="so-field"><span>Categoría</span><select value={categoryId} onChange={(event) => { setPage(1); setCategoryId(event.target.value); }}>
-              <option value="">Todas las categorías</option>{catalogs.categories.map((category) => <option key={category.id} value={category.id}>{category.nombre}</option>)}
-            </select></label>
+          <div className="so-discovery-controls">
+            <label className="so-field so-discovery-search">
+              <span>Buscar servicios</span>
+              <input
+                type="search"
+                placeholder="Nombre, descripción o categoría"
+                value={query}
+                onChange={(event) => { setPage(1); setQuery(event.target.value); }}
+              />
+            </label>
+            <DiscoveryCategoryChips
+              categories={catalogs.categories}
+              selected={categoryId}
+              onChange={(value) => { setPage(1); setCategoryId(value); }}
+            />
           </div>
-          {catalogs.error && <Notice error={catalogs.error} retry={catalogs.retry} />}
-          {error && <Notice error={error} retry={() => setReload((value) => value + 1)} />}
-          {detailLoading && <p role="status">Abriendo detalles del servicio…</p>}
-          {loading ? <p className="so-loading" role="status">Cargando servicios…</p> : services.length === 0 ? <p className="so-empty">No encontramos servicios para estos filtros.</p> : (
-            <div className="so-list">{services.map((service) => (
-              <article className="so-card" key={service.id}>
-                <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span>{service.categoria && <span className="so-muted">{service.categoria.nombre}</span>}</div>
-                <h3>{service.titulo}</h3>
-                <p className="so-clamp">{service.descripcion}</p>
-                {service.freelancer?.nombre && <span className="so-muted">Por {service.freelancer.nombre}</span>}
-                <div className="so-card__meta"><strong>{money(service.precio)}</strong></div>
-                <button className="so-button so-button--outline" type="button" disabled={service.estado?.toLowerCase() !== "activo"} onClick={() => void openService(service)}>Ver servicio</button>
-              </article>
-            ))}</div>
+          {catalogs.error && <Notice error={`No se pudieron cargar las categorías y habilidades: ${catalogs.error}`} retry={catalogs.retry} />}
+          {detailLoading && <p className="so-discovery-status" role="status">Cargando los detalles del servicio…</p>}
+          {error ? (
+            <Notice error={`No se pudieron cargar los servicios: ${error}`} retry={() => setReload((value) => value + 1)} />
+          ) : loading ? (
+            <DiscoverySkeletons label="Buscando servicios disponibles…" />
+          ) : services.length === 0 ? (
+            <DiscoveryEmpty
+              emptyTitle="Aún no hay servicios publicados"
+              emptyMessage="Vuelve pronto para descubrir nuevos servicios."
+              filteredTitle="No encontramos servicios para esos filtros"
+              filteredMessage="Prueba con otra búsqueda o categoría."
+              filtered={Boolean(query.trim() || categoryId)}
+              onClear={() => { setPage(1); setQuery(""); setCategoryId(""); }}
+              onRefresh={() => { setPage(1); setReload((value) => value + 1); }}
+            />
+          ) : (
+            <section className="so-discovery-grid" aria-label="Servicios disponibles">
+              {services.map((service) => (
+                <ServiceDiscoveryCard key={service.id} service={service} onOpen={() => void openService(service)} />
+              ))}
+            </section>
           )}
-          <Pager page={page} total={total} onChange={setPage} />
+          {!error && !loading && <Pager page={page} total={total} onChange={setPage} />}
         </>
       )}
     </PageShell>

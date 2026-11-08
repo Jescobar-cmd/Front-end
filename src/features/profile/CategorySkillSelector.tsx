@@ -40,7 +40,12 @@ export function CategorySkillSelector({
   };
 
   return (
-    <fieldset className="profile-skills" disabled={disabled} aria-describedby={error ? "profile-skills-error" : undefined}>
+    <fieldset
+      className="profile-skills"
+      disabled={disabled}
+      aria-invalid={Boolean(error)}
+      aria-describedby={error ? "profile-skills-error" : undefined}
+    >
       <legend>Habilidades</legend>
       <label className="profile-field" htmlFor="profile-category">
         <span>Categoría</span>
@@ -61,7 +66,10 @@ export function CategorySkillSelector({
       <div className="profile-skill-list" aria-label="Selecciona tus habilidades">
         {visibleSkills.length ? (
           visibleSkills.map((skill) => (
-            <label className="profile-skill-option" key={skill.id}>
+            <label
+              className={`profile-skill-option${selectedSkillIds.includes(skill.id) ? " is-selected" : ""}`}
+              key={skill.id}
+            >
               <input
                 type="checkbox"
                 checked={selectedSkillIds.includes(skill.id)}

@@ -1,17 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./ProfileMenu.css";
 
-type RolPerfil = "freelancer" | "cliente";
 type IconName = "chevron" | "edit" | "logout";
-
-interface ProfileMenuProps {
-  nombre: string;
-  rol: RolPerfil;
-  editarPerfilPath: string;
-}
 
 function Icono({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -46,8 +39,8 @@ function Icono({ name }: { name: IconName }) {
   );
 }
 
-export function ProfileMenu({ nombre, rol, editarPerfilPath }: ProfileMenuProps) {
-  const { cerrarSesion } = useAuth();
+export function ProfileMenu() {
+  const { user, cerrarSesion } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
@@ -55,8 +48,13 @@ export function ProfileMenu({ nombre, rol, editarPerfilPath }: ProfileMenuProps)
   const disparadorRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const nombreVisible = nombre.trim() || "Mi cuenta";
-  const rolVisible = rol === "freelancer" ? "Freelancer" : "Cliente";
+  // El rol y el nombre salen siempre del contexto de autenticación: una sola
+  // fuente de verdad para todas las vistas internas.
+  const nombreVisible = user?.nombre.trim() || "Mi cuenta";
+  const esFreelancer = user?.rol === "freelancer";
+  const rolVisible = esFreelancer ? "Freelancer" : "Cliente";
+  const handle = `@${nombreVisible.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".").replace(/[^a-z0-9._]/g, "") || "usuario"}`;
+  const editarPerfilPath = esFreelancer ? "/perfil/freelancer" : "/perfil/cliente";
   const inicial = nombreVisible.charAt(0).toLocaleUpperCase();
 
   useEffect(() => {
@@ -95,6 +93,32 @@ export function ProfileMenu({ nombre, rol, editarPerfilPath }: ProfileMenuProps)
     navigate("/login", { replace: true });
   };
 
+  const manejarTecladoMenu = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const items = Array.from(
+      panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
+    );
+    if (items.length === 0) return;
+
+    const actual = items.indexOf(document.activeElement as HTMLElement);
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      items[(actual + 1) % items.length]?.focus();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(actual - 1 + items.length) % items.length]?.focus();
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      items[0]?.focus();
+    } else if (event.key === "End") {
+      event.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (event.key === "Tab") {
+      setAbierto(false);
+    }
+  };
+
+  if (!user) return null;
+
   return (
     <div className="profile-menu" ref={contenedorRef}>
       <button
@@ -112,7 +136,7 @@ export function ProfileMenu({ nombre, rol, editarPerfilPath }: ProfileMenuProps)
         </span>
         <span className="profile-menu__identity">
           <strong>{nombreVisible}</strong>
-          <small>{rolVisible}</small>
+          <small>{handle}</small>
         </span>
         <span className={`profile-menu__chevron${abierto ? " is-open" : ""}`} aria-hidden="true">
           <Icono name="chevron" />
@@ -120,14 +144,21 @@ export function ProfileMenu({ nombre, rol, editarPerfilPath }: ProfileMenuProps)
       </button>
 
       {abierto && (
-        <div className="profile-menu__panel" id="profile-menu-panel" role="menu" aria-label="Cuenta" ref={panelRef}>
+        <div
+          className="profile-menu__panel"
+          id="profile-menu-panel"
+          role="menu"
+          aria-label="Cuenta"
+          ref={panelRef}
+          onKeyDown={manejarTecladoMenu}
+        >
           <div className="profile-menu__header">
             <span className="profile-menu__avatar profile-menu__avatar--lg" aria-hidden="true">
               {inicial}
             </span>
             <div className="profile-menu__header-text">
               <strong>{nombreVisible}</strong>
-              <small>{rolVisible}</small>
+              <small>{handle} · {rolVisible}</small>
             </div>
           </div>
 

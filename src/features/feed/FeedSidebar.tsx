@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Brand } from "../../components/Brand";
 import { useTema } from "../../hooks/useTema";
 
 type IconName =
@@ -22,6 +23,7 @@ interface ItemSidebar {
   label: string;
   href: string;
   exact?: boolean;
+  aliases?: string[];
 }
 
 interface FeedSidebarProps {
@@ -39,15 +41,13 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
       { id: "marketplace", icono: "compass", label: "Explorar proyectos", href: "/dashboard/freelancer/ofertas" },
       { id: "servicios", icono: "plus", label: "Mis servicios", href: "/dashboard/freelancer/servicios" },
       { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
-      { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
     ];
   }
   return [
     { id: "inicio", icono: "home", label: "Inicio", href: "/dashboard/cliente", exact: true },
     { id: "proyectos", icono: "folder", label: "Mis proyectos", href: "/dashboard/cliente/ofertas" },
-    { id: "servicios", icono: "compass", label: "Explorar talento", href: "/servicios", exact: true },
+    { id: "servicios", icono: "compass", label: "Explorar talento", href: "/servicios", exact: true, aliases: ["/dashboard/cliente/servicios"] },
     { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
-    { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
   ];
 }
 
@@ -122,8 +122,32 @@ export function FeedSidebar({
 
   useEffect(() => {
     if (!abierta) return;
+    const aside = asideRef.current;
     const manejarTecla = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCerrar();
+      if (event.key === "Escape") {
+        onCerrar();
+        return;
+      }
+      if (event.key !== "Tab" || !aside) return;
+
+      const enfocables = Array.from(
+        aside.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((elemento) => elemento.offsetParent !== null);
+      if (enfocables.length === 0) return;
+
+      const primero = enfocables[0];
+      const ultimo = enfocables[enfocables.length - 1];
+      const activo = document.activeElement;
+
+      if (event.shiftKey && (activo === primero || !aside.contains(activo))) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && (activo === ultimo || !aside.contains(activo))) {
+        event.preventDefault();
+        primero.focus();
+      }
     };
     document.addEventListener("keydown", manejarTecla);
     return () => document.removeEventListener("keydown", manejarTecla);
@@ -158,7 +182,18 @@ export function FeedSidebar({
         id="feed-sidebar"
         className={`feed-sidebar${colapsada ? " is-collapsed" : ""}${abierta ? " is-open" : ""}`}
         aria-label="Navegación principal"
+        role={abierta ? "dialog" : undefined}
+        aria-modal={abierta ? true : undefined}
       >
+        <Link
+          className="feed-sidebar__brand"
+          to={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
+          aria-label="FirstGig, ir al inicio"
+          onClick={onCerrar}
+        >
+          <Brand />
+        </Link>
+
         <div className="feed-sidebar__head">
           <span className="feed-sidebar__label">Mi espacio</span>
           <button
@@ -187,13 +222,16 @@ export function FeedSidebar({
             const activo = item.exact
               ? pathname === item.href
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const activoPorAlias = item.aliases?.some(
+              (alias) => pathname === alias || pathname.startsWith(`${alias}/`),
+            ) ?? false;
             return (
               <Link
                 key={item.id}
                 to={item.href}
-                className={activo ? "is-current" : undefined}
+                className={activo || activoPorAlias ? "is-current" : undefined}
                 aria-label={item.label}
-                aria-current={activo ? "page" : undefined}
+                aria-current={activo || activoPorAlias ? "page" : undefined}
                 data-tooltip={item.label}
                 onClick={onCerrar}
               >
@@ -204,18 +242,16 @@ export function FeedSidebar({
           })}
         </nav>
 
-        {!esFreelancer && (
-          <Link
-            className="feed-sidebar__create"
-            to="/dashboard/cliente/ofertas"
-            aria-label="Crear proyecto"
-            data-tooltip="Crear proyecto"
-            onClick={onCerrar}
-          >
-            <Icono name="plus" />
-            <span className="feed-sidebar__text">Crear proyecto</span>
-          </Link>
-        )}
+        <Link
+          className="feed-sidebar__create"
+          to={esFreelancer ? "/crear/servicio" : "/crear/proyecto"}
+          aria-label={esFreelancer ? "Crear servicio" : "Crear proyecto"}
+          data-tooltip={esFreelancer ? "Crear servicio" : "Crear proyecto"}
+          onClick={onCerrar}
+        >
+          <Icono name="plus" />
+          <span className="feed-sidebar__text">{esFreelancer ? "Crear servicio" : "Crear proyecto"}</span>
+        </Link>
 
         <div className="feed-sidebar__foot">
           <button
