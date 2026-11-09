@@ -363,9 +363,15 @@ export function ChatContextPanel({
               </div>
             )}
           </dl>
-          <Link className="cc-inline-link" to={`/contracts/${contract.id}`}>
-            Ver contrato
-          </Link>
+          <p className="cc-context-actions">
+            <Link className="cc-inline-link" to={`/contracts/${contract.id}`}>
+              Ver contrato
+            </Link>
+            {" · "}
+            <Link className="cc-inline-link" to="/contracts">
+              Ver todos
+            </Link>
+          </p>
         </section>
       )}
 
