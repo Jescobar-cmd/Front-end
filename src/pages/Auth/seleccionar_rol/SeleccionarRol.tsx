@@ -16,8 +16,19 @@ type RolCuenta = "cliente" | "freelancer";
 
 export function SeleccionarRol() {
   const navigate = useNavigate();
-  const { token, guardarSesion } = useAuth();
+  const { token, guardarSesion, cerrarSesion } = useAuth();
   const { seleccionar, loading, error, limpiarError } = useSeleccionarRol();
+
+  const salir = () => {
+    try {
+      sessionStorage.removeItem(NEEDS_ROLE_SELECTION_KEY);
+      sessionStorage.removeItem(ROL_INTENT_KEY);
+    } catch {
+      // no-op
+    }
+    cerrarSesion();
+    navigate("/login", { replace: true });
+  };
 
   const [rol, setRol] = useState<RolCuenta | null>(null);
   const [telefono, setTelefono] = useState("");
@@ -108,10 +119,20 @@ export function SeleccionarRol() {
           />
         </div>
 
-        {error && <p className="error" role="alert">{error}</p>}
+        {error && (
+          <div role="alert">
+            <p className="error">{error}</p>
+            {/(404|no encontr|no existe|ruta)/i.test(error) && (
+              <p className="auth-hint">No pudimos completar este paso con el servidor actual. Puedes cerrar sesión e intentarlo más tarde.</p>
+            )}
+          </div>
+        )}
 
         <Button type="submit" className="btn-primary" disabled={loading} aria-busy={loading}>
           {loading ? <Spinner size="small" /> : "Continuar"}
+        </Button>
+        <Button type="button" variant="secondary" onClick={salir} disabled={loading}>
+          Cerrar sesión
         </Button>
       </form>
     </div>
