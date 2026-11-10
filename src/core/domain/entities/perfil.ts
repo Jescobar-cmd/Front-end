@@ -6,10 +6,17 @@ export interface ClientePerfil {
   descripcion: string | null;
 }
 
+export interface HabilidadPerfil {
+  id: number;
+  nombre: string;
+  nivel: string | null;
+}
+
 export interface FreelancerPerfil {
   tituloProfesional: string | null;
   biografia: string | null;
   calificacionPromedio: number;
+  habilidades?: HabilidadPerfil[];
 }
 
 /** Perfil propio del cliente (GET /api/cliente/perfil): incluye email y teléfono. */
@@ -24,6 +31,25 @@ export interface PerfilCliente {
   estado: string;
   fechaRegistro: string;
   cliente: ClientePerfil;
+}
+
+/** Perfil propio del freelancer (GET /api/freelancer/perfil): incluye email y teléfono. */
+export interface PerfilFreelancer {
+  id: number;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  fotoPerfil: string | null;
+  rolId: number;
+  rolNombre: string;
+  estado: string;
+  fechaRegistro: string;
+  freelancer: {
+    tituloProfesional: string | null;
+    biografia: string | null;
+    calificacionPromedio: number;
+    habilidades: HabilidadPerfil[];
+  };
 }
 
 /** Perfil público de cualquier usuario (GET /api/usuarios/:id): sin email ni teléfono. */
@@ -49,4 +75,17 @@ export interface DatosPerfilCliente {
   descripcion?: string | null;
   nombreEmpresa?: string | null;
   tipoCliente?: TipoCliente;
+}
+
+/**
+ * Campos editables del perfil del freelancer (PATCH /api/freelancer/perfil).
+ * `undefined` = no tocar. `null` o "" = borrar el valor (solo opcionales).
+ */
+export interface DatosPerfilFreelancer {
+  nombre?: string;
+  telefono?: string | null;
+  fotoPerfil?: string | null;
+  tituloProfesional?: string | null;
+  biografia?: string | null;
+  habilidadIds?: number[];
 }

@@ -51,6 +51,10 @@ export function statusLabel(value: string): string {
   const labels: Record<string, string> = {
     activo: "Activo",
     active: "Activo",
+    abierto: "Abierto",
+    en_progreso: "En curso",
+    pausado: "Pausado",
+    eliminado: "Eliminado",
     completado: "Completado",
     completed: "Completado",
     cancelado: "Cancelado",
@@ -63,10 +67,18 @@ export function statusLabel(value: string): string {
     accepted: "Aceptada",
     rechazada: "Rechazada",
     rejected: "Rechazada",
+    contraofertada: "Contraofertada",
+    expirada: "Expirada",
   };
   return labels[normalized] ?? value;
 }
 
 export function formatMoney(amount: number): string {
   return new Intl.NumberFormat("es", { style: "currency", currency: "USD" }).format(amount);
+}
+
+export function roleLabel(role: number | string | undefined): string {
+  if (role === 2 || role === "2" || role === "freelancer") return "Freelancer";
+  if (role === 3 || role === "3" || role === "cliente") return "Cliente";
+  return "Participante";
 }

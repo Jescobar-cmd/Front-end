@@ -1,8 +1,8 @@
-import { FeedLayout } from "./FeedLayout";
+import { FeedView } from "./FeedView";
 import { useFeedData } from "./useFeedData";
 import "./feed.css";
 
-export function InicioFreelancer({ vistaPrevia = false }: { vistaPrevia?: boolean }) {
-  const datos = useFeedData("freelancer", vistaPrevia);
-  return <FeedLayout datos={datos} />;
+export function InicioFreelancer() {
+  const datos = useFeedData("freelancer");
+  return <FeedView datos={datos} />;
 }

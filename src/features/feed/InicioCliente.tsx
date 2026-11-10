@@ -1,8 +1,8 @@
-import { FeedLayout } from "./FeedLayout";
+import { FeedView } from "./FeedView";
 import { useFeedData } from "./useFeedData";
 import "./feed.css";
 
-export function InicioCliente({ vistaPrevia = false }: { vistaPrevia?: boolean }) {
-  const datos = useFeedData("cliente", vistaPrevia);
-  return <FeedLayout datos={datos} />;
+export function InicioCliente() {
+  const datos = useFeedData("cliente");
+  return <FeedView datos={datos} />;
 }

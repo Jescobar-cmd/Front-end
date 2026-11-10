@@ -1,37 +1,9 @@
-import type { ChangeEvent } from "react";
 import type { PiezaFeed } from "./datosFeed";
-
-interface FeedBuscadorProps {
-  valor: string;
-  onChange: (valor: string) => void;
-  placeholder?: string;
-}
 
 interface FeedFiltrosProps {
   categorias: string[];
   activa: string;
   onChange: (categoria: string) => void;
-}
-
-export function FeedBuscador({ valor, onChange, placeholder = "Buscar por tema o habilidad" }: FeedBuscadorProps) {
-  const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
-  };
-
-  return (
-    <label className="feed-search">
-      <span className="feed-search__icon" aria-hidden="true">
-        ⌕
-      </span>
-      <span className="feed-visually-hidden">Buscar en el feed</span>
-      <input type="search" value={valor} onChange={manejarCambio} placeholder={placeholder} />
-      {valor && (
-        <button className="feed-search__clear" type="button" onClick={() => onChange("")} aria-label="Limpiar búsqueda">
-          ×
-        </button>
-      )}
-    </label>
-  );
 }
 
 export function FeedFiltros({ categorias, activa, onChange }: FeedFiltrosProps) {
@@ -53,11 +25,17 @@ export function FeedFiltros({ categorias, activa, onChange }: FeedFiltrosProps) 
 }
 
 export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
+  const precio = pieza.precio === null
+    ? "Por definir"
+    : pieza.precio === undefined
+      ? null
+      : new Intl.NumberFormat("es", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(pieza.precio);
+
   return (
     <article className="feed-card">
       <div className="feed-card__image">
         {pieza.imagenUrl ? (
-          <img src={pieza.imagenUrl} alt={`Imagen del servicio: ${pieza.titulo}`} />
+          <img src={pieza.imagenUrl} alt={`Imagen de ${pieza.titulo}`} loading="lazy" />
         ) : (
           <span className="feed-card__image-placeholder">Sin imagen</span>
         )}
@@ -66,19 +44,16 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
       <div className="feed-card__body">
         <div className="feed-card__heading">
           <h3>{pieza.titulo}</h3>
-          <span className="feed-card__mark" aria-hidden="true">
-            ↗
-          </span>
         </div>
         <p className="feed-card__description">{pieza.descripcion}</p>
         <div className="feed-card__bottom">
-          <p className="feed-card__detail">{pieza.detalle}</p>
-          {typeof pieza.postulaciones === "number" && (
-            <p className="feed-card__postulaciones">
-              <span aria-hidden="true">◇</span> {pieza.postulaciones}{" "}
-              {pieza.postulaciones === 1 ? "postulación" : "postulaciones"}
+          {precio !== null && (
+            <p className="feed-card__price">
+              <span>{pieza.etiquetaPrecio ?? "Precio"}</span>
+              <strong>{precio}</strong>
             </p>
           )}
+          <p className="feed-card__detail">{pieza.detalle}</p>
           <ul className="feed-tags" aria-label="Temas y habilidades">
             {pieza.etiquetas.map((etiqueta) => (
               <li key={etiqueta}>{etiqueta}</li>
@@ -90,17 +65,60 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
   );
 }
 
-export function FeedVacio({ buscando, onAccion, etiquetaAccion }: { buscando: boolean; onAccion?: () => void; etiquetaAccion?: string }) {
+export function FeedFiltersSkeleton() {
+  return (
+    <div className="feed-filters feed-filters--skeleton" aria-hidden="true">
+      {Array.from({ length: 5 }, (_, index) => (
+        <span className="feed-skeleton-chip" key={index} />
+      ))}
+    </div>
+  );
+}
+
+export function FeedSkeleton() {
+  return (
+    <div role="status" aria-live="polite">
+      <span className="feed-visually-hidden">Cargando contenido…</span>
+      <div className="feed-grid" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => (
+          <article className="feed-card feed-card--skeleton" key={index}>
+            <div className="feed-card__image" />
+            <div className="feed-card__body">
+              <span className="feed-skeleton-line feed-skeleton-line--short" />
+              <span className="feed-skeleton-line" />
+              <span className="feed-skeleton-line feed-skeleton-line--wide" />
+              <span className="feed-skeleton-line feed-skeleton-line--price" />
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FeedVacio({
+  buscando,
+  titulo,
+  mensaje,
+  onAccion,
+  etiquetaAccion,
+}: {
+  buscando: boolean;
+  titulo?: string;
+  mensaje?: string;
+  onAccion?: () => void;
+  etiquetaAccion?: string;
+}) {
   return (
     <section className="feed-empty" aria-live="polite">
       <span className="feed-empty__symbol" aria-hidden="true">
-        ✳
+        {buscando ? "⌕" : "✳"}
       </span>
-      <h2>{buscando ? "No encontramos resultados" : "Tu feed empieza aquí"}</h2>
+      <h2>{buscando ? "No encontramos resultados" : titulo ?? "Tu feed empieza aquí"}</h2>
       <p>
         {buscando
           ? "Prueba con otra palabra o categoría."
-          : "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."}
+          : mensaje ?? "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."}
       </p>
       {onAccion ? (
         <button className="feed-empty__cta" type="button" onClick={onAccion}>
@@ -111,23 +129,13 @@ export function FeedVacio({ buscando, onAccion, etiquetaAccion }: { buscando: bo
   );
 }
 
-export function FeedLoading() {
-  return (
-    <section className="feed-empty" aria-live="polite">
-      <span className="feed-loading__spinner" aria-hidden="true" />
-      <h2>Cargando contenido</h2>
-      <p>Un momento mientras preparamos tu feed.</p>
-    </section>
-  );
-}
-
 export function FeedError({ mensaje, onReintentar }: { mensaje: string; onReintentar?: () => void }) {
   return (
-    <section className="feed-empty" aria-live="polite">
+    <section className="feed-empty" role="alert">
       <span className="feed-empty__symbol" aria-hidden="true">
         ⚠
       </span>
-      <h2>No pudimos cargar el feed</h2>
+      <h2>No pudimos cargar el contenido</h2>
       <p>{mensaje}</p>
       {onReintentar ? (
         <button className="feed-retry" type="button" onClick={onReintentar}>

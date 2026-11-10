@@ -1,6 +1,4 @@
 import { HttpAuthRepository } from "../infrastructure/api/HttpAuthRepository";
-import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
-import { HttpServiciosRepository } from "../infrastructure/api/HttpServiciosRepository";
 import { RegistroUseCase } from "../core/application/use-cases/RegistroUseCase";
 import { LoginUseCase } from "../core/application/use-cases/LoginUseCase";
 import { LoginConGoogleUseCase } from "../core/application/use-cases/LoginConGoogleUseCase";
@@ -8,21 +6,27 @@ import { SolicitarRecuperacionUseCase } from "../core/application/use-cases/Soli
 import { RestablecerPasswordUseCase } from "../core/application/use-cases/RestablecerPasswordUseCase";
 import { VerificarCuentaUseCase } from "../core/application/use-cases/VerificarCuentaUseCase";
 import { CompletarPerfilGoogleUseCase } from "../core/application/use-cases/CompletarPerfilGoogleUseCase";
+import { SeleccionarRolUseCase } from "../core/application/use-cases/SeleccionarRolUseCase";
 import { CambiarPasswordUseCase } from "../core/application/use-cases/CambiarPasswordUseCase";
 import { ReenviarCodigoUseCase } from "../core/application/use-cases/ReenviarCodigoUseCase";
 import { ObtenerPerfilUseCase } from "../core/application/use-cases/ObtenerPerfilUseCase";
 import { ListarCategoriasUseCase } from "../core/application/use-cases/ListarCategoriasUseCase";
 import { ListarMisOfertasUseCase } from "../core/application/use-cases/ListarMisOfertasUseCase";
-import { ListarServiciosUseCase } from "../core/application/use-cases/ListarServiciosUseCase";
-import { ObtenerServicioUseCase } from "../core/application/use-cases/ObtenerServicioUseCase";
-import { CrearServicioUseCase } from "../core/application/use-cases/CrearServicioUseCase";
-import { ActualizarServicioUseCase } from "../core/application/use-cases/ActualizarServicioUseCase";
-import { CambiarEstadoServicioUseCase } from "../core/application/use-cases/CambiarEstadoServicioUseCase";
-import { ListarMisServiciosUseCase } from "../core/application/use-cases/ListarMisServiciosUseCase";
+import { CrearOfertaUseCase } from "../core/application/use-cases/CrearOfertaUseCase";
+import { ObtenerOfertaUseCase } from "../core/application/use-cases/ObtenerOfertaUseCase";
+import { ActualizarOfertaUseCase } from "../core/application/use-cases/ActualizarOfertaUseCase";
+import { CambiarEstadoOfertaUseCase } from "../core/application/use-cases/CambiarEstadoOfertaUseCase";
+import { ObtenerMiPerfilUseCase } from "../core/application/use-cases/ObtenerMiPerfilUseCase";
+import { ActualizarMiPerfilUseCase } from "../core/application/use-cases/ActualizarMiPerfilUseCase";
+import { ObtenerMiPerfilFreelancerUseCase } from "../core/application/use-cases/ObtenerMiPerfilFreelancerUseCase";
+import { ActualizarMiPerfilFreelancerUseCase } from "../core/application/use-cases/ActualizarMiPerfilFreelancerUseCase";
+import { ObtenerPerfilPublicoUseCase } from "../core/application/use-cases/ObtenerPerfilPublicoUseCase";
+import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
+import { HttpPerfilRepository } from "../infrastructure/api/HttpPerfilRepository";
 
 const authRepository = new HttpAuthRepository();
 const ofertasRepository = new HttpOfertasRepository();
-const serviciosRepository = new HttpServiciosRepository();
+const perfilRepository = new HttpPerfilRepository();
 
 export { authRepository };
 export const registroUseCase = new RegistroUseCase(authRepository);
@@ -32,14 +36,20 @@ export const solicitarRecuperacionUseCase = new SolicitarRecuperacionUseCase(aut
 export const restablecerPasswordUseCase = new RestablecerPasswordUseCase(authRepository);
 export const verificarCuentaUseCase = new VerificarCuentaUseCase(authRepository);
 export const completarPerfilGoogleUseCase = new CompletarPerfilGoogleUseCase(authRepository);
+export const seleccionarRolUseCase = new SeleccionarRolUseCase(authRepository);
 export const cambiarPasswordUseCase = new CambiarPasswordUseCase(authRepository);
 export const reenviarCodigoUseCase = new ReenviarCodigoUseCase(authRepository);
 export const obtenerPerfilUseCase = new ObtenerPerfilUseCase(authRepository);
+
 export const listarCategoriasUseCase = new ListarCategoriasUseCase(ofertasRepository);
 export const listarMisOfertasUseCase = new ListarMisOfertasUseCase(ofertasRepository);
-export const listarServiciosUseCase = new ListarServiciosUseCase(serviciosRepository);
-export const obtenerServicioUseCase = new ObtenerServicioUseCase(serviciosRepository);
-export const crearServicioUseCase = new CrearServicioUseCase(serviciosRepository);
-export const actualizarServicioUseCase = new ActualizarServicioUseCase(serviciosRepository);
-export const cambiarEstadoServicioUseCase = new CambiarEstadoServicioUseCase(serviciosRepository);
-export const listarMisServiciosUseCase = new ListarMisServiciosUseCase(serviciosRepository);
+export const crearOfertaUseCase = new CrearOfertaUseCase(ofertasRepository);
+export const obtenerOfertaUseCase = new ObtenerOfertaUseCase(ofertasRepository);
+export const actualizarOfertaUseCase = new ActualizarOfertaUseCase(ofertasRepository);
+export const cambiarEstadoOfertaUseCase = new CambiarEstadoOfertaUseCase(ofertasRepository);
+
+export const obtenerMiPerfilUseCase = new ObtenerMiPerfilUseCase(perfilRepository);
+export const actualizarMiPerfilUseCase = new ActualizarMiPerfilUseCase(perfilRepository);
+export const obtenerMiPerfilFreelancerUseCase = new ObtenerMiPerfilFreelancerUseCase(perfilRepository);
+export const actualizarMiPerfilFreelancerUseCase = new ActualizarMiPerfilFreelancerUseCase(perfilRepository);
+export const obtenerPerfilPublicoUseCase = new ObtenerPerfilPublicoUseCase(perfilRepository);

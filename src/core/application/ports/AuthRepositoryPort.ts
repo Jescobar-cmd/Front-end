@@ -1,16 +1,15 @@
 import type { User } from "../../domain/entities/user";
-import type { DatosPerfilCliente, PerfilCliente, PerfilPublico } from "../../domain/entities/perfil";
-
-export interface PerfilRepositoryPort {
-  obtenerMiPerfil(token: string): Promise<PerfilCliente>;
-  actualizarMiPerfil(token: string, datos: DatosPerfilCliente): Promise<PerfilCliente>;
-  obtenerPerfilPublico(token: string, id: number): Promise<PerfilPublico>;
-}
 export interface RegistroData {
   nombre: string;
   apellido: string;
   email: string;
   password: string;
+  rolId?: 2 | 3;
+  telefono?: string;
+  cedula?: string;
+}
+
+export interface SeleccionarRolData {
   rolId: 2 | 3;
   telefono?: string;
   cedula?: string;
@@ -44,6 +43,11 @@ export interface CompletarPerfilGoogleData {
   cedula?: string;
 }
 
+export interface LoginGoogleOptions {
+  rolId?: 2 | 3;
+  cedula?: string;
+}
+
 export interface Sesion {
   user: User;
   token: string;
@@ -68,8 +72,9 @@ export interface AuthRepositoryPort {
   verificarCuenta(data: VerificarData): Promise<void>;
   reenviarCodigo(email: string): Promise<void>;
   login(data: LoginData): Promise<Sesion>;
-  loginConGoogle(idToken: string, rolId?: 2 | 3): Promise<ResultadoGoogle>;
+  loginConGoogle(idToken: string, options?: LoginGoogleOptions | 2 | 3): Promise<ResultadoGoogle>;
   completarPerfilGoogle(data: CompletarPerfilGoogleData): Promise<Sesion>;
+  seleccionarRol(token: string, data: SeleccionarRolData): Promise<Sesion>;
   solicitarRecuperacion(email: string): Promise<void>;
   restablecerPassword(data: RestablecerData): Promise<void>;
   cambiarPassword(token: string, data: CambiarPasswordData): Promise<void>;

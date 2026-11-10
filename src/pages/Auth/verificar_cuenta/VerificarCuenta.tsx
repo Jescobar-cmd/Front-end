@@ -20,8 +20,8 @@ export function VerificarCuenta() {
     params.get("email") ??
     sessionStorage.getItem("first_gig_email_pendiente") ??
     "";
-  // El enlace del correo puede traer ?token=CODIGO o ?code=CODIGO
-  const codigoInicial = params.get("token") ?? params.get("code") ?? "";
+  // El backend envía un código de seis dígitos, no un enlace con token.
+  const codigoInicial = params.get("code") ?? "";
 
   const [email, setEmail] = useState(emailInicial);
   const [code, setCode] = useState(codigoInicial);
@@ -34,21 +34,27 @@ export function VerificarCuenta() {
     e.preventDefault();
     if (await verificar(email, code)) {
       sessionStorage.removeItem("first_gig_email_pendiente");
+      sessionStorage.removeItem("first_gig_rol_intent");
       setExito(true);
     }
   };
 
   if (exito) {
+    const needsRoleSelection = sessionStorage.getItem("first_gig_needs_role_selection") === "1";
     return (
       <div className="auth-page auth-screen auth-screen--verificacion">
         <Brand appearance="auth" onClick={() => navigate("/")} />
         <section className="verificar auth-card">
           <h1>¡Cuenta confirmada!</h1>
-          <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
+          <p>
+            {needsRoleSelection
+              ? "Inicia sesión y, como paso obligatorio, elegirás si usarás FirstGig como cliente o freelancer."
+              : "Ya puedes iniciar sesión con tu correo y contraseña."}
+          </p>
           <Button
             type="button"
             className="btn-primary"
-            onClick={() => navigate("/login", { replace: true })}
+            onClick={() => navigate("/login", { replace: true, state: needsRoleSelection ? { needsRoleSelection: true } : undefined })}
           >
             Ir a iniciar sesión
           </Button>

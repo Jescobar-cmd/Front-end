@@ -4,10 +4,12 @@ import type {
   CambiarPasswordData,
   CompletarPerfilGoogleData,
   LoginData,
+  LoginGoogleOptions,
   Perfil,
   RegistroData,
   RestablecerData,
   ResultadoGoogle,
+  SeleccionarRolData,
   Sesion,
   VerificarData,
 } from "../../core/application/ports/AuthRepositoryPort";
@@ -34,9 +36,6 @@ interface PerfilDto {
 async function sesionDesdeDto(dto: SesionDto): Promise<Sesion> {
   let perfil: PerfilDto | null = null;
 
-  // /auth/me es la fuente de verdad del rol. Así una respuesta de login con el
-  // rol en otro formato (por ejemplo "2" o "freelancer") no envía al dashboard
-  // equivocado. Si el endpoint falla, se usa el DTO como respaldo.
   try {
     const { data } = await apiFetch<PerfilDto>({
       method: "GET",
@@ -105,11 +104,19 @@ export class HttpAuthRepository implements AuthRepositoryPort {
     return sesionDesdeDto(dto);
   }
 
-  async loginConGoogle(idToken: string, rolId?: 2 | 3): Promise<ResultadoGoogle> {
+  async loginConGoogle(
+    idToken: string,
+    options?: LoginGoogleOptions | 2 | 3,
+  ): Promise<ResultadoGoogle> {
+    const normalized = typeof options === "number" ? { rolId: options } : options;
     const { status, data } = await apiFetch<SesionDto & { needsOnboarding?: boolean; email?: string }>({
       method: "POST",
       path: "/auth/google",
-      body: { idToken, ...(rolId ? { rolId } : {}) },
+      body: {
+        idToken,
+        ...(normalized?.rolId ? { rolId: normalized.rolId } : {}),
+        ...(normalized?.cedula ? { cedula: normalized.cedula } : {}),
+      },
       mensajeError: "No se pudo iniciar sesión con Google",
     });
     if (status === 202 || data.needsOnboarding) {
@@ -124,6 +131,17 @@ export class HttpAuthRepository implements AuthRepositoryPort {
       path: "/auth/google/complete-profile",
       body: data,
       mensajeError: "No se pudo completar tu perfil",
+    });
+    return sesionDesdeDto(dto);
+  }
+
+  async seleccionarRol(token: string, data: SeleccionarRolData): Promise<Sesion> {
+    const { data: dto } = await apiFetch<SesionDto>({
+      method: "POST",
+      path: "/auth/me/seleccionar-rol",
+      token,
+      body: data,
+      mensajeError: "No se pudo guardar tu rol",
     });
     return sesionDesdeDto(dto);
   }

@@ -1,14 +1,14 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { Brand } from "../../components/Brand";
 import { ProfileMenu } from "../../components/ProfileMenu";
-import type { TipoCuentaFeed } from "./datosFeed";
+import { useAuth } from "../../context/AuthContext";
 
 interface FeedTopbarProps {
   valor: string;
   onChange: (valor: string) => void;
+  onSubmit?: () => void;
   placeholder?: string;
-  nombre?: string;
-  tipoCuenta: TipoCuentaFeed;
   onAbrirMenu?: () => void;
   menuAbierto?: boolean;
 }
@@ -16,21 +16,23 @@ interface FeedTopbarProps {
 export function FeedTopbar({
   valor,
   onChange,
+  onSubmit,
   placeholder,
-  nombre,
-  tipoCuenta,
   onAbrirMenu,
   menuAbierto = false,
 }: FeedTopbarProps) {
+  const { user } = useAuth();
   const manejarCambio = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value);
   };
 
-  const esFreelancer = tipoCuenta === "freelancer";
+  // El rol sale del contexto de autenticación, no de una prop derivada.
+  const esFreelancer = user?.rol === "freelancer";
 
   return (
     <header className="feed-topbar">
       <button
+        id="feed-menu-button"
         className="feed-menu-button"
         type="button"
         onClick={onAbrirMenu}
@@ -49,22 +51,30 @@ export function FeedTopbar({
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
       </button>
-      <a
+      <Link
         className="feed-brand"
-        href={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
+        to={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
         aria-label="FirstGig, ir al inicio"
       >
         <Brand />
-      </a>
-      <label className="feed-search">
+      </Link>
+      <form
+        className="feed-search"
+        role="search"
+        onSubmit={(event: FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          onSubmit?.();
+        }}
+      >
         <span className="feed-search__icon" aria-hidden="true">
           ⌕
         </span>
-        <span className="feed-visually-hidden">Buscar en el feed</span>
+        <span className="feed-visually-hidden">Buscar</span>
         <input
           type="search"
           value={valor}
           onChange={manejarCambio}
+          aria-label="Buscar"
           placeholder={placeholder ?? (esFreelancer ? "Buscar proyectos por título o habilidad" : "Buscar servicios o freelancers")}
         />
         {valor && (
@@ -72,13 +82,9 @@ export function FeedTopbar({
             ×
           </button>
         )}
-      </label>
+      </form>
       <div className="feed-topbar__right">
-        <ProfileMenu
-          nombre={nombre ?? ""}
-          rol={esFreelancer ? "freelancer" : "cliente"}
-          editarPerfilPath={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}
-        />
+        <ProfileMenu />
       </div>
     </header>
   );
