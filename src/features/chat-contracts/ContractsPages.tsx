@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import {
   cancelContract,
@@ -27,7 +28,7 @@ function Counterparty({ contract }: { contract: Contrato }) {
 }
 
 export function ContractsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [contracts, setContracts] = useState<Contrato[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -76,7 +77,13 @@ export function ContractsPage() {
       </header>
       {error && <p className="cc-alert" role="alert">{error}</p>}
       {loading ? <section className="cc-panel"><p className="cc-muted">Cargando contratos…</p></section> : contracts.length === 0 ? (
-        <section className="cc-panel cc-empty"><h2>Aún no tienes contratos</h2><p>Los contratos aparecerán cuando se acepte una propuesta.</p></section>
+        <EmptyState
+          title="Aún no tienes contratos"
+          description="Los contratos aparecen cuando se acepta una propuesta. Mientras tanto, explora oportunidades o revisa tus conversaciones."
+          actionLabel={user?.rol === "freelancer" ? "Explorar proyectos" : "Explorar talento"}
+          to={user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/servicios"}
+          secondary={<Link className="cc-link-button cc-secondary-button" to="/chat">Ir a mensajes</Link>}
+        />
       ) : (
         <div className="cc-contract-list">
           {contracts.map((contract) => (

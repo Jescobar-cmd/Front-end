@@ -3,6 +3,8 @@
 // - Ante un 401 borra el token guardado y redirige a /login.
 // - Expone errores tipados (`ApiError`) con status y detalles de validación (422).
 
+import { API_URL } from "./config";
+
 export interface ApiError extends Error {
   status: number;
   error?: string;
@@ -22,7 +24,6 @@ interface CuerpoError {
 
 type DatosRespuesta<T> = T & Partial<CuerpoError>;
 
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
 const TOKEN_KEY = "first_gig_sesion";
 
 interface OpcionesFetch {

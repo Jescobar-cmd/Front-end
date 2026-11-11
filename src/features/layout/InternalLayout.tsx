@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { FeedSidebar } from "../feed/FeedSidebar";
-import { FeedTopbar } from "../feed/FeedTopbar";
+import { AppHeader } from "./AppHeader";
 import { InternalSearchContext } from "./InternalSearchContext";
 import "../feed/feed.css";
 import "./internal-layout.css";
@@ -54,12 +54,11 @@ export function InternalLayout() {
     <InternalSearchContext.Provider value={valorBusqueda}>
       <div className={`feed-layout feed-layout--${user?.rol ?? "cliente"}`}>
         <a className="fg-skip" href="#contenido">Saltar al contenido</a>
-        <FeedTopbar
+        <AppHeader
           valor={query}
           onChange={setQuery}
           onSubmit={buscar}
           onAbrirMenu={() => setMenuMovilAbierto(true)}
-          menuAbierto={menuMovilAbierto}
         />
 
         <div className="feed-app">
@@ -78,7 +77,7 @@ export function InternalLayout() {
 
         <footer className="feed-footer">
           <span>FIRST GIG</span>
-          <span>Ideas que encuentran su equipo.</span>
+          <span>Talento verificado. Portafolio primero.</span>
         </footer>
       </div>
     </InternalSearchContext.Provider>

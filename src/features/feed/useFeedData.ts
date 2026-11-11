@@ -63,6 +63,12 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
         imagenUrl: oferta.imagenUrl ?? undefined,
         precio: oferta.presupuesto,
         etiquetaPrecio: "Presupuesto",
+        autorId: oferta.cliente.id,
+        autorNombre: oferta.cliente.nombre,
+        autorFoto: oferta.cliente.fotoPerfil,
+        autorTitulo: oferta.cliente.nombreEmpresa ?? "Cliente",
+        href: "/dashboard/freelancer/ofertas",
+        ctaLabel: "Ver proyecto",
       }));
     }
 
@@ -76,6 +82,13 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
       imagenUrl: servicio.imagenUrl ?? undefined,
       precio: servicio.precio,
       etiquetaPrecio: "Precio",
+      autorId: servicio.freelancer.id,
+      autorNombre: servicio.freelancer.nombre,
+      autorFoto: servicio.freelancer.fotoPerfil,
+      autorTitulo: servicio.freelancer.tituloProfesional ?? "Freelancer",
+      calificacion: servicio.freelancer.calificacionPromedio,
+      href: `/perfil/usuario/${servicio.freelancer.id}?servicioId=${servicio.id}`,
+      ctaLabel: "Ver perfil",
     }));
   }, [estadoFeed, feed, tipoCuenta]);
 
