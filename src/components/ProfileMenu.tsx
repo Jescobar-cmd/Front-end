@@ -4,15 +4,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./ProfileMenu.css";
 
-type IconName = "chevron" | "edit" | "logout";
+type IconName = "chevron" | "user" | "logout";
 
 function Icono({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     chevron: <path d="m6 9 6 6 6-6" />,
-    edit: (
+    user: (
       <>
-        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-        <path d="m13.5 6.5 3 3" />
+        <circle cx="12" cy="8" r="3.6" />
+        <path d="M5 20a7 7 0 0 1 14 0" />
       </>
     ),
     logout: (
@@ -54,7 +54,7 @@ export function ProfileMenu() {
   const esFreelancer = user?.rol === "freelancer";
   const rolVisible = esFreelancer ? "Freelancer" : "Cliente";
   const handle = `@${nombreVisible.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".").replace(/[^a-z0-9._]/g, "") || "usuario"}`;
-  const editarPerfilPath = esFreelancer ? "/perfil/freelancer" : "/perfil/cliente";
+  const perfilPath = esFreelancer ? "/perfil/freelancer" : "/perfil/cliente";
   const inicial = nombreVisible.charAt(0).toLocaleUpperCase();
 
   useEffect(() => {
@@ -165,12 +165,12 @@ export function ProfileMenu() {
           <div className="profile-menu__actions">
             <Link
               className="profile-menu__item"
-              to={editarPerfilPath}
+              to={perfilPath}
               role="menuitem"
               onClick={() => setAbierto(false)}
             >
-              <Icono name="edit" />
-              <span>Editar perfil</span>
+              <Icono name="user" />
+              <span>Ver mi perfil</span>
             </Link>
             <span className="profile-menu__divider" role="separator" />
             <button

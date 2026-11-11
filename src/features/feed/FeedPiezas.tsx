@@ -1,3 +1,5 @@
+import { EmptyState } from "../../components/ui/EmptyState";
+import { ServiceCard } from "../../components/ui/ServiceCard";
 import type { PiezaFeed } from "./datosFeed";
 
 interface FeedFiltrosProps {
@@ -25,43 +27,25 @@ export function FeedFiltros({ categorias, activa, onChange }: FeedFiltrosProps) 
 }
 
 export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
-  const precio = pieza.precio === null
-    ? "Por definir"
-    : pieza.precio === undefined
-      ? null
-      : new Intl.NumberFormat("es", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(pieza.precio);
-
   return (
-    <article className="feed-card">
-      <div className="feed-card__image">
-        {pieza.imagenUrl ? (
-          <img src={pieza.imagenUrl} alt={`Imagen de ${pieza.titulo}`} loading="lazy" />
-        ) : (
-          <span className="feed-card__image-placeholder">Sin imagen</span>
-        )}
-        <span className="feed-card__category">{pieza.categoria}</span>
-      </div>
-      <div className="feed-card__body">
-        <div className="feed-card__heading">
-          <h3>{pieza.titulo}</h3>
-        </div>
-        <p className="feed-card__description">{pieza.descripcion}</p>
-        <div className="feed-card__bottom">
-          {precio !== null && (
-            <p className="feed-card__price">
-              <span>{pieza.etiquetaPrecio ?? "Precio"}</span>
-              <strong>{precio}</strong>
-            </p>
-          )}
-          <p className="feed-card__detail">{pieza.detalle}</p>
-          <ul className="feed-tags" aria-label="Temas y habilidades">
-            {pieza.etiquetas.map((etiqueta) => (
-              <li key={etiqueta}>{etiqueta}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </article>
+    <ServiceCard
+      title={pieza.titulo}
+      description={pieza.descripcion}
+      category={pieza.categoria}
+      imageUrl={pieza.imagenUrl}
+      authorName={pieza.autorNombre}
+      authorPhoto={pieza.autorFoto}
+      authorTitle={pieza.autorTitulo}
+      showRating={pieza.etiquetaPrecio !== "Presupuesto"}
+      rating={pieza.calificacion}
+      price={pieza.precio}
+      pricePrefix={pieza.etiquetaPrecio === "Presupuesto" ? "Presupuesto" : "Desde"}
+      priceFallback={pieza.etiquetaPrecio === "Presupuesto" ? "Por definir" : "A convenir"}
+      href={pieza.href}
+      ctaHref={pieza.href}
+      ctaLabel={pieza.ctaLabel}
+      eyebrow={pieza.etiquetas[0] ?? pieza.categoria}
+    />
   );
 }
 
@@ -79,17 +63,9 @@ export function FeedSkeleton() {
   return (
     <div role="status" aria-live="polite">
       <span className="feed-visually-hidden">Cargando contenido…</span>
-      <div className="feed-grid" aria-hidden="true">
+      <div className="dashboard-loading" aria-hidden="true">
         {Array.from({ length: 6 }, (_, index) => (
-          <article className="feed-card feed-card--skeleton" key={index}>
-            <div className="feed-card__image" />
-            <div className="feed-card__body">
-              <span className="feed-skeleton-line feed-skeleton-line--short" />
-              <span className="feed-skeleton-line" />
-              <span className="feed-skeleton-line feed-skeleton-line--wide" />
-              <span className="feed-skeleton-line feed-skeleton-line--price" />
-            </div>
-          </article>
+          <div className="dashboard-skeleton" key={index} />
         ))}
       </div>
     </div>
@@ -110,22 +86,16 @@ export function FeedVacio({
   etiquetaAccion?: string;
 }) {
   return (
-    <section className="feed-empty" aria-live="polite">
-      <span className="feed-empty__symbol" aria-hidden="true">
-        {buscando ? "⌕" : "✳"}
-      </span>
-      <h2>{buscando ? "No encontramos resultados" : titulo ?? "Tu feed empieza aquí"}</h2>
-      <p>
-        {buscando
+    <EmptyState
+      title={buscando ? "No encontramos resultados" : titulo ?? "Tu feed empieza aquí"}
+      description={
+        buscando
           ? "Prueba con otra palabra o categoría."
-          : mensaje ?? "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."}
-      </p>
-      {onAccion ? (
-        <button className="feed-empty__cta" type="button" onClick={onAccion}>
-          {etiquetaAccion ?? (buscando ? "Limpiar búsqueda" : "Explorar oportunidades")}
-        </button>
-      ) : null}
-    </section>
+          : mensaje ?? "Cuando haya nuevas oportunidades para ti, las encontrarás en este espacio."
+      }
+      actionLabel={onAccion ? etiquetaAccion ?? (buscando ? "Limpiar búsqueda" : "Explorar oportunidades") : undefined}
+      onAction={onAccion}
+    />
   );
 }
 

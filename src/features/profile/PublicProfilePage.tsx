@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Badge } from "../../components/ui/Badge";
+import { Button, buttonClassName } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { ServiceCard } from "../../components/ui/ServiceCard";
 import { useAuth } from "../../context/AuthContext";
 import { createConversation } from "../../infrastructure/api/apiChat";
 import { getPublicProfile } from "../../infrastructure/api/apiPerfiles";
 import type { PerfilPublico } from "../../infrastructure/api/apiPerfiles";
+import { listServices } from "../../infrastructure/api/apiServicios";
+import type { Servicio } from "../../infrastructure/api/apiServicios";
 import "./profile.css";
 
 function errorMessage(error: unknown): string {
@@ -26,6 +32,8 @@ export function PublicProfilePage() {
   const [error, setError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [services, setServices] = useState<Servicio[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -55,15 +63,46 @@ export function PublicProfilePage() {
     };
   }, [token, userId]);
 
+  useEffect(() => {
+    let active = true;
+    if (!token || !profile || Number(profile.rolId) !== 2) {
+      setServices([]);
+      return () => {
+        active = false;
+      };
+    }
+    setServicesLoading(true);
+    listServices(token, { limit: 50 })
+      .then((result) => {
+        if (active) {
+          setServices(result.items.filter((servicio) => servicio.freelancer?.id === profile.id && servicio.estado?.toLowerCase() !== "eliminado"));
+        }
+      })
+      .catch(() => {
+        if (active) setServices([]);
+      })
+      .finally(() => {
+        if (active) setServicesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [token, profile]);
+
   const servicioId = Number(searchParams.get("servicioId"));
   const proyectoId = Number(searchParams.get("proyectoId"));
   const esPropio = user?.id !== undefined && String(user.id) === String(userId);
   const esFreelancer = Number(profile?.rolId) === 2;
   const esCliente = Number(profile?.rolId) === 3;
+  const servicioPortafolio = useMemo(
+    () => services.find((servicio) => servicio.estado?.toLowerCase() === "activo") ?? services[0],
+    [services],
+  );
+  const servicioContexto = Number.isInteger(servicioId) && servicioId > 0 ? servicioId : servicioPortafolio?.id;
 
   const contextoChat = (() => {
-    if (user?.rol === "cliente" && esFreelancer && Number.isInteger(servicioId) && servicioId > 0) {
-      return { servicioId };
+    if (user?.rol === "cliente" && esFreelancer && servicioContexto) {
+      return { servicioId: servicioContexto };
     }
     if (Number.isInteger(proyectoId) && proyectoId > 0) {
       if (user?.rol === "cliente" && esFreelancer) {
@@ -74,12 +113,14 @@ export function PublicProfilePage() {
     return null;
   })();
 
-  const iniciarChat = async () => {
-    if (!token || !contextoChat || chatLoading) return;
+  const iniciarChatConContexto = async (
+    contexto: { servicioId?: number; proyectoId?: number; freelancerId?: number } | null,
+  ) => {
+    if (!token || !contexto || chatLoading) return;
     setChatLoading(true);
     setChatError("");
     try {
-      const result = await createConversation(token, contextoChat);
+      const result = await createConversation(token, contexto);
       navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setChatError(errorMessage(reason));
@@ -87,6 +128,8 @@ export function PublicProfilePage() {
       setChatLoading(false);
     }
   };
+
+  const iniciarChat = () => void iniciarChatConContexto(contextoChat);
 
   const rutaExplorar = user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/servicios";
 
@@ -107,37 +150,119 @@ export function PublicProfilePage() {
 
   return (
     <div className="profile-page profile-public">
-      <header className="profile-heading">
-        <Link className="profile-back-link" to={rutaExplorar}>← Volver a explorar</Link>
-        <p className="profile-eyebrow">PERFIL PÚBLICO</p>
-        <h1>{profile.nombre}</h1>
-        <p>{profile.rolNombre} en FirstGig · Miembro desde {fechaRegistro(profile.fechaRegistro)}</p>
+      <nav className="profile-breadcrumbs" aria-label="Migas de pan">
+        <Link to={rutaExplorar}>Explorar talento</Link>
+        <span aria-hidden="true">/</span>
+        <span>{profile.nombre}</span>
+      </nav>
+
+      <header className="profile-public__hero">
+        <div className="profile-public__cover" aria-hidden="true" />
+        <div className="profile-public__hero-body">
+          <div className="profile-public__identity">
+            {profile.fotoPerfil ? (
+              <img className="profile-public__avatar" src={profile.fotoPerfil} alt="" />
+            ) : (
+              <span className="profile-public__avatar profile-public__avatar--initial" aria-hidden="true">
+                {profile.nombre.charAt(0).toLocaleUpperCase()}
+              </span>
+            )}
+            <div className="profile-public__identity-copy">
+              <p className="ui-eyebrow">{profile.rolNombre} · Miembro desde {fechaRegistro(profile.fechaRegistro)}</p>
+              <h1>{profile.nombre}</h1>
+              <p>{esFreelancer ? profile.freelancer?.tituloProfesional ?? "Talento First Gig" : profile.cliente?.nombreEmpresa ?? "Cliente First Gig"}</p>
+              <div className="profile-public__badges">
+                <Badge tone="blue">Perfil público</Badge>
+                {esFreelancer && profile.freelancer && profile.freelancer.calificacionPromedio > 0 ? (
+                  <Badge tone="warning">★ {profile.freelancer.calificacionPromedio.toFixed(1)}</Badge>
+                ) : null}
+                {esFreelancer ? <Badge tone="blue">Portafolio primero</Badge> : <Badge tone="blue">Cliente</Badge>}
+              </div>
+            </div>
+          </div>
+          <div className="profile-public__hero-actions">
+            {esPropio ? (
+              <Link className={buttonClassName({ variant: "action" })} to={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>
+                Editar perfil
+              </Link>
+            ) : (
+              <Button
+                variant="action"
+                disabled={!contextoChat || chatLoading}
+                onClick={() => void iniciarChat()}
+              >
+                {chatLoading ? "Abriendo chat…" : "Contactar"}
+              </Button>
+            )}
+          </div>
+        </div>
       </header>
+
+      {chatError ? <p className="profile-message profile-message--error" role="alert">{chatError}</p> : null}
 
       <div className="profile-public__layout">
         <div className="profile-public__main">
-          <section className="profile-card profile-public__card">
-            <div className="profile-public__identity">
-              {profile.fotoPerfil ? (
-                <img className="profile-public__avatar" src={profile.fotoPerfil} alt="" />
+          {esFreelancer && profile.freelancer ? (
+            <section className="profile-public__section">
+              <div className="profile-public__section-head">
+                <div>
+                  <p className="ui-eyebrow">Portafolio</p>
+                  <h2>Servicios publicados</h2>
+                  <p>El trabajo del freelancer va primero. Explora sus servicios y contacta desde el que te interese.</p>
+                </div>
+                <Badge tone="blue">{services.length} servicios</Badge>
+              </div>
+              {servicesLoading ? (
+                <div className="dashboard-loading" aria-hidden="true">
+                  {Array.from({ length: 3 }, (_, index) => <div className="dashboard-skeleton" key={index} />)}
+                </div>
+              ) : services.length > 0 ? (
+                <div className="dashboard-grid">
+                  {services.map((servicio) => (
+                    <ServiceCard
+                      key={servicio.id}
+                      title={servicio.titulo}
+                      description={servicio.descripcion}
+                      category={servicio.categoria?.nombre}
+                      imageUrl={servicio.imagenUrl}
+                      authorName={profile.nombre}
+                      authorPhoto={profile.fotoPerfil}
+                      authorTitle={profile.freelancer?.tituloProfesional}
+                      rating={profile.freelancer?.calificacionPromedio}
+                      price={servicio.precio}
+                      pricePrefix="Desde"
+                      onCta={esPropio ? undefined : () => void iniciarChatConContexto({ servicioId: servicio.id })}
+                      ctaHref={esPropio ? "/dashboard/freelancer/servicios" : undefined}
+                      ctaLabel={esPropio ? "Gestionar" : "Contactar"}
+                      ctaDisabled={!esPropio && chatLoading}
+                    />
+                  ))}
+                </div>
               ) : (
-                <span className="profile-public__avatar profile-public__avatar--initial" aria-hidden="true">
-                  {profile.nombre.charAt(0).toLocaleUpperCase()}
-                </span>
+                <EmptyState
+                  title={esPropio ? "Tu portafolio está vacío" : "Portafolio en construcción"}
+                  description={
+                    esPropio
+                      ? "Publica tu primer servicio para que los clientes puedan encontrarte y contactarte."
+                      : "Este freelancer todavía no tiene servicios publicados. Vuelve pronto o explora otros perfiles."
+                  }
+                  actionLabel={esPropio ? "Gestionar mis servicios" : "Explorar talento"}
+                  to={esPropio ? "/dashboard/freelancer/servicios" : rutaExplorar}
+                />
               )}
+            </section>
+          ) : null}
+
+          <section className="profile-public__section">
+            <div className="profile-public__section-head">
               <div>
-                <h2>{profile.nombre}</h2>
-                <p>{profile.rolNombre}</p>
+                <p className="ui-eyebrow">Sobre {esFreelancer ? "el freelancer" : "el cliente"}</p>
+                <h2>Presentación</h2>
               </div>
             </div>
-
-            {esFreelancer && profile.freelancer && (
+            {esFreelancer && profile.freelancer ? (
               <>
-                {profile.freelancer.tituloProfesional && <h3>{profile.freelancer.tituloProfesional}</h3>}
-                {profile.freelancer.biografia && <p className="profile-public__bio">{profile.freelancer.biografia}</p>}
-                {profile.freelancer.calificacionPromedio > 0 && (
-                  <p className="profile-public__rating">★ {profile.freelancer.calificacionPromedio.toFixed(1)}</p>
-                )}
+                <p className="profile-public__bio">{profile.freelancer.biografia || "Este freelancer todavía no ha añadido una biografía."}</p>
                 <div className="profile-public__skills">
                   <h3>Habilidades</h3>
                   {profile.freelancer.habilidades.length > 0 ? (
@@ -148,42 +273,59 @@ export function PublicProfilePage() {
                     <p className="profile-muted">Este freelancer todavía no ha añadido habilidades.</p>
                   )}
                 </div>
+                {profile.freelancer.calificacionPromedio > 0 ? (
+                  <div className="profile-public__reviews">
+                    <strong>{profile.freelancer.calificacionPromedio.toFixed(1)}</strong>
+                    <div>
+                      <span className="service-reviews__stars">★★★★★</span>
+                      <p>Calificación promedio del perfil. Las reseñas individuales se mostrarán cuando el backend las exponga.</p>
+                    </div>
+                  </div>
+                ) : null}
               </>
-            )}
-
-            {esCliente && profile.cliente && (
+            ) : profile.cliente ? (
               <>
-                {profile.cliente.nombreEmpresa && <h3>{profile.cliente.nombreEmpresa}</h3>}
+                {profile.cliente.nombreEmpresa ? <h3>{profile.cliente.nombreEmpresa}</h3> : null}
                 <p className="profile-public__bio">{profile.cliente.descripcion || "Este cliente todavía no ha añadido una descripción."}</p>
                 <p className="profile-muted">Tipo de cliente: {profile.cliente.tipoCliente === "empresa" ? "Empresa" : "Persona"}.</p>
               </>
-            )}
+            ) : null}
           </section>
         </div>
 
         <aside className="profile-public__aside">
-          <section className="profile-card profile-public__contact">
-            <p className="profile-eyebrow">CONTACTO</p>
-            <h2>Conversar desde el contexto</h2>
+          <section className="profile-public__contact">
+            <p className="ui-eyebrow">Contacto</p>
+            <h2>{esPropio ? "Tu perfil público" : esFreelancer ? "Hablemos de tu proyecto" : "Contacta a este cliente"}</h2>
             <p>
-              {contextoChat
-                ? "El chat conservará el servicio o proyecto desde el que llegaste."
-                : "Abre una conversación desde un servicio o proyecto para compartir el contexto correcto."}
+              {esPropio
+                ? "Así ven los demás tu perfil. Puedes editarlo cuando quieras desde este botón."
+                : contextoChat
+                  ? "La conversación quedará vinculada al servicio o proyecto desde el que llegaste."
+                  : "Este perfil todavía no tiene un servicio activo para iniciar una conversación."}
             </p>
-            {chatError && <p className="profile-message profile-message--error" role="alert">{chatError}</p>}
-            {!esPropio && (
-              <button
-                className="profile-save"
-                type="button"
+            {esPropio ? (
+              <Link className={buttonClassName({ variant: "action", block: true })} to={esFreelancer ? "/perfil/freelancer" : "/perfil/cliente"}>
+                Editar perfil
+              </Link>
+            ) : (
+              <Button
+                variant="action"
+                block
                 disabled={!contextoChat || chatLoading}
                 onClick={() => void iniciarChat()}
               >
-                {chatLoading ? "Abriendo chat…" : "Abrir chat"}
-              </button>
+                {chatLoading ? "Abriendo chat…" : "Contactar"}
+              </Button>
             )}
-            {!contextoChat && !esPropio && (
-              <Link className="profile-back-link" to={rutaExplorar}>Buscar un servicio o proyecto</Link>
-            )}
+            {!contextoChat && !esPropio ? (
+              <Link className="profile-back-link" to={rutaExplorar}>Explorar otros perfiles</Link>
+            ) : null}
+            <dl className="profile-public__facts">
+              <div><dt>Rol</dt><dd>{profile.rolNombre}</dd></div>
+              <div><dt>Miembro desde</dt><dd>{fechaRegistro(profile.fechaRegistro)}</dd></div>
+              {esFreelancer ? <div><dt>Servicios</dt><dd>{services.length}</dd></div> : null}
+            </dl>
           </section>
         </aside>
       </div>

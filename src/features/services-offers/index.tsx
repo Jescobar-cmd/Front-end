@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -32,6 +32,10 @@ import type { Habilidad } from "../../infrastructure/api/apiCatalogos";
 import type { Categoria } from "../../core/domain/entities/categoria";
 import type { DatosOferta, EstadoOferta, Oferta } from "../../core/domain/entities/oferta";
 import { useInternalSearch } from "../layout/InternalSearchContext";
+import { Badge } from "../../components/ui/Badge";
+import { buttonClassName } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { ServiceCard } from "../../components/ui/ServiceCard";
 import "./services-offers.css";
 
 const PAGE_SIZE = 20;
@@ -284,22 +288,19 @@ function DiscoveryEmpty({
   onRefresh?: () => void;
 }) {
   return (
-    <section className="so-discovery-empty" role="status" aria-live="polite">
-      <span className="so-discovery-empty__mark" aria-hidden="true">{filtered ? "⌕" : "○"}</span>
-      <div className="so-discovery-empty__content">
-        <h2>{filtered ? filteredTitle : emptyTitle}</h2>
-        <p>{filtered ? filteredMessage : emptyMessage}</p>
-      </div>
-      {(filtered || onRefresh) ? (
-        <button
-          className="so-button so-button--quiet"
-          type="button"
-          onClick={filtered ? onClear : onRefresh}
-        >
-          {filtered ? "Limpiar filtros" : "Actualizar"}
-        </button>
-      ) : null}
-    </section>
+    <EmptyState
+      title={filtered ? filteredTitle : emptyTitle}
+      description={filtered ? filteredMessage : emptyMessage}
+      actionLabel={filtered ? "Limpiar filtros" : onRefresh ? "Actualizar" : undefined}
+      onAction={filtered ? onClear : onRefresh}
+      secondary={
+        filtered && onRefresh ? (
+          <button className={buttonClassName({ variant: "secondary", size: "sm" })} type="button" onClick={onRefresh}>
+            Actualizar
+          </button>
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -311,32 +312,28 @@ function ProjectDiscoveryCard({
   onOpen: () => void;
 }) {
   return (
-    <article className="so-discovery-card">
-      <div className="so-discovery-card__image">
-        {offer.imagenUrl
-          ? <img src={offer.imagenUrl} alt="" loading="lazy" />
-          : <span>Sin imagen</span>}
-        {offer.categoria?.nombre && <span className="so-discovery-card__category">{offer.categoria.nombre}</span>}
-      </div>
-      <div className="so-discovery-card__body">
-        <div className="so-discovery-card__meta">
-          <span className="so-badge">{statusLabel(offer.estado)}</span>
-          <strong>{money(offer.presupuesto)}</strong>
+    <ServiceCard
+      title={offer.titulo}
+      description={offer.descripcion}
+      category={offer.categoria?.nombre}
+      imageUrl={offer.imagenUrl}
+      authorName={offer.cliente.nombre}
+      authorPhoto={offer.cliente.fotoPerfil}
+      authorTitle={offer.cliente.nombreEmpresa ?? "Cliente"}
+      showRating={false}
+      price={offer.presupuesto}
+      pricePrefix="Presupuesto"
+      priceFallback="Por definir"
+      eyebrow={offer.categoria?.nombre ?? "Proyecto"}
+      onCta={onOpen}
+      ctaLabel="Ver proyecto"
+      footer={
+        <div className="so-card-footer">
+          <Badge tone="blue">{statusLabel(offer.estado)}</Badge>
+          {offer.plazoDias !== null ? <span className="so-muted">{offer.plazoDias} días de plazo</span> : null}
         </div>
-        <h2>{offer.titulo}</h2>
-        <p className="so-discovery-card__description">{offer.descripcion}</p>
-        <div className="so-discovery-card__owner">
-          {offer.cliente.fotoPerfil
-            ? <img src={offer.cliente.fotoPerfil} alt="" loading="lazy" />
-            : <span aria-hidden="true">{offer.cliente.nombre.charAt(0).toLocaleUpperCase()}</span>}
-          <span>{offer.cliente.nombre}</span>
-          {offer.plazoDias !== null && <small>{offer.plazoDias} días</small>}
-        </div>
-        <button className="so-button so-button--outline" type="button" onClick={onOpen}>
-          Ver proyecto
-        </button>
-      </div>
-    </article>
+      }
+    />
   );
 }
 
@@ -347,42 +344,26 @@ function ServiceDiscoveryCard({
   service: Servicio;
   onOpen: () => void;
 }) {
-  const freelancerName = service.freelancer?.nombre ?? "Freelancer";
+  const activo = service.estado?.toLowerCase() === "activo";
 
   return (
-    <article className="so-discovery-card">
-      <div className="so-discovery-card__image">
-        {service.imagenUrl
-          ? <img src={service.imagenUrl} alt="" loading="lazy" />
-          : <span>Sin imagen</span>}
-        {service.categoria?.nombre && <span className="so-discovery-card__category">{service.categoria.nombre}</span>}
-      </div>
-      <div className="so-discovery-card__body">
-        <div className="so-discovery-card__meta">
-          <span className="so-badge">{statusLabel(service.estado)}</span>
-          <strong>{money(service.precio)}</strong>
-        </div>
-        <h2>{service.titulo}</h2>
-        <p className="so-discovery-card__description">{service.descripcion}</p>
-        <div className="so-discovery-card__owner">
-          {service.freelancer?.fotoPerfil
-            ? <img src={service.freelancer.fotoPerfil} alt="" loading="lazy" />
-            : <span aria-hidden="true">{freelancerName.charAt(0).toLocaleUpperCase()}</span>}
-          <span>{freelancerName}</span>
-          {service.freelancer?.calificacionPromedio > 0 && (
-            <small>★ {service.freelancer.calificacionPromedio.toFixed(1)}</small>
-          )}
-        </div>
-        <button
-          className="so-button so-button--outline"
-          type="button"
-          disabled={service.estado?.toLowerCase() !== "activo"}
-          onClick={onOpen}
-        >
-          Ver servicio
-        </button>
-      </div>
-    </article>
+    <ServiceCard
+      title={service.titulo}
+      description={service.descripcion}
+      category={service.categoria?.nombre}
+      imageUrl={service.imagenUrl}
+      authorName={service.freelancer?.nombre}
+      authorPhoto={service.freelancer?.fotoPerfil}
+      authorTitle={service.freelancer?.tituloProfesional}
+      rating={service.freelancer?.calificacionPromedio}
+      price={service.precio}
+      pricePrefix="Desde"
+      eyebrow={service.categoria?.nombre ?? "Servicio"}
+      onCta={onOpen}
+      ctaDisabled={!activo}
+      ctaLabel={activo ? "Ver servicio" : "No disponible"}
+      footer={<Badge tone={activo ? "green" : "neutral"}>{statusLabel(service.estado)}</Badge>}
+    />
   );
 }
 
@@ -644,11 +625,28 @@ export function OfferForm({
             <div className="so-form__grid">
               <label className="so-field so-field--wide">
                 <span>Título <small>5–200 caracteres</small></span>
-                <input value={values.titulo} minLength={5} maxLength={200} required onChange={(event) => set("titulo", event.target.value)} />
+                <input
+                  value={values.titulo}
+                  minLength={5}
+                  maxLength={200}
+                  required
+                  aria-invalid={values.titulo.length > 0 && (values.titulo.trim().length < 5 || values.titulo.trim().length > 200)}
+                  onChange={(event) => set("titulo", event.target.value)}
+                />
+                <small className="ui-help">{values.titulo.length}/200 caracteres</small>
               </label>
               <label className="so-field so-field--wide">
                 <span>Descripción <small>10–5000 caracteres</small></span>
-                <textarea value={values.descripcion} minLength={10} maxLength={5000} required rows={6} onChange={(event) => set("descripcion", event.target.value)} />
+                <textarea
+                  value={values.descripcion}
+                  minLength={10}
+                  maxLength={5000}
+                  required
+                  rows={6}
+                  aria-invalid={values.descripcion.length > 0 && (values.descripcion.trim().length < 10 || values.descripcion.trim().length > 5000)}
+                  onChange={(event) => set("descripcion", event.target.value)}
+                />
+                <small className="ui-help">{values.descripcion.length}/5000 caracteres</small>
               </label>
             </div>
           </section>
@@ -694,8 +692,8 @@ export function OfferForm({
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
             {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-            <button className="so-button so-button--primary" type="submit" disabled={saving}>
-              {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar oferta"}
+            <button className="so-button so-button--action" type="submit" disabled={saving}>
+              {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar proyecto"}
             </button>
           </div>
         </div>
@@ -821,7 +819,7 @@ function ProposalCards({
             )}
             {pending && onAccept && onReject && (
               <div className="so-form__actions">
-                <button className="so-button so-button--primary" type="button" disabled={busyId !== null} onClick={() => onAccept(proposal)}>
+                <button className="so-button so-button--action" type="button" disabled={busyId !== null} onClick={() => onAccept(proposal)}>
                   {busyId === proposal.id ? "Procesando…" : "Aceptar"}
                 </button>
                 <button className="so-button so-button--quiet" type="button" disabled={busyId !== null} onClick={() => onReject(proposal)}>Rechazar</button>
@@ -971,8 +969,8 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
   const filteredCount = proposalsCount || proposals.length;
 
   return (
-    <PageShell eyebrow="Espacio cliente" title="Servicios y ofertas" description="Publica trabajos y gestiona las propuestas que recibes.">
-      <Tabs active={tab} onChange={setTab} items={[{ id: "offers", label: "Mis ofertas" }, { id: "create", label: "Crear oferta" }]} />
+    <PageShell eyebrow="Espacio cliente" title="Mis proyectos" description="Publica proyectos y gestiona las propuestas que recibes.">
+      <Tabs active={tab} onChange={setTab} items={[{ id: "offers", label: "Mis proyectos" }, { id: "create", label: "Crear proyecto" }]} />
       {tab === "offers" && (
         <Panel id="offers" active={tab}>
           {selected ? (
@@ -980,7 +978,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
               {actionError && <Notice error={actionError} retry={() => setReload((value) => value + 1)} />}
               {editing ? (
                 <section className="so-surface">
-                  <h2>Editar oferta</h2>
+                  <h2>Editar proyecto</h2>
                   {catalogs.error ? <Notice error={catalogs.error} retry={catalogs.retry} /> : catalogs.loading ? <p role="status">Cargando categorías y habilidades…</p> : (
                     <OfferForm token={token} categories={catalogs.categories} skills={catalogs.skills} initial={selected} onCancel={() => setEditing(false)} onSaved={(saved) => { setSelected(saved); setEditing(false); setReload((value) => value + 1); }} />
                   )}
@@ -989,11 +987,11 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
                 <>
                   <OfferDetails offer={selected} onBack={() => setSelected(null)}>
                     <div className="so-form__actions">
-                      <button className="so-button so-button--outline" type="button" onClick={() => setEditing(true)} disabled={selected.estado === "completado" || selected.estado === "cancelado"}>Editar oferta</button>
-                      {selected.estado === "abierto" && <button className="so-button so-button--danger" type="button" disabled={busyId !== null} onClick={() => updateStatus("cancelado")}>Cancelar oferta</button>}
+                      <button className="so-button so-button--outline" type="button" onClick={() => setEditing(true)} disabled={selected.estado === "completado" || selected.estado === "cancelado"}>Editar proyecto</button>
+                      {selected.estado === "abierto" && <button className="so-button so-button--danger" type="button" disabled={busyId !== null} onClick={() => updateStatus("cancelado")}>Cancelar proyecto</button>}
                       {selected.estado === "en_progreso" && <>
-                        <button className="so-button so-button--primary" type="button" disabled={busyId !== null} onClick={() => updateStatus("completado")}>Marcar completada</button>
-                        <button className="so-button so-button--danger" type="button" disabled={busyId !== null} onClick={() => updateStatus("cancelado")}>Cancelar oferta</button>
+                        <button className="so-button so-button--action" type="button" disabled={busyId !== null} onClick={() => updateStatus("completado")}>Marcar completado</button>
+                        <button className="so-button so-button--danger" type="button" disabled={busyId !== null} onClick={() => updateStatus("cancelado")}>Cancelar proyecto</button>
                       </>}
                     </div>
                   </OfferDetails>
@@ -1007,14 +1005,21 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
           ) : (
             <>
               <div className="so-filterbar">
-                <label className="so-field so-search"><span>Buscar ofertas</span><input type="search" value={query} placeholder="Título o descripción" onChange={(event) => { setPage(1); setQuery(event.target.value); }} /></label>
+                <label className="so-field so-search"><span>Buscar proyectos</span><input type="search" value={query} placeholder="Título o descripción" onChange={(event) => { setPage(1); setQuery(event.target.value); }} /></label>
                 <label className="so-field"><span>Estado</span><select value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }}>
-                  <option value="">Todos los estados</option><option value="abierto">Abierta</option><option value="en_progreso">En progreso</option><option value="completado">Completada</option><option value="cancelado">Cancelada</option>
+                  <option value="">Todos los estados</option><option value="abierto">Abierto</option><option value="en_progreso">En progreso</option><option value="completado">Completado</option><option value="cancelado">Cancelado</option>
                 </select></label>
               </div>
               {error && <Notice error={error} retry={() => setReload((value) => value + 1)} />}
               {detailLoading && <p role="status">Cargando los detalles de la oferta…</p>}
-              {loading ? <p className="so-loading" role="status">Cargando tus ofertas…</p> : offers.length === 0 ? <p className="so-empty">No encontramos ofertas. Prueba otro filtro o crea una oferta nueva.</p> : (
+              {loading ? <p className="so-loading" role="status">Cargando tus proyectos…</p> : offers.length === 0 ? (
+                <EmptyState
+                  title={query || status ? "No encontramos proyectos" : "Aún no tienes proyectos"}
+                  description={query || status ? "Prueba con otro término o cambia el estado." : "Publica tu primer proyecto y empieza a recibir propuestas de freelancers."}
+                  actionLabel={query || status ? "Limpiar filtros" : "Crear proyecto"}
+                  onAction={query || status ? () => { setQuery(""); setStatus(""); setPage(1); } : () => setTab("create")}
+                />
+              ) : (
                 <div className="so-list">{offers.map((offer) => <OfferCard key={offer.id} offer={offer} onOpen={() => void openOffer(offer)} />)}</div>
               )}
               <Pager page={page} total={total} onChange={setPage} />
@@ -1025,8 +1030,8 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
       {tab === "create" && (
         <Panel id="create" active={tab}>
           <section className="so-surface">
-            <h2>Publica una oferta</h2>
-            <p className="so-muted">Describe el trabajo, el presupuesto y el plazo para recibir propuestas adecuadas.</p>
+            <h2>Publica un proyecto</h2>
+            <p className="so-muted">Describe el trabajo, el presupuesto y el plazo para recibir propuestas a medida.</p>
             {catalogs.error ? <Notice error={catalogs.error} retry={catalogs.retry} /> : catalogs.loading ? <p role="status">Cargando categorías y habilidades…</p> : (
               <OfferForm token={token} categories={catalogs.categories} skills={catalogs.skills} onSaved={(saved) => { setTab("offers"); setSelected(saved); setReload((value) => value + 1); }} />
             )}
@@ -1206,8 +1211,8 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   ]), [submittedIds, myProposalList]);
 
   return (
-    <PageShell eyebrow="Espacio freelancer" title="Encuentra tu próximo proyecto" description="Explora ofertas abiertas y da seguimiento a tus propuestas.">
-      <Tabs active={tab} onChange={setTab} items={[{ id: "market", label: "Marketplace" }, { id: "mine", label: "Mis propuestas" }]} />
+    <PageShell eyebrow="Espacio freelancer" title="Explorar proyectos" description="Encuentra proyectos abiertos y da seguimiento a tus propuestas.">
+      <Tabs active={tab} onChange={setTab} items={[{ id: "market", label: "Proyectos abiertos" }, { id: "mine", label: "Mis propuestas" }]} />
       <Panel id="market" active={tab}>
         {selected ? (
           <OfferDetails offer={selected} onBack={() => setSelected(null)}>
@@ -1228,7 +1233,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
                   <label className="so-field"><span>Monto propuesto (USD)</span><input type="number" min="0.01" step="0.01" required value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
                   <label className="so-field"><span>Mensaje <small>opcional</small></span><textarea rows={4} value={message} onChange={(event) => setMessage(event.target.value)} /></label>
                   {sendError && <p className="so-inline-error" role="alert">{sendError}</p>}
-                  <button type="submit" className="so-button so-button--primary" disabled={sending || myLoading || Boolean(myError)}>{sending ? "Enviando…" : "Enviar propuesta"}</button>
+                  <button type="submit" className="so-button so-button--action" disabled={sending || myLoading || Boolean(myError)}>{sending ? "Enviando…" : "Enviar propuesta"}</button>
                 </form>
               )}
             </section>
@@ -1280,13 +1285,14 @@ export function FreelancerMarketplace({ token }: { token: string }) {
       </Panel>
       <Panel id="mine" active={tab}>
         {myError && <Notice error={myError} retry={() => setMyReload((value) => value + 1)} />}
-        {myLoading ? <p className="so-loading" role="status">Cargando tus propuestas…</p> : myProposalList.length === 0 ?             <section className="so-discovery-empty" role="status" aria-live="polite">
-              <span className="so-discovery-empty__mark" aria-hidden="true">○</span>
-              <div className="so-discovery-empty__content">
-                <h2>Aún no has enviado propuestas</h2>
-                <p>Cuando postules a un proyecto, tus propuestas aparecerán aquí para que puedas hacer seguimiento.</p>
-              </div>
-            </section> : (
+        {myLoading ? <p className="so-loading" role="status">Cargando tus propuestas…</p> : myProposalList.length === 0 ? (
+          <EmptyState
+            title="Aún no has enviado propuestas"
+            description="Cuando postules a un proyecto, tus propuestas aparecerán aquí para que puedas hacer seguimiento."
+            actionLabel="Explorar proyectos"
+            onAction={() => setTab("market")}
+          />
+        ) : (
           <div className="so-list">{myProposalList.map((proposal) => (
             <article className="so-card" key={proposal.id}>
               <div className="so-card__top"><span className="so-badge">{statusLabel(proposal.estado)}</span><span className="so-muted">{date(proposal.fechaEnvio)}</span></div>
@@ -1397,11 +1403,28 @@ export function ServiceForm({
             <div className="so-form__grid">
               <label className="so-field so-field--wide">
                 <span>Título <small>5–150 caracteres</small></span>
-                <input value={values.titulo} minLength={5} maxLength={150} required onChange={(event) => set("titulo", event.target.value)} />
+                <input
+                  value={values.titulo}
+                  minLength={5}
+                  maxLength={150}
+                  required
+                  aria-invalid={values.titulo.length > 0 && (values.titulo.trim().length < 5 || values.titulo.trim().length > 150)}
+                  onChange={(event) => set("titulo", event.target.value)}
+                />
+                <small className="ui-help">{values.titulo.length}/150 caracteres</small>
               </label>
               <label className="so-field so-field--wide">
                 <span>Descripción <small>10–5000 caracteres</small></span>
-                <textarea rows={6} minLength={10} maxLength={5000} required value={values.descripcion} onChange={(event) => set("descripcion", event.target.value)} />
+                <textarea
+                  rows={6}
+                  minLength={10}
+                  maxLength={5000}
+                  required
+                  value={values.descripcion}
+                  aria-invalid={values.descripcion.length > 0 && (values.descripcion.trim().length < 10 || values.descripcion.trim().length > 5000)}
+                  onChange={(event) => set("descripcion", event.target.value)}
+                />
+                <small className="ui-help">{values.descripcion.length}/5000 caracteres</small>
               </label>
               <label className="so-field">
                 <span>Precio (USD)</span>
@@ -1427,7 +1450,7 @@ export function ServiceForm({
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
             {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-            <button className="so-button so-button--primary" type="submit" disabled={saving}>{saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
+            <button className="so-button so-button--action" type="submit" disabled={saving}>{saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
           </div>
         </div>
         <ListingPreview
@@ -1491,7 +1514,7 @@ export function FreelancerServices({ token }: { token: string }) {
   }
 
   return (
-    <PageShell eyebrow="Espacio freelancer" title="Tus servicios" description="Publica tus servicios y controla cuándo están disponibles.">
+    <PageShell eyebrow="Espacio freelancer" title="Mis servicios" description="Publica tus servicios y controla cuándo están disponibles.">
       <Tabs active={tab} onChange={setTab} items={[{ id: "services", label: "Mis servicios" }, { id: "create", label: "Crear servicio" }]} />
       <Panel id="services" active={tab}>
         {editing ? (
@@ -1510,7 +1533,14 @@ export function FreelancerServices({ token }: { token: string }) {
               </select></label>
             </div>
             {error && <Notice error={error} retry={() => setReload((value) => value + 1)} />}
-            {loading ? <p className="so-loading" role="status">Cargando tus servicios…</p> : services.length === 0 ? <p className="so-empty">No hay servicios para mostrar.</p> : (
+            {loading ? <p className="so-loading" role="status">Cargando tus servicios…</p> : services.length === 0 ? (
+              <EmptyState
+                title={query || status ? "No encontramos servicios" : "Aún no tienes servicios"}
+                description={query || status ? "Prueba con otro término o cambia el estado." : "Publica tu primer servicio para que los clientes puedan encontrarte y contactarte."}
+                actionLabel={query || status ? "Limpiar filtros" : "Crear servicio"}
+                onAction={query || status ? () => { setQuery(""); setStatus(""); setPage(1); } : () => setTab("create")}
+              />
+            ) : (
               <div className="so-list">{services.map((service) => (
                 <article className="so-card" key={service.id}>
                   <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span><span className="so-muted">{service.categoria?.nombre ?? "Sin categoría"}</span></div>
@@ -1521,7 +1551,7 @@ export function FreelancerServices({ token }: { token: string }) {
                       <button className="so-button so-button--outline" type="button" onClick={() => setEditing(service)}>Editar</button>
                       {service.estado === "activo"
                         ? <button className="so-button so-button--quiet" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "pausado")}>Pausar</button>
-                        : <button className="so-button so-button--primary" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "activo")}>Activar</button>}
+                        : <button className="so-button so-button--action" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "activo")}>Activar</button>}
                       <button className="so-button so-button--danger" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "eliminado")}>Eliminar</button>
                     </>}
                   </div>
@@ -1613,50 +1643,137 @@ export function ClientServices({ token }: { token: string }) {
   }
 
   return (
-    <PageShell eyebrow="Explora servicios" title="Encuentra el servicio ideal" description="Busca servicios publicados por freelancers y contacta directamente para conversar.">
+    <PageShell eyebrow="Explorar talento" title="Encuentra talento verificado" description="Talento con portafolio, servicios claros y conversación directa desde cada perfil.">
       {selected ? (
-        <div className="so-stack">
+        <div className="service-detail">
           {actionError && <Notice error={actionError} />}
+          <nav className="service-breadcrumbs" aria-label="Migas de pan">
+            <button type="button" onClick={() => setSelected(null)}>Explorar talento</button>
+            <span aria-hidden="true">/</span>
+            <span>{selected.categoria?.nombre ?? "Servicio"}</span>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{selected.titulo}</span>
+          </nav>
           {detailLoading ? <p className="so-loading" role="status">Cargando los detalles del servicio…</p> : (
-            <article className="so-detail">
-              <button type="button" className="so-button so-button--quiet" onClick={() => setSelected(null)}>← Volver a servicios</button>
-              <div className="so-detail__head">
-                <div><span className="so-badge">{statusLabel(selected.estado)}</span><h2>{selected.titulo}</h2></div>
-                <strong className="so-price">{money(selected.precio)}</strong>
-              </div>
-              <p className="so-detail__description">{selected.descripcion}</p>
-              <dl className="so-facts">
-                <div><dt>Categoría</dt><dd>{selected.categoria?.nombre ?? "Sin categoría"}</dd></div>
-                {selected.freelancer?.nombre && (
-                  <div>
-                    <dt>Freelancer</dt>
-                    <dd>
-                      <Link className="so-profile-link" to={`/perfil/usuario/${selected.freelancer.id}?servicioId=${selected.id}`}>
-                        {selected.freelancer.nombre}
-                      </Link>
-                    </dd>
+            <div className="service-detail__layout">
+              <div className="service-detail__main">
+                <header className="service-detail__title">
+                  <div className="service-detail__badges">
+                    <Badge tone={selected.estado?.toLowerCase() === "activo" ? "green" : "neutral"}>{statusLabel(selected.estado)}</Badge>
+                    <Badge tone="blue">{selected.categoria?.nombre ?? "Sin categoría"}</Badge>
                   </div>
-                )}
-                {selected.freelancer?.calificacionPromedio !== undefined && <div><dt>Calificación</dt><dd>★ {selected.freelancer.calificacionPromedio.toFixed(1)}</dd></div>}
-              </dl>
-              {selected.imagenUrl && <img className="so-cover" src={selected.imagenUrl} alt={`Imagen de ${selected.titulo}`} />}
-              <div className="so-form__actions">
-                <button className="so-button so-button--primary" type="button" disabled={creatingConversation || selected.estado?.toLowerCase() !== "activo"} onClick={() => void startConversation()}>
-                  {creatingConversation ? "Abriendo conversación…" : "Contactar al freelancer"}
-                </button>
+                  <h1>{selected.titulo}</h1>
+                  <div className="service-detail__author">
+                    <span className="marketplace-card__avatar">
+                      {selected.freelancer?.fotoPerfil
+                        ? <img src={selected.freelancer.fotoPerfil} alt="" />
+                        : selected.freelancer?.nombre?.charAt(0).toLocaleUpperCase() ?? "F"}
+                    </span>
+                    <div>
+                      <strong>{selected.freelancer?.nombre ?? "Freelancer"}</strong>
+                      <small>{selected.freelancer?.tituloProfesional ?? "Talento First Gig"}</small>
+                    </div>
+                    <Badge tone="blue">Perfil público</Badge>
+                    {selected.freelancer?.calificacionPromedio > 0 ? (
+                      <span className="service-detail__rating">★ {selected.freelancer.calificacionPromedio.toFixed(1)}</span>
+                    ) : (
+                      <span className="service-detail__rating">Nuevo</span>
+                    )}
+                  </div>
+                </header>
+
+                <div className="service-gallery">
+                  {selected.imagenUrl ? (
+                    <img src={selected.imagenUrl} alt={`Imagen de ${selected.titulo}`} />
+                  ) : (
+                    <div className="service-gallery__placeholder">
+                      <span>Portafolio First Gig</span>
+                      <strong>{selected.categoria?.nombre ?? "Servicio profesional"}</strong>
+                    </div>
+                  )}
+                </div>
+
+                <section className="service-panel">
+                  <h2>Descripción del servicio</h2>
+                  <p>{selected.descripcion}</p>
+                </section>
+
+                <section className="service-panel">
+                  <h2>Sobre el freelancer</h2>
+                  <div className="service-freelancer">
+                    <span className="service-freelancer__avatar">
+                      {selected.freelancer?.fotoPerfil
+                        ? <img src={selected.freelancer.fotoPerfil} alt="" />
+                        : selected.freelancer?.nombre?.charAt(0).toLocaleUpperCase() ?? "F"}
+                    </span>
+                    <div>
+                      <strong>{selected.freelancer?.nombre ?? "Freelancer"}</strong>
+                      <p>{selected.freelancer?.tituloProfesional ?? "Perfil profesional en First Gig"}</p>
+                      <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to={`/perfil/usuario/${selected.freelancer.id}?servicioId=${selected.id}`}>
+                        Ver portafolio completo
+                      </Link>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="service-panel">
+                  <h2>Reseñas</h2>
+                  {selected.freelancer?.calificacionPromedio > 0 ? (
+                    <div className="service-reviews">
+                      <strong>{selected.freelancer.calificacionPromedio.toFixed(1)}</strong>
+                      <div>
+                        <span className="service-reviews__stars">★★★★★</span>
+                        <p>Calificación promedio del perfil. Las reseñas individuales se mostrarán cuando el backend las exponga.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="so-muted">Este freelancer aún no tiene reseñas públicas. Puedes revisar su perfil y contactarlo para conocer más sobre su trabajo.</p>
+                  )}
+                </section>
               </div>
-              {selected.estado?.toLowerCase() !== "activo" && <p className="so-muted">Este servicio no está disponible para nuevos contactos.</p>}
-            </article>
+
+              <aside className="service-pricing" aria-label="Resumen del servicio">
+                <div className="service-packages" role="tablist" aria-label="Paquetes">
+                  <button type="button" role="tab" aria-selected="true" className="is-active">Básico</button>
+                  <button type="button" role="tab" aria-selected="false" disabled title="El backend aún no maneja paquetes">Estándar</button>
+                  <button type="button" role="tab" aria-selected="false" disabled title="El backend aún no maneja paquetes">Premium</button>
+                </div>
+                <p className="service-pricing__price"><small>Desde</small><strong>{money(selected.precio)}</strong></p>
+                <dl className="service-pricing__facts">
+                  <div><dt>Tiempo de entrega</dt><dd>A convenir</dd></div>
+                  <div><dt>Revisiones</dt><dd>A convenir</dd></div>
+                  <div><dt>Categoría</dt><dd>{selected.categoria?.nombre ?? "Sin categoría"}</dd></div>
+                </dl>
+                <button
+                  className={buttonClassName({ variant: "action", block: true })}
+                  type="button"
+                  disabled={creatingConversation || selected.estado?.toLowerCase() !== "activo"}
+                  onClick={() => void startConversation()}
+                >
+                  {creatingConversation ? "Abriendo conversación…" : "Continuar"}
+                </button>
+                <button
+                  className={buttonClassName({ variant: "secondary", block: true })}
+                  type="button"
+                  disabled={creatingConversation || selected.estado?.toLowerCase() !== "activo"}
+                  onClick={() => void startConversation()}
+                >
+                  Contactar
+                </button>
+                {selected.estado?.toLowerCase() !== "activo" && <p className="so-muted">Este servicio no está disponible para nuevos contactos.</p>}
+                <p className="service-pricing__note">El backend actual maneja un precio único. Los paquetes Estándar y Premium se habilitarán cuando existan en la API.</p>
+              </aside>
+            </div>
           )}
         </div>
       ) : (
         <>
           <div className="so-discovery-controls">
             <label className="so-field so-discovery-search">
-              <span>Buscar servicios</span>
+              <span>Buscar talento</span>
               <input
                 type="search"
-                placeholder="Nombre, descripción o categoría"
+                placeholder="Servicio, descripción o categoría"
                 value={query}
                 onChange={(event) => { setPage(1); setQuery(event.target.value); }}
               />

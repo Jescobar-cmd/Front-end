@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "../../components/ui/Badge";
+import { Button, buttonClassName } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import type { Categoria } from "../../core/domain/entities/categoria";
 import { getCategories, getSkills } from "../../infrastructure/api/apiCatalogos";
@@ -167,6 +170,110 @@ function ProfilePreview({
   );
 }
 
+function ProfileOverview({
+  nombre,
+  fotoPerfil,
+  rol,
+  email,
+  telefono,
+  titulo,
+  descripcion,
+  nombreEmpresa,
+  tipoCliente,
+  habilidades,
+  publicPath,
+  onEdit,
+}: {
+  nombre: string;
+  fotoPerfil: string;
+  rol: string;
+  email: string;
+  telefono?: string;
+  titulo?: string;
+  descripcion?: string;
+  nombreEmpresa?: string;
+  tipoCliente?: string;
+  habilidades?: string[];
+  publicPath: string;
+  onEdit: () => void;
+}) {
+  const inicial = nombre.trim().charAt(0).toLocaleUpperCase() || "F";
+  const esFreelancer = rol === "Freelancer";
+
+  return (
+    <section className="profile-overview">
+      <div className="profile-overview__cover" aria-hidden="true" />
+      <div className="profile-overview__head">
+        <div className="profile-overview__identity">
+          {fotoPerfil.trim() ? (
+            <img className="profile-overview__avatar" src={fotoPerfil.trim()} alt="" />
+          ) : (
+            <span className="profile-overview__avatar profile-overview__avatar--initial" aria-hidden="true">
+              {inicial}
+            </span>
+          )}
+          <div>
+            <p className="ui-eyebrow">Tu perfil · {rol}</p>
+            <h2>{nombre.trim() || "Tu perfil"}</h2>
+            <p>{titulo?.trim() || (esFreelancer ? "Talento First Gig" : "Cliente First Gig")}</p>
+            <div className="profile-overview__badges">
+              <Badge tone="blue">Perfil público</Badge>
+              {nombreEmpresa ? <Badge tone="blue">{nombreEmpresa}</Badge> : null}
+              {tipoCliente ? <Badge>{tipoCliente === "empresa" ? "Empresa" : "Persona"}</Badge> : null}
+            </div>
+          </div>
+        </div>
+        <div className="profile-overview__actions">
+          <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to={publicPath}>
+            Ver perfil público
+          </Link>
+          <Button variant="action" size="sm" onClick={onEdit}>
+            Editar perfil
+          </Button>
+        </div>
+      </div>
+
+      <div className="profile-overview__grid">
+        <section className="profile-overview__panel">
+          <h3>Presentación</h3>
+          <p>{descripcion?.trim() || (esFreelancer ? "Añade una biografía para que los clientes conozcan tu experiencia y forma de trabajar." : "Añade una descripción para que los freelancers entiendan tu proyecto y tu forma de trabajar.")}</p>
+          {esFreelancer ? (
+            <div className="profile-overview__portfolio">
+              <div>
+                <h3>Tu portafolio</h3>
+                <p>Los servicios que publiques aparecerán en tu perfil público. El portafolio va primero.</p>
+              </div>
+              <Link className={buttonClassName({ variant: "primary", size: "sm" })} to="/dashboard/freelancer/servicios">
+                Gestionar servicios
+              </Link>
+            </div>
+          ) : null}
+        </section>
+
+        <aside className="profile-overview__panel">
+          <h3>Datos de contacto</h3>
+          <dl className="profile-overview__facts">
+            <div><dt>Correo</dt><dd>{email}</dd></div>
+            {telefono ? <div><dt>Teléfono</dt><dd>{telefono}</dd></div> : null}
+            <div><dt>Rol</dt><dd>{rol}</dd></div>
+          </dl>
+        </aside>
+      </div>
+
+      {habilidades && habilidades.length > 0 ? (
+        <section className="profile-overview__panel">
+          <h3>Habilidades</h3>
+          <div className="profile-overview__skills">
+            {habilidades.map((habilidad) => (
+              <Badge key={habilidad} tone="blue">{habilidad}</Badge>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </section>
+  );
+}
+
 function useProfileToken() {
   const { token, user, actualizarNombre } = useAuth();
   return { token, user, actualizarNombre };
@@ -181,6 +288,7 @@ export function ClientProfilePage() {
   const [saveError, setSaveError] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [values, setValues] = useState({
     nombre: "",
     telefono: "",
@@ -304,7 +412,22 @@ export function ClientProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+        <>
+          {!editing && (
+            <ProfileOverview
+              nombre={values.nombre}
+              fotoPerfil={values.fotoPerfil}
+              rol="Cliente"
+              email={profile.email}
+              telefono={values.telefono}
+              descripcion={values.descripcion}
+              nombreEmpresa={values.nombreEmpresa}
+              tipoCliente={values.tipoCliente}
+              publicPath={`/perfil/usuario/${profile.id}`}
+              onEdit={() => setEditing(true)}
+            />
+          )}
+          <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate hidden={!editing}>
           <div className="profile-layout">
             <div className="profile-main">
               <section className="profile-section-card">
@@ -395,7 +518,7 @@ export function ClientProfilePage() {
                 <button className="profile-save" type="submit" disabled={saving}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                <button className="profile-cancel" type="button" disabled={saving} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>
@@ -410,6 +533,7 @@ export function ClientProfilePage() {
             }}
           />
         </form>
+        </>
       ) : null}
     </ProfileFrame>
   );
@@ -428,6 +552,7 @@ export function FreelancerProfilePage() {
   const [saveError, setSaveError] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
   const [values, setValues] = useState({
@@ -577,7 +702,22 @@ export function FreelancerProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+        <>
+          {!editing && (
+            <ProfileOverview
+              nombre={values.nombre}
+              fotoPerfil={values.fotoPerfil}
+              rol="Freelancer"
+              email={profile.email}
+              telefono={values.telefono}
+              titulo={values.tituloProfesional}
+              descripcion={values.biografia}
+              habilidades={profile.freelancer.habilidades.map((habilidad) => habilidad.nombre)}
+              publicPath={`/perfil/usuario/${profile.id}`}
+              onEdit={() => setEditing(true)}
+            />
+          )}
+          <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate hidden={!editing}>
           <div className="profile-layout">
             <div className="profile-main">
               <section className="profile-section-card">
@@ -684,7 +824,7 @@ export function FreelancerProfilePage() {
                 <button className="profile-save" type="submit" disabled={saving || catalogLoading || Boolean(catalogError)}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                <button className="profile-cancel" type="button" disabled={saving} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>
@@ -699,6 +839,7 @@ export function FreelancerProfilePage() {
             }}
           />
         </form>
+        </>
       ) : null}
     </ProfileFrame>
   );

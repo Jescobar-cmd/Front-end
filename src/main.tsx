@@ -7,6 +7,8 @@ import "./index.css";
 import "./styles/brand.css";
 import "./styles/responsive.css";
 import "./styles/auth-apple.css";
+import "./styles/fg-design-system.css";
+import "./styles/app-shell.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
