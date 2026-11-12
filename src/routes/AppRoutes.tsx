@@ -5,7 +5,6 @@ import { RecuperarPassword } from "../pages/Auth/recuperar_password";
 import { RestablecerPassword } from "../pages/Auth/restablecer_password";
 import { VerificarCuenta } from "../pages/Auth/verificar_cuenta";
 import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerfilGoogle";
-import { SeleccionarRol } from "../pages/Auth/seleccionar_rol";
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
 import { useAuth } from "../context/AuthContext";
@@ -47,7 +46,7 @@ export function AppRoutes() {
       <Route path="/confirm" element={<VerificarCuenta />} />
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
-      <Route path="/seleccionar-rol" element={<RutaProtegida permitirSeleccionRol><SeleccionarRol /></RutaProtegida>} />
+      <Route path="/seleccionar-rol" element={<Navigate to="/dashboard" replace />} />
 
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
 

@@ -4,12 +4,6 @@ export interface RegistroData {
   apellido: string;
   email: string;
   password: string;
-  rolId?: 2 | 3;
-  telefono?: string;
-  cedula?: string;
-}
-
-export interface SeleccionarRolData {
   rolId: 2 | 3;
   telefono?: string;
   cedula?: string;
@@ -74,7 +68,6 @@ export interface AuthRepositoryPort {
   login(data: LoginData): Promise<Sesion>;
   loginConGoogle(idToken: string, options?: LoginGoogleOptions | 2 | 3): Promise<ResultadoGoogle>;
   completarPerfilGoogle(data: CompletarPerfilGoogleData): Promise<Sesion>;
-  seleccionarRol(token: string, data: SeleccionarRolData): Promise<Sesion>;
   solicitarRecuperacion(email: string): Promise<void>;
   restablecerPassword(data: RestablecerData): Promise<void>;
   cambiarPassword(token: string, data: CambiarPasswordData): Promise<void>;

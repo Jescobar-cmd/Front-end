@@ -40,21 +40,16 @@ export function VerificarCuenta() {
   };
 
   if (exito) {
-    const needsRoleSelection = sessionStorage.getItem("first_gig_needs_role_selection") === "1";
     return (
       <div className="auth-page auth-screen auth-screen--verificacion">
         <Brand appearance="auth" onClick={() => navigate("/")} />
         <section className="verificar auth-card">
           <h1>¡Cuenta confirmada!</h1>
-          <p>
-            {needsRoleSelection
-              ? "Inicia sesión y, como paso obligatorio, elegirás si usarás FirstGig como cliente o freelancer."
-              : "Ya puedes iniciar sesión con tu correo y contraseña."}
-          </p>
+          <p>Ya puedes iniciar sesión con tu correo y contraseña.</p>
           <Button
             type="button"
             className="btn-primary"
-            onClick={() => navigate("/login", { replace: true, state: needsRoleSelection ? { needsRoleSelection: true } : undefined })}
+            onClick={() => navigate("/login", { replace: true })}
           >
             Ir a iniciar sesión
           </Button>

@@ -7,12 +7,12 @@ import { Spinner } from "../../../components/spinner";
 import { Brand } from "../../../components/Brand";
 import { useRegistro } from "../../../hooks/UseRegistro";
 
-const NEEDS_ROLE_SELECTION_KEY = "first_gig_needs_role_selection";
-
 export function Registro() {
   const navigate = useNavigate();
   const { registrar, loading, error, limpiarError } = useRegistro();
 
+  const [rol, setRol] = useState<"cliente" | "freelancer" | null>(null);
+  const [rolError, setRolError] = useState("");
   const [mayorDeEdad, setMayorDeEdad] = useState(false);
   const [form, setForm] = useState({
     nombre: "",
@@ -32,6 +32,11 @@ export function Registro() {
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!rol) {
+      setRolError("Elige si usarás FirstGig como cliente o freelancer.");
+      return;
+    }
+    setRolError("");
 
     const resultado = await registrar({
       nombre: form.nombre,
@@ -40,15 +45,14 @@ export function Registro() {
       password: form.password,
       confirmPassword: form.confirmPassword,
       mayorDeEdad,
+      rolId: rol === "freelancer" ? 2 : 3,
       telefono: form.telefono,
       ...(form.documento.trim() ? { documento: form.documento } : {}),
     });
 
     if (!resultado) return;
     sessionStorage.setItem("first_gig_email_pendiente", resultado.email);
-    // Tras verificar e iniciar sesión, el usuario deberá elegir su rol (obligatorio).
-    sessionStorage.setItem(NEEDS_ROLE_SELECTION_KEY, "1");
-    navigate("/verificar-cuenta", { state: { email: resultado.email, needsRoleSelection: true } });
+    navigate("/verificar-cuenta", { state: { email: resultado.email } });
   };
 
   return (
@@ -57,7 +61,34 @@ export function Registro() {
 
       <form onSubmit={handleSubmit} className="registro auth-card">
         <h1>Crear cuenta</h1>
-        <p>Completa tus datos para comenzar. Después de confirmar tu cuenta elegirás si eres cliente o freelancer.</p>
+        <p>Completa tus datos y elige cómo usarás FirstGig. Después solo tendrás que confirmar tu correo.</p>
+
+        <fieldset
+          className="roles roles--pill account-selector"
+          aria-label="Tipo de cuenta"
+          aria-describedby={rolError ? "registro-rol-error" : undefined}
+        >
+          <legend>Tipo de cuenta</legend>
+          <Button
+            type="button"
+            variant={rol === "cliente" ? "primary" : "secondary"}
+            className="account-selector__button"
+            aria-pressed={rol === "cliente"}
+            onClick={() => { setRol("cliente"); setRolError(""); }}
+          >
+            Soy cliente
+          </Button>
+          <Button
+            type="button"
+            variant={rol === "freelancer" ? "primary" : "secondary"}
+            className="account-selector__button"
+            aria-pressed={rol === "freelancer"}
+            onClick={() => { setRol("freelancer"); setRolError(""); }}
+          >
+            Soy freelancer
+          </Button>
+        </fieldset>
+        {rolError && <p className="error" id="registro-rol-error" role="alert">{rolError}</p>}
 
         <div className="registro-name-row">
           <div className="auth-field">
@@ -144,15 +175,18 @@ export function Registro() {
           />
         </div>
         <div className="auth-field">
-          <label htmlFor="registro-documento">Número de documento (opcional)</label>
+          <label htmlFor="registro-documento">
+            Número de documento {rol === "freelancer" ? "(obligatorio)" : "(opcional)"}
+          </label>
           <Input
             id="registro-documento"
             name="documento"
-            placeholder="Número de documento (opcional)"
+            placeholder={rol === "freelancer" ? "Número de documento" : "Número de documento (opcional)"}
             value={form.documento}
             onChange={handleChange}
+            required={rol === "freelancer"}
           />
-          <p className="auth-hint">Si eliges ser freelancer, te pediremos el documento al seleccionar tu rol.</p>
+          <p className="auth-hint">La cédula es obligatoria si te registras como freelancer.</p>
         </div>
 
         <label className="auth-checkbox">

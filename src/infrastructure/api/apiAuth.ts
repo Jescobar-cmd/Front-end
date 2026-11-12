@@ -9,7 +9,6 @@ import type {
   RegistroData,
   RestablecerData,
   ResultadoGoogle,
-  SeleccionarRolData,
   Sesion,
   VerificarData,
 } from "../../core/application/ports/AuthRepositoryPort";
@@ -46,10 +45,6 @@ export async function loginGoogle(
 
 export async function completeGoogleProfile(data: CompletarPerfilGoogleData): Promise<Sesion> {
   return repo.completarPerfilGoogle(data);
-}
-
-export async function selectRole(token: string, data: SeleccionarRolData): Promise<Sesion> {
-  return repo.seleccionarRol(token, data);
 }
 
 export async function forgotPassword(email: string): Promise<void> {

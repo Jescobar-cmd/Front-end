@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
@@ -16,7 +16,6 @@ import { dashboardPorRol } from "../../../routes/rutasPorRol";
 const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
 const GOOGLE_CONOCIDO_PREFIX = "first_gig_google_conocido_";
 const ROL_INTENT_KEY = "first_gig_rol_intent";
-const NEEDS_ROLE_SELECTION_KEY = "first_gig_needs_role_selection";
 
 type RolGoogle = "cliente" | "freelancer";
 
@@ -44,7 +43,6 @@ function claveGoogleConocido(email: string): string {
 
 export function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { guardarSesion } = useAuth();
   const { iniciarSesion, loading, error, limpiarError } = useLogin();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -197,13 +195,6 @@ export function Login() {
     const sesion = await iniciarSesion({ email: form.email.trim(), password: form.password });
     if (sesion) {
       guardarSesion(sesion);
-      const needsRoleSelection =
-        sessionStorage.getItem(NEEDS_ROLE_SELECTION_KEY) === "1" ||
-        Boolean((location.state as { needsRoleSelection?: boolean } | null)?.needsRoleSelection);
-      if (needsRoleSelection) {
-        navigate("/seleccionar-rol", { replace: true });
-        return;
-      }
       navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
