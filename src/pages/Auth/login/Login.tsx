@@ -60,10 +60,16 @@ export function Login() {
     googleLoadingRef.current = googleLoading;
   }, [googleLoading]);
 
-  const procesarResultadoGoogle = useCallback((resultado: ResultadoGoogle) => {
+  const procesarResultadoGoogle = useCallback((resultado: ResultadoGoogle, rolSolicitado?: RolGoogle) => {
     if (resultado.tipo === "onboarding") {
       sessionStorage.setItem(GOOGLE_PENDIENTE_KEY, JSON.stringify({ idToken: resultado.idToken, email: resultado.email }));
       navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
+      return;
+    }
+    if (rolSolicitado && resultado.sesion.user.rol !== rolSolicitado) {
+      setGoogleError(
+        `Esa cuenta de Google ya está registrada como ${resultado.sesion.user.rol}. No es posible cambiar el rol desde aquí. Usa otra cuenta de Google o regístrate con correo como freelancer.`,
+      );
       return;
     }
     const email = resultado.sesion.user.email.value;
@@ -93,7 +99,9 @@ export function Login() {
     setGoogleError("");
     try {
       const resultado = await loginConGoogleUseCase.execute(credential, options);
-      procesarResultadoGoogle(resultado);
+      const rolSolicitado: RolGoogle | undefined =
+        options?.rolId === 2 ? "freelancer" : options?.rolId === 3 ? "cliente" : undefined;
+      procesarResultadoGoogle(resultado, rolSolicitado);
     } catch (e) {
       setGoogleError(e instanceof Error ? e.message : "No se pudo continuar con Google.");
     } finally {

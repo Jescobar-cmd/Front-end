@@ -58,12 +58,19 @@ export function CompletarPerfilGoogle() {
       return;
     }
     setRolError("");
+    const rolElegido = rol;
     const sesion = await completar(
-      rol === "freelancer"
-        ? { idToken, rol, telefono, documento }
-        : { idToken, rol, telefono, ...(documento.trim() ? { documento } : {}) }
+      rolElegido === "freelancer"
+        ? { idToken, rol: rolElegido, telefono, documento }
+        : { idToken, rol: rolElegido, telefono, ...(documento.trim() ? { documento } : {}) }
     );
     if (sesion) {
+      if (sesion.user.rol !== rolElegido) {
+        setRolError(
+          `El servidor guardó la cuenta como ${sesion.user.rol}. Esa cuenta de Google ya existía con otro rol y no se puede cambiar desde aquí. Usa otra cuenta de Google o regístrate con correo como freelancer.`,
+        );
+        return;
+      }
       sessionStorage.removeItem(GOOGLE_PENDIENTE_KEY);
       sessionStorage.removeItem(ROL_INTENT_KEY);
       try {
