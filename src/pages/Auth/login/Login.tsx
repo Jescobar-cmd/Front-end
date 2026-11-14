@@ -14,7 +14,6 @@ import { GoogleLogo } from "../../../components/GoogleLogo";
 import { dashboardPorRol } from "../../../routes/rutasPorRol";
 
 const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
-const GOOGLE_CONOCIDO_PREFIX = "first_gig_google_conocido_";
 const ROL_INTENT_KEY = "first_gig_rol_intent";
 
 type RolGoogle = "cliente" | "freelancer";
@@ -35,10 +34,6 @@ function correoDesdeIdToken(credential: string): string {
   } catch {
     return "";
   }
-}
-
-function claveGoogleConocido(email: string): string {
-  return `${GOOGLE_CONOCIDO_PREFIX}${email.trim().toLocaleLowerCase()}`;
 }
 
 export function Login() {
@@ -72,14 +67,6 @@ export function Login() {
       );
       return;
     }
-    const email = resultado.sesion.user.email.value;
-    if (email) {
-      try {
-        localStorage.setItem(claveGoogleConocido(email), "true");
-      } catch {
-        // La sesión sigue funcionando aunque el navegador no permita persistir la marca.
-      }
-    }
     try {
       // La cuenta ya tiene rol: no debe arrastrar la intención de un alta anterior.
       sessionStorage.removeItem(ROL_INTENT_KEY);
@@ -111,21 +98,11 @@ export function Login() {
 
   const handleGoogleCredential = useCallback((credential: string) => {
     const email = correoDesdeIdToken(credential);
-    if (email) {
-      try {
-        if (localStorage.getItem(claveGoogleConocido(email)) === "true") {
-          void continuarConGoogle(credential);
-          return;
-        }
-      } catch {
-        // Sin almacenamiento local, se muestra el selector una vez.
-      }
-    }
     setGoogleRol(null);
     setGoogleCedula("");
     setGoogleError("");
     setGooglePendiente({ credential, email });
-  }, [continuarConGoogle]);
+  }, []);
 
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleGoogleCredential);
 
@@ -295,6 +272,12 @@ export function Login() {
         </div>
         {errorGoogle && !errorGoogle.toLocaleLowerCase().includes("configur") && (
           <p className="error" role="alert">{errorGoogle}</p>
+        )}
+        {googleLoading && !googlePendiente && (
+          <p className="google-login-status" role="status">Conectando con Google...</p>
+        )}
+        {googleError && !googlePendiente && (
+          <p className="error" role="alert">{googleError}</p>
         )}
 
         <div className="links">
