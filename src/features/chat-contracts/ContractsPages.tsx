@@ -81,7 +81,7 @@ export function ContractsPage() {
           title="Aún no tienes contratos"
           description="Los contratos aparecen cuando se acepta una propuesta. Mientras tanto, explora oportunidades o revisa tus conversaciones."
           actionLabel={user?.rol === "freelancer" ? "Explorar proyectos" : "Explorar talento"}
-          to={user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/servicios"}
+          to={user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/talento"}
           secondary={<Link className="cc-link-button cc-secondary-button" to="/chat">Ir a mensajes</Link>}
         />
       ) : (

@@ -145,7 +145,7 @@ function ConversationListPanel({
         <div className="cc-conversation-state">
           <p>Aún no tienes conversaciones. Inicia una desde un perfil o servicio.</p>
           <Link className="cc-inline-link" to={explorePath}>
-            {explorePath === "/servicios" ? "Explorar talento" : "Explorar proyectos"}
+            {explorePath === "/talento" ? "Explorar talento" : "Explorar proyectos"}
           </Link>
         </div>
       ) : filteredConversations.length === 0 ? (
@@ -210,7 +210,7 @@ function ConversationPlaceholder() {
 export function ChatPage() {
   const { user, token } = useAuth();
   const list = useConversationList(token);
-  const explorePath = user?.rol === "cliente" ? "/servicios" : "/dashboard/freelancer/ofertas";
+  const explorePath = user?.rol === "cliente" ? "/talento" : "/dashboard/freelancer/ofertas";
 
   return (
     <div className="cc-page cc-chat-page">
@@ -254,7 +254,7 @@ export function ConversationDetailPage({
   const messageListRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<number | undefined>(undefined);
   const latestMessageRef = useRef<number | undefined>(undefined);
-  const explorePath = user?.rol === "cliente" ? "/servicios" : "/dashboard/freelancer/ofertas";
+  const explorePath = user?.rol === "cliente" ? "/talento" : "/dashboard/freelancer/ofertas";
 
   useEffect(() => {
     if (!token || !id) {

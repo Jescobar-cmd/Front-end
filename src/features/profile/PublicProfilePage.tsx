@@ -131,7 +131,7 @@ export function PublicProfilePage() {
 
   const iniciarChat = () => void iniciarChatConContexto(contextoChat);
 
-  const rutaExplorar = user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/servicios";
+  const rutaExplorar = user?.rol === "freelancer" ? "/dashboard/freelancer/ofertas" : "/talento";
 
   if (loading) {
     return <div className="profile-page"><p className="profile-message" role="status">Cargando perfil…</p></div>;

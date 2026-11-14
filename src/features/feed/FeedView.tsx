@@ -49,7 +49,8 @@ export function FeedView({ datos }: { datos: FeedData }) {
     });
   }, [categoriaActiva, proyectosParaTi, query]);
 
-  const rutaExplorar = esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios";
+  const rutaExplorar = esFreelancer ? "/dashboard/freelancer/ofertas" : "/talento";
+  const rutaCatalogo = esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios";
   const rutaCrear = esFreelancer ? "/crear/servicio" : "/crear/proyecto";
   const buscando = Boolean(query.trim()) || categoriaActiva !== "Todo";
   const rolVisible = esFreelancer ? "Freelancer" : "Cliente";
@@ -158,7 +159,7 @@ export function FeedView({ datos }: { datos: FeedData }) {
                   ? "Lee el proyecto completo y envía una propuesta con alcance y presupuesto. Las propuestas claras reciben mejores respuestas."
                   : "Abre el perfil de un freelancer y usa Contactar. La conversación queda vinculada al servicio que te interesa."}
               </p>
-              <Link to={esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios"}>{esFreelancer ? "Ver proyectos" : "Ver servicios"}</Link>
+              <Link to={rutaCatalogo}>{esFreelancer ? "Ver proyectos" : "Ver servicios"}</Link>
             </div>
           </article>
         </div>
@@ -174,7 +175,7 @@ export function FeedView({ datos }: { datos: FeedData }) {
                 : "Profesionales con portafolio que pueden sumarse a tu proyecto."}
             </p>
           </div>
-          <Link className={buttonClassName({ variant: "ghost", size: "sm" })} to={rutaExplorar}>
+          <Link className={buttonClassName({ variant: "ghost", size: "sm" })} to={rutaCatalogo}>
             Ver todo
           </Link>
         </div>

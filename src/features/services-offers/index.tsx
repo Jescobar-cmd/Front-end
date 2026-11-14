@@ -1643,12 +1643,12 @@ export function ClientServices({ token }: { token: string }) {
   }
 
   return (
-    <PageShell eyebrow="Explorar talento" title="Encuentra talento verificado" description="Talento con portafolio, servicios claros y conversación directa desde cada perfil.">
+    <PageShell eyebrow="Servicios" title="Encuentra servicios de freelancers" description="Servicios con precio claro, categoría y conversación directa desde el perfil del freelancer.">
       {selected ? (
         <div className="service-detail">
           {actionError && <Notice error={actionError} />}
           <nav className="service-breadcrumbs" aria-label="Migas de pan">
-            <button type="button" onClick={() => setSelected(null)}>Explorar talento</button>
+            <button type="button" onClick={() => setSelected(null)}>Servicios</button>
             <span aria-hidden="true">/</span>
             <span>{selected.categoria?.nombre ?? "Servicio"}</span>
             <span aria-hidden="true">/</span>
