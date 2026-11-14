@@ -3,6 +3,7 @@ import type { FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { Button, buttonClassName } from "../../components/ui/Button";
+import { ImageUploader } from "../../components/ui/ImageUploader";
 import { useAuth } from "../../context/AuthContext";
 import type { Categoria } from "../../core/domain/entities/categoria";
 import {
@@ -128,29 +129,25 @@ function PhotoUrlField({
   error,
   disabled,
   onChange,
+  onUploadingChange,
 }: {
   value: string;
   error?: string;
   disabled: boolean;
   onChange: (value: string) => void;
+  onUploadingChange: (uploading: boolean) => void;
 }) {
   return (
-    <Field label="URL de foto de perfil" name="fotoPerfil" error={error}>
-      <input
+      <ImageUploader
         id="fotoPerfil"
-        name="fotoPerfil"
-        type="url"
-        inputMode="url"
-        autoComplete="url"
-        placeholder="https://ejemplo.com/mi-foto.jpg"
-        value={value}
+        label="Foto de perfil"
+        value={value ? [value] : []}
+        onChange={(urls) => onChange(urls[0] ?? "")}
+        onUploadingChange={onUploadingChange}
         disabled={disabled}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? "fotoPerfil-error" : "fotoPerfil-help"}
-        onChange={(event) => onChange(event.target.value)}
+        error={error}
+        helpText="JPG, PNG o WebP. Máximo 5 MB."
       />
-      {!error && <small id="fotoPerfil-help">Usa una URL HTTPS. La carga de archivos no está disponible.</small>}
-    </Field>
   );
 }
 
@@ -296,6 +293,7 @@ export function ClientProfilePage() {
   const [profile, setProfile] = useState<PerfilCliente | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -375,7 +373,7 @@ export function ClientProfilePage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token || imageUploading) return;
     const photoError = httpsUrlError(values.fotoPerfil);
     if (photoError) {
       setErrors({ fotoPerfil: photoError });
@@ -480,6 +478,7 @@ export function ClientProfilePage() {
                     error={errors.fotoPerfil}
                     disabled={saving}
                     onChange={(value) => updateValue("fotoPerfil", value)}
+                    onUploadingChange={setImageUploading}
                   />
                   <Field label="Tipo de cliente" name="tipoCliente" error={errors.tipoCliente}>
                     <select
@@ -527,10 +526,10 @@ export function ClientProfilePage() {
               <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Cliente" email={profile.email} />
               <div className="profile-savebar">
                 <ProfileFormStatus saving={saving} />
-                <button className="profile-save" type="submit" disabled={saving}>
+                <button className="profile-save" type="submit" disabled={saving || imageUploading}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={() => { resetValues(); setEditing(false); }}>
+                <button className="profile-cancel" type="button" disabled={saving || imageUploading} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>
@@ -559,6 +558,7 @@ export function FreelancerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [catalogError, setCatalogError] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -665,7 +665,7 @@ export function FreelancerProfilePage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token || imageUploading) return;
     const photoError = httpsUrlError(values.fotoPerfil);
     if (photoError) {
       setErrors({ fotoPerfil: photoError });
@@ -780,6 +780,7 @@ export function FreelancerProfilePage() {
                     error={errors.fotoPerfil}
                     disabled={saving}
                     onChange={(value) => updateValue("fotoPerfil", value)}
+                    onUploadingChange={setImageUploading}
                   />
                   <Field label="Título profesional" name="tituloProfesional" error={errors.tituloProfesional}>
                     <input
@@ -843,10 +844,10 @@ export function FreelancerProfilePage() {
               <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Freelancer" email={profile.email} />
               <div className="profile-savebar">
                 <ProfileFormStatus saving={saving} />
-                <button className="profile-save" type="submit" disabled={saving || catalogLoading || Boolean(catalogError)}>
+                <button className="profile-save" type="submit" disabled={saving || imageUploading || catalogLoading || Boolean(catalogError)}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={() => { resetValues(); setEditing(false); }}>
+                <button className="profile-cancel" type="button" disabled={saving || imageUploading} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>

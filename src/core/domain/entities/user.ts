@@ -1,15 +1,46 @@
 import { Email } from "../value-objects/Email";
 
-export type Rol = "freelancer" | "cliente";
-export type RolId = 2 | 3; // 2 = freelancer, 3 = cliente
+export type Rol = "administrador" | "freelancer" | "cliente" | "moderador";
+export type RolId = 1 | 2 | 3 | 4; // 1 = administrador, 2 = freelancer, 3 = cliente, 4 = moderador
+
+const ROLES_POR_ID: Record<string, Rol> = {
+  "1": "administrador",
+  admin: "administrador",
+  administrador: "administrador",
+  "2": "freelancer",
+  freelancer: "freelancer",
+  "3": "cliente",
+  cliente: "cliente",
+  "4": "moderador",
+  moderador: "moderador",
+};
+
+const IDS_POR_ROL: Record<Rol, RolId> = {
+  administrador: 1,
+  freelancer: 2,
+  cliente: 3,
+  moderador: 4,
+};
+
+const ETIQUETAS_POR_ROL: Record<Rol, string> = {
+  administrador: "Administrador",
+  freelancer: "Freelancer",
+  cliente: "Cliente",
+  moderador: "Moderador",
+};
 
 export const rolDesdeId = (id: number | string): Rol => {
   const valor = String(id).trim().toLowerCase();
-  if (valor === "2" || valor === "freelancer") return "freelancer";
-  if (valor === "3" || valor === "cliente") return "cliente";
-  throw new Error("El servidor devolvió un rol de usuario no válido");
+  const rol = ROLES_POR_ID[valor];
+  if (!rol) {
+    throw new Error("El servidor devolvió un rol de usuario no válido");
+  }
+  return rol;
 };
-export const idDesdeRol = (rol: Rol): RolId => (rol === "freelancer" ? 2 : 3);
+
+export const idDesdeRol = (rol: Rol): RolId => IDS_POR_ROL[rol];
+
+export const rolLabel = (rol: Rol): string => ETIQUETAS_POR_ROL[rol];
 
 interface UserData {
   id?: number | string;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import type {
@@ -90,6 +91,8 @@ export function ProfessionalProfilePage() {
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
   const [projectSaving, setProjectSaving] = useState(false);
   const [projectError, setProjectError] = useState("");
+  const [projectToDelete, setProjectToDelete] = useState<PortfolioProject | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
   const sectionRefs = useRef<Partial<Record<ProfileSectionId, HTMLElement | null>>>({});
@@ -297,23 +300,26 @@ export function ProfessionalProfilePage() {
     }
   };
 
-  const deleteProject = async (project: PortfolioProject) => {
-    if (!token) return;
-    const confirmed = window.confirm(
-      `¿Eliminar "${project.titulo}" de tu portafolio? Esta acción no se puede deshacer.`,
-    );
-    if (!confirmed) return;
+  const requestDeleteProject = (project: PortfolioProject) => {
+    setProjectToDelete(project);
+  };
 
+  const confirmDeleteProject = async () => {
+    if (!token || !projectToDelete) return;
+    setDeletingProject(true);
     try {
-      await perfilProfesionalApi.eliminarProyecto(token, project.id);
+      await perfilProfesionalApi.eliminarProyecto(token, projectToDelete.id);
       setPortfolio((current) =>
         current
-          .filter((item) => item.id !== project.id)
+          .filter((item) => item.id !== projectToDelete.id)
           .map((item, index) => ({ ...item, orden: index })),
       );
       setToast({ tone: "success", message: "Proyecto eliminado del portafolio." });
+      setProjectToDelete(null);
     } catch (reason) {
       setToast({ tone: "error", message: errorMessage(reason) });
+    } finally {
+      setDeletingProject(false);
     }
   };
 
@@ -445,7 +451,7 @@ export function ProfessionalProfilePage() {
             error={portfolioError}
             onAdd={openAddProject}
             onEdit={openEditProject}
-            onDelete={(project) => void deleteProject(project)}
+            onDelete={requestDeleteProject}
             onOpen={setSelectedProject}
             onRetry={() => setReload((value) => value + 1)}
           />
@@ -645,6 +651,24 @@ export function ProfessionalProfilePage() {
       {selectedProject ? (
         <ProjectDetailModal project={selectedProject} onClose={() => setSelectedProject(null)} />
       ) : null}
+
+      <ConfirmDialog
+        open={Boolean(projectToDelete)}
+        title="Eliminar proyecto del portafolio"
+        description={
+          projectToDelete
+            ? `¿Eliminar "${projectToDelete.titulo}"? Esta acción no se puede deshacer.`
+            : ""
+        }
+        confirmLabel="Eliminar proyecto"
+        cancelLabel="Conservar"
+        tone="danger"
+        loading={deletingProject}
+        onCancel={() => {
+          if (!deletingProject) setProjectToDelete(null);
+        }}
+        onConfirm={() => void confirmDeleteProject()}
+      />
 
       {toast ? (
         <div

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "../../components/ui/Button";
+import { ImageUploader } from "../../components/ui/ImageUploader";
 import type {
   DatosProyectoPortafolio,
   PortfolioProject,
@@ -49,6 +50,7 @@ function urlError(value: string): string | undefined {
 export function ProjectForm({ initial, saving, error, onCancel, onSubmit }: ProjectFormProps) {
   const [values, setValues] = useState<Values>(() => initialValues(initial));
   const [errors, setErrors] = useState<Errors>({});
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     setValues(initialValues(initial));
@@ -62,6 +64,7 @@ export function ProjectForm({ initial, saving, error, onCancel, onSubmit }: Proj
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (imageUploading) return;
     const nextErrors: Errors = {};
     const titulo = values.titulo.trim();
     const descripcion = values.descripcion.trim();
@@ -145,28 +148,18 @@ export function ProjectForm({ initial, saving, error, onCancel, onSubmit }: Proj
           )}
         </label>
 
-        <label className="pp-field">
-          <span>URL de la imagen de portada</span>
-          <input
-            type="url"
-            name="imagenUrl"
-            inputMode="url"
-            maxLength={500}
-            placeholder="https://res.cloudinary.com/…"
-            value={values.imagenUrl}
+        <div className="pp-field pp-field--full">
+          <ImageUploader
+            id="proyecto-imagen"
+            label="Imagen de portada"
+            value={values.imagenUrl ? [values.imagenUrl] : []}
+            onChange={(urls) => update("imagenUrl", urls[0] ?? "")}
+            onUploadingChange={setImageUploading}
             disabled={saving}
-            aria-invalid={Boolean(errors.imagenUrl)}
-            aria-describedby={errors.imagenUrl ? "proyecto-imagen-error" : "proyecto-imagen-help"}
-            onChange={(event) => update("imagenUrl", event.target.value)}
+            error={errors.imagenUrl}
+            helpText="JPG, PNG o WebP. Máximo 5 MB."
           />
-          {errors.imagenUrl ? (
-            <small className="pp-field__error" id="proyecto-imagen-error">{errors.imagenUrl}</small>
-          ) : (
-            <small className="pp-field__help" id="proyecto-imagen-help">
-              Imagen alojada en Cloudinary u otro servicio.
-            </small>
-          )}
-        </label>
+        </div>
 
         <label className="pp-field">
           <span>Enlace del proyecto</span>
@@ -193,11 +186,11 @@ export function ProjectForm({ initial, saving, error, onCancel, onSubmit }: Proj
       </div>
 
       <div className="pp-form-actions">
-        <Button variant="secondary" onClick={onCancel} disabled={saving}>
+        <Button variant="secondary" onClick={onCancel} disabled={saving || imageUploading}>
           Cancelar
         </Button>
-        <Button variant="action" type="submit" disabled={saving}>
-          {saving ? "Guardando…" : initial ? "Guardar cambios" : "Agregar proyecto"}
+        <Button variant="action" type="submit" disabled={saving || imageUploading}>
+          {imageUploading ? "Subiendo imagen…" : saving ? "Guardando…" : initial ? "Guardar cambios" : "Agregar proyecto"}
         </Button>
       </div>
     </form>

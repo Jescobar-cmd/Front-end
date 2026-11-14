@@ -31,6 +31,8 @@ import {
 import { FreelancerDirectoryPage } from "../features/freelancers";
 import { CreateProjectPage, CreateServicePage } from "../features/services-offers/CreatePages";
 import { ClientOffersRoute } from "./ClientOffersRoute";
+import { RoleHomePage } from "../features/account/RoleHomePage";
+import { SecurityPage } from "../features/account/SecurityPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -42,6 +44,9 @@ function MiPerfilRedirect() {
   const { user, cargando } = useAuth();
   if (cargando) return null;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.rol === "administrador" || user.rol === "moderador") {
+    return <Navigate to={dashboardPorRol(user.rol)} replace />;
+  }
   if (user.id !== undefined) return <Navigate to={`/perfil/${user.id}`} replace />;
   return <Navigate to={user.rol === "cliente" ? "/perfil/cliente" : "/perfil/freelancer"} replace />;
 }
@@ -95,6 +100,31 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
+        <Route
+          path="/dashboard/moderador"
+          element={
+            <RutaProtegida roles={["moderador", "administrador"]}>
+              <RoleHomePage />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/administrador"
+          element={
+            <RutaProtegida roles={["administrador"]}>
+              <RoleHomePage />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/cuenta/seguridad"
+          element={
+            <RutaProtegida>
+              <SecurityPage />
+            </RutaProtegida>
+          }
+        />
+        <Route path="/cambiar-password" element={<Navigate to="/cuenta/seguridad" replace />} />
         <Route
           path="/perfil/freelancer"
           element={

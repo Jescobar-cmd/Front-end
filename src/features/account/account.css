@@ -1,0 +1,147 @@
+.account-page {
+  display: grid;
+  width: min(760px, 100%);
+  gap: 24px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px) 0;
+}
+
+.account-page__head {
+  display: grid;
+  gap: 6px;
+}
+
+.account-page__head h1 {
+  margin: 0;
+  color: var(--fg-text);
+  font-family: var(--fg-font-display);
+  font-size: var(--fg-text-2xl);
+  font-weight: 780;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.account-page__head p:not(.ui-eyebrow) {
+  max-width: 620px;
+  margin: 0;
+  color: var(--fg-text-secondary);
+  font-size: var(--fg-text-md);
+  line-height: 1.6;
+}
+
+.account-card {
+  display: grid;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 32px);
+  border: 1px solid var(--fg-line);
+  border-radius: 20px;
+  background: var(--fg-surface);
+  box-shadow: var(--fg-shadow-sm);
+}
+
+.account-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.account-alert {
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--fg-r-md);
+  font-size: var(--fg-text-sm);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.account-alert--error {
+  border-color: color-mix(in srgb, var(--fg-danger) 28%, transparent);
+  background: var(--fg-danger-soft);
+  color: var(--fg-danger);
+}
+
+.account-alert--success {
+  border-color: color-mix(in srgb, var(--fg-action) 28%, transparent);
+  background: var(--fg-action-soft);
+  color: var(--fg-action);
+}
+
+/* Moderator / administrator home */
+.role-home__stats {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.role-home__stat {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--fg-line);
+  border-radius: var(--fg-r-lg);
+  background: var(--fg-surface);
+  box-shadow: var(--fg-shadow-sm);
+}
+
+.role-home__stat-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--fg-accent-soft);
+  color: var(--fg-accent);
+}
+
+.role-home__stat-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.role-home__stat-label {
+  color: var(--fg-text-secondary);
+  font-size: var(--fg-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.role-home__stat strong {
+  color: var(--fg-text);
+  font-family: var(--fg-font-display);
+  font-size: clamp(1.8rem, 1.4rem + 1.2vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.role-home__stat--skeleton {
+  height: 148px;
+  background: linear-gradient(100deg, var(--fg-fill) 20%, var(--fg-surface) 40%, var(--fg-fill) 60%);
+  background-size: 220% 100%;
+  animation: fg-shimmer 1.4s linear infinite;
+}
+
+.role-home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .role-home__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .role-home__stat--skeleton {
+    height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-home__stat--skeleton {
+    animation: none;
+  }
+}

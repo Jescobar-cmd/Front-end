@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Brand } from "../../components/Brand";
 import { ProfileMenu } from "../../components/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
-import { useInternalSearch } from "./InternalSearchContext";
+import { dashboardPorRol } from "../../routes/rutasPorRol";
 import { CategoryBar } from "./CategoryBar";
 
 function SearchIcon() {
@@ -26,11 +26,7 @@ export function AppHeader({
 }) {
   const { user } = useAuth();
   const esFreelancer = user?.rol === "freelancer";
-  const brandPath = !user
-    ? "/"
-    : esFreelancer
-      ? "/dashboard/freelancer"
-      : "/dashboard/cliente";
+  const brandPath = user ? dashboardPorRol(user.rol) : "/";
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value);
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {

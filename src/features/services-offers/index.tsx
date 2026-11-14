@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -34,7 +34,9 @@ import type { DatosOferta, EstadoOferta, Oferta } from "../../core/domain/entiti
 import { useInternalSearch } from "../layout/InternalSearchContext";
 import { Badge } from "../../components/ui/Badge";
 import { buttonClassName } from "../../components/ui/Button";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { ImageUploader } from "../../components/ui/ImageUploader";
 import { ServiceCard } from "../../components/ui/ServiceCard";
 import "./services-offers.css";
 
@@ -567,7 +569,7 @@ export function OfferForm({
     if (values.descripcion.trim().length < 10 || values.descripcion.trim().length > 5000) return setError("La descripción debe tener entre 10 y 5000 caracteres.");
     if (!values.presupuesto || !Number.isFinite(budget) || budget < 0) return setError("Ingresa un presupuesto válido de 0 o más.");
     if (!values.plazoDias || !Number.isInteger(deadline) || deadline < 1) return setError("El plazo debe ser de al menos 1 día.");
-    if (!validImageUrl(values.imagenUrl)) return setError("La imagen debe ser una URL http o https válida. No hay carga de archivos disponible.");
+    if (!validImageUrl(values.imagenUrl)) return setError("La imagen debe ser una URL HTTP o HTTPS válida.");
 
     const payload: DatosOferta = {
       titulo: values.titulo.trim(),
@@ -691,7 +693,7 @@ export function OfferForm({
 
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
-            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
+            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving || imageUploading} onClick={onCancel}>Cancelar</button>}
             <button className="so-button so-button--action" type="submit" disabled={saving}>
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar proyecto"}
             </button>
@@ -850,6 +852,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [proposalToAccept, setProposalToAccept] = useState<Propuesta | null>(null);
   const [reload, setReload] = useState(0);
   const catalogs = useCatalogs(token);
 
@@ -921,8 +924,8 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
     }
   }
 
-  async function handleProposal(proposal: Propuesta, action: "accept" | "reject") {
-    if (!selected) return;
+  async function handleProposal(proposal: Propuesta, action: "accept" | "reject"): Promise<boolean> {
+    if (!selected) return false;
     setActionError("");
     setBusyId(proposal.id);
     try {
@@ -942,11 +945,18 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
         setProposals((current) => current.map((item) => item.id === proposal.id ? { ...item, estado: "rechazada" } : item));
         setReload((value) => value + 1);
       }
+      return true;
     } catch (reason) {
       setActionError(errorMessage(reason));
+      return false;
     } finally {
       setBusyId(null);
     }
+  }
+
+  async function confirmAcceptProposal() {
+    if (!proposalToAccept) return;
+    if (await handleProposal(proposalToAccept, "accept")) setProposalToAccept(null);
   }
 
   async function handleChatProposal(proposal: Propuesta) {
@@ -997,7 +1007,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
                   </OfferDetails>
                   <section className="so-surface">
                     <div className="so-section-title"><div><h2>Propuestas recibidas</h2><p>{filteredCount} en total</p></div></div>
-                    {proposalsLoading ? <p role="status">Cargando propuestas…</p> : <ProposalCards proposals={proposals} projectId={selected.id} busyId={busyId} onAccept={(proposal) => handleProposal(proposal, "accept")} onReject={(proposal) => handleProposal(proposal, "reject")} onChat={(proposal) => void handleChatProposal(proposal)} />}
+                    {proposalsLoading ? <p role="status">Cargando propuestas…</p> : <ProposalCards proposals={proposals} projectId={selected.id} busyId={busyId} onAccept={setProposalToAccept} onReject={(proposal) => void handleProposal(proposal, "reject")} onChat={(proposal) => void handleChatProposal(proposal)} />}
                   </section>
                 </>
               )}
@@ -1038,6 +1048,22 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
           </section>
         </Panel>
       )}
+      <ConfirmDialog
+        open={proposalToAccept !== null}
+        title="Aceptar propuesta"
+        description={proposalToAccept
+          ? `¿Quieres aceptar la propuesta de ${proposalToAccept.freelancer.nombre} por ${money(proposalToAccept.montoPropuesto)}? Se creará un contrato.`
+          : "Confirma la aceptación de esta propuesta."}
+        confirmLabel="Aceptar propuesta"
+        loading={proposalToAccept !== null && busyId === proposalToAccept.id}
+        onConfirm={() => void confirmAcceptProposal()}
+        onCancel={() => {
+          setProposalToAccept(null);
+          setActionError("");
+        }}
+      >
+        {proposalToAccept && actionError ? <p role="alert">{actionError}</p> : null}
+      </ConfirmDialog>
     </PageShell>
   );
 }
@@ -1047,7 +1073,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   const [tab, setTab] = useState("market");
   const [items, setItems] = useState<OfertaMarketplace[]>([]);
   const [selected, setSelected] = useState<OfertaMarketplace | null>(null);
-  const [proposals, setProposals] = useState<Propuesta[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const { query, setQuery } = useInternalSearch();
@@ -1061,7 +1086,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   const [sendError, setSendError] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
-  const [submittedIds, setSubmittedIds] = useState<number[]>([]);
   const [myProposalList, setMyProposalList] = useState<Propuesta[]>([]);
   const [myLoading, setMyLoading] = useState(false);
   const [myError, setMyError] = useState("");
@@ -1071,17 +1095,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   useEffect(() => {
     setPage(1);
   }, [query]);
-  const { user } = useAuth();
-  const storageKey = `first_gig_pending_proposals_${user?.id ?? user?.email ?? "freelancer"}`;
-
-  useEffect(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as number[];
-      setSubmittedIds(Array.isArray(parsed) ? parsed.filter(Number.isInteger) : []);
-    } catch {
-      setSubmittedIds([]);
-    }
-  }, [storageKey]);
 
   useEffect(() => {
     let active = true;
@@ -1112,25 +1125,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
       .then((result) => {
         if (!active) return;
         setMyProposalList(result.propuestas);
-        const identifiedIds = result.propuestas
-          .map((item) => item.proyecto?.id)
-          .filter((id): id is number => typeof id === "number");
-        const pendingIds = result.propuestas
-          .filter((item) => item.estado.toLowerCase() === "pendiente")
-          .map((item) => item.proyecto?.id)
-          .filter((id): id is number => typeof id === "number");
-        setSubmittedIds((current) => {
-          const next = Array.from(new Set([
-            ...pendingIds,
-            ...current.filter((id) => !identifiedIds.includes(id)),
-          ]));
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(next));
-          } catch {
-            // The in-memory guard still prevents a duplicate for this page session.
-          }
-          return next;
-        });
       })
       .catch((reason: unknown) => { if (active) setMyError(errorMessage(reason)); })
       .finally(() => { if (active) setMyLoading(false); });
@@ -1145,7 +1139,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     try {
       const detail = await getMarketOffer(token, offer.id);
       setSelected(detail);
-      setProposals([]);
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -1156,17 +1149,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   async function submitProposal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
-    if (myLoading || myError) {
-      setSendError("No se pudieron comprobar tus propuestas anteriores. Vuelve a intentarlo antes de enviar.");
-      return;
-    }
     const numericAmount = Number(amount);
-    const localPending = submittedIds.includes(selected.id);
-    const serverPending = proposals.some((proposal) => proposal.estado.toLowerCase() === "pendiente");
-    if (localPending || serverPending) {
-      setSendError("Ya enviaste una propuesta pendiente para esta oferta.");
-      return;
-    }
     if (!amount || !Number.isFinite(numericAmount) || numericAmount <= 0) {
       setSendError("Ingresa un monto propuesto mayor que 0.");
       return;
@@ -1175,13 +1158,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     setSendError("");
     try {
       await sendProposal(token, selected.id, { montoPropuesto: numericAmount, mensaje: message.trim() || undefined });
-      const next = Array.from(new Set([...submittedIds, selected.id]));
-      setSubmittedIds(next);
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        // The in-memory guard still prevents a duplicate for this page session.
-      }
       setMyReload((value) => value + 1);
       setSelected(null);
     } catch (reason) {
@@ -1205,11 +1181,6 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     }
   }
 
-  const pendingOfferIds = useMemo(() => new Set([
-    ...submittedIds,
-    ...myProposalList.filter((item) => item.estado.toLowerCase() === "pendiente").map((item) => item.proyecto?.id).filter((id): id is number => typeof id === "number"),
-  ]), [submittedIds, myProposalList]);
-
   return (
     <PageShell eyebrow="Espacio freelancer" title="Explorar proyectos" description="Encuentra proyectos abiertos y da seguimiento a tus propuestas.">
       <Tabs active={tab} onChange={setTab} items={[{ id: "market", label: "Proyectos abiertos" }, { id: "mine", label: "Mis propuestas" }]} />
@@ -1221,21 +1192,14 @@ export function FreelancerMarketplace({ token }: { token: string }) {
                 {chatLoading ? "Abriendo chat…" : "Abrir chat del proyecto"}
               </button>
             </div>
-            {sendError && <p className="so-inline-error" role="alert">{sendError}</p>}
             <section className="so-surface so-proposal-form">
               <h3>Enviar una propuesta</h3>
-              {pendingOfferIds.has(selected.id) ? (
-                <p className="so-inline-success" role="status">Ya tienes una propuesta pendiente para esta oferta.</p>
-              ) : (
-                <form className="so-form" onSubmit={submitProposal} noValidate>
-                  {myLoading && <p className="so-muted" role="status">Comprobando tus propuestas anteriores…</p>}
-                  {myError && <div className="so-inline-error" role="alert">{myError} <button type="button" className="so-button so-button--quiet" onClick={() => setMyReload((value) => value + 1)}>Reintentar</button></div>}
-                  <label className="so-field"><span>Monto propuesto (USD)</span><input type="number" min="0.01" step="0.01" required value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
-                  <label className="so-field"><span>Mensaje <small>opcional</small></span><textarea rows={4} value={message} onChange={(event) => setMessage(event.target.value)} /></label>
-                  {sendError && <p className="so-inline-error" role="alert">{sendError}</p>}
-                  <button type="submit" className="so-button so-button--action" disabled={sending || myLoading || Boolean(myError)}>{sending ? "Enviando…" : "Enviar propuesta"}</button>
-                </form>
-              )}
+              <form className="so-form" onSubmit={submitProposal} noValidate>
+                <label className="so-field"><span>Monto propuesto (USD)</span><input type="number" min="0.01" step="0.01" required value={amount} onChange={(event) => setAmount(event.target.value)} /></label>
+                <label className="so-field"><span>Mensaje <small>opcional</small></span><textarea rows={4} value={message} onChange={(event) => setMessage(event.target.value)} /></label>
+                {sendError && <p className="so-inline-error" role="alert">{sendError}</p>}
+                <button type="submit" className="so-button so-button--action" disabled={sending}>{sending ? "Enviando…" : "Enviar propuesta"}</button>
+              </form>
             </section>
           </OfferDetails>
         ) : (
@@ -1341,15 +1305,17 @@ export function ServiceForm({
   const [values, setValues] = useState(() => serviceValues(initial));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const set = (key: keyof ServiceFormValues, value: string) => setValues((old) => ({ ...old, [key]: value }));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (imageUploading) return;
     const price = Number(values.precio);
     if (values.titulo.trim().length < 5 || values.titulo.trim().length > 150) return setError("El título debe tener entre 5 y 150 caracteres.");
     if (values.descripcion.trim().length < 10 || values.descripcion.trim().length > 5000) return setError("La descripción debe tener entre 10 y 5000 caracteres.");
     if (!values.precio || !Number.isFinite(price) || price <= 0) return setError("El precio debe ser mayor que 0.");
-    if (!validImageUrl(values.imagenUrl)) return setError("La imagen debe ser una URL http o https válida. No hay carga de archivos disponible.");
+    if (!validImageUrl(values.imagenUrl)) return setError("La imagen debe ser una URL HTTP o HTTPS válida.");
     setSaving(true);
     setError("");
     try {
@@ -1440,17 +1406,24 @@ export function ServiceForm({
               <p>Usa una URL pública de imagen para mostrar tu trabajo.</p>
             </header>
             <div className="so-form__grid">
-              <label className="so-field so-field--wide">
-                <span>URL de imagen <small>El backend guarda una URL; no admite subida de archivos.</small></span>
-                <input type="url" inputMode="url" placeholder="https://…" value={values.imagenUrl} onChange={(event) => set("imagenUrl", event.target.value)} />
-              </label>
+              <div className="so-field so-field--wide">
+                <ImageUploader
+                  id="servicio-imagen"
+                  label="Imagen del servicio"
+                  value={values.imagenUrl ? [values.imagenUrl] : []}
+                  onChange={(urls) => set("imagenUrl", urls[0] ?? "")}
+                  onUploadingChange={setImageUploading}
+                  disabled={saving}
+                  helpText="JPG, PNG o WebP. Máximo 5 MB."
+                />
+              </div>
             </div>
           </section>
 
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
             {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-            <button className="so-button so-button--action" type="submit" disabled={saving}>{saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
+            <button className="so-button so-button--action" type="submit" disabled={saving || imageUploading}>{imageUploading ? "Subiendo imagen…" : saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
           </div>
         </div>
         <ListingPreview

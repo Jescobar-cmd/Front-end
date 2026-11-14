@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import {
   acceptChatOffer,
   counterChatOffer,
@@ -33,6 +34,7 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
   const [busy, setBusy] = useState<"accept" | "reject" | "counter" | null>(null);
   const [error, setError] = useState("");
   const [counterOpen, setCounterOpen] = useState(false);
+  const [confirmAcceptOpen, setConfirmAcceptOpen] = useState(false);
   const [counterAmount, setCounterAmount] = useState("");
   const [counterDescription, setCounterDescription] = useState("");
   const offer = message.oferta;
@@ -51,9 +53,8 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
     try {
       const result = await acceptChatOffer(token, offer.id);
       onChanged();
-      if (result.contrato?.id) {
-        navigate(`/contracts/${result.contrato.id}`);
-      }
+      setConfirmAcceptOpen(false);
+      navigate(result.contrato?.id ? `/contracts/${result.contrato.id}` : "/contracts");
     } catch (cause) {
       setError(errorMessage(cause, "No se pudo aceptar la oferta."));
     } finally {
@@ -141,10 +142,13 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
           <button
             className="cc-primary-button"
             type="button"
-            onClick={() => void accept()}
+            onClick={() => {
+              setError("");
+              setConfirmAcceptOpen(true);
+            }}
             disabled={busy !== null}
           >
-            {busy === "accept" ? "Aceptando…" : "Aceptar"}
+            Aceptar
           </button>
           <button
             className="cc-secondary-button"
@@ -207,6 +211,17 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
           {error}
         </p>
       )}
+      <ConfirmDialog
+        open={confirmAcceptOpen}
+        title="Aceptar oferta"
+        description={`¿Quieres aceptar la oferta de ${formatMoney(offer.monto)}? El sistema creará el contrato y te llevará a su detalle.`}
+        confirmLabel="Aceptar oferta"
+        loading={busy === "accept"}
+        onConfirm={() => void accept()}
+        onCancel={() => setConfirmAcceptOpen(false)}
+      >
+        {confirmAcceptOpen && error ? <p role="alert">{error}</p> : null}
+      </ConfirmDialog>
     </article>
   );
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button, buttonClassName } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
@@ -20,16 +20,22 @@ function errorMessage(error: unknown): string {
 
 export function FreelancerDirectoryPage() {
   const { token } = useAuth();
-  const { query, setQuery } = useInternalSearch();
+  const { query: sharedQuery, setQuery } = useInternalSearch();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlPage = Number(searchParams.get("page"));
+  const [query, setLocalQuery] = useState(() => searchParams.get("q") ?? "");
 
   const [items, setItems] = useState<FreelancerDirectorioItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [skillId, setSkillId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [page, setPage] = useState(Number.isInteger(urlPage) && urlPage > 0 ? urlPage : 1);
+  const [skillId, setSkillId] = useState(() => searchParams.get("habilidadId") ?? "");
+  const [categoryId, setCategoryId] = useState(() => searchParams.get("categoriaId") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+  const [filtersInitialized, setFiltersInitialized] = useState(false);
+  const previousSharedQuery = useRef(sharedQuery);
+  const sharedQueryInitialized = useRef(false);
 
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [skills, setSkills] = useState<Habilidad[]>([]);
@@ -39,6 +45,69 @@ export function FreelancerDirectoryPage() {
 
   const filtrosActivos = Boolean(query.trim() || skillId || categoryId);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  useEffect(() => {
+    if (filtersInitialized) return;
+    setQuery(query);
+    setFiltersInitialized(true);
+  }, [filtersInitialized, query, setQuery]);
+
+  useEffect(() => {
+    if (!filtersInitialized) return;
+
+    if (!sharedQueryInitialized.current) {
+      sharedQueryInitialized.current = true;
+      previousSharedQuery.current = sharedQuery;
+      if (sharedQuery !== query) setQuery(query);
+      return;
+    }
+
+    if (sharedQuery !== previousSharedQuery.current) {
+      previousSharedQuery.current = sharedQuery;
+      if (sharedQuery !== query) {
+        setLocalQuery(sharedQuery);
+        setPage(1);
+      }
+    } else if (query !== sharedQuery) {
+      previousSharedQuery.current = query;
+      setQuery(query);
+      setPage(1);
+    }
+  }, [filtersInitialized, query, setQuery, sharedQuery]);
+
+  useEffect(() => {
+    if (!filtersInitialized) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    const normalizedQuery = query.trim();
+    if (normalizedQuery) nextParams.set("q", normalizedQuery);
+    else nextParams.delete("q");
+    if (skillId) nextParams.set("habilidadId", skillId);
+    else nextParams.delete("habilidadId");
+    if (categoryId) nextParams.set("categoriaId", categoryId);
+    else nextParams.delete("categoriaId");
+    if (page > 1) nextParams.set("page", String(page));
+    else nextParams.delete("page");
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [categoryId, filtersInitialized, page, query, searchParams, setSearchParams, skillId]);
+
+  useEffect(() => {
+    if (!filtersInitialized) return;
+
+    const nextQuery = searchParams.get("q") ?? "";
+    const nextSkillId = searchParams.get("habilidadId") ?? "";
+    const nextCategoryId = searchParams.get("categoriaId") ?? "";
+    const nextPageValue = Number(searchParams.get("page"));
+    const nextPage = Number.isInteger(nextPageValue) && nextPageValue > 0 ? nextPageValue : 1;
+
+    if (nextQuery !== query) setLocalQuery(nextQuery);
+    if (nextSkillId !== skillId) setSkillId(nextSkillId);
+    if (nextCategoryId !== categoryId) setCategoryId(nextCategoryId);
+    if (nextPage !== page) setPage(nextPage);
+  }, [categoryId, filtersInitialized, page, query, searchParams, skillId]);
 
   useEffect(() => {
     if (!token) return;
@@ -61,10 +130,6 @@ export function FreelancerDirectoryPage() {
       active = false;
     };
   }, [token, catalogsReload]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [query, skillId, categoryId]);
 
   useEffect(() => {
     if (loading || total === 0) return;
@@ -103,6 +168,7 @@ export function FreelancerDirectoryPage() {
   }, [token, page, query, skillId, categoryId, reload]);
 
   function limpiarFiltros() {
+    setLocalQuery("");
     setQuery("");
     setSkillId("");
     setCategoryId("");
@@ -136,7 +202,7 @@ export function FreelancerDirectoryPage() {
             placeholder="Nombre, especialidad o palabra clave"
             onChange={(event) => {
               setPage(1);
-              setQuery(event.target.value);
+              setLocalQuery(event.target.value);
             }}
           />
         </label>

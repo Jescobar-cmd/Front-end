@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -32,6 +33,7 @@ export function ContractsPage() {
   const [contracts, setContracts] = useState<Contrato[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [contractToCancel, setContractToCancel] = useState<Contrato | null>(null);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -50,19 +52,26 @@ export function ContractsPage() {
     return () => { cancelled = true; };
   }, [token, refreshKey]);
 
-  const changeState = async (contract: Contrato, action: "complete" | "cancel") => {
-    if (!token || !isActive(contract.estado)) return;
+  const changeState = async (contract: Contrato, action: "complete" | "cancel"): Promise<boolean> => {
+    if (!token || !isActive(contract.estado)) return false;
     setBusyId(contract.id);
     setError("");
     try {
       if (action === "complete") await completeContract(token, contract.id);
       else await cancelContract(token, contract.id);
       setRefreshKey((key) => key + 1);
+      return true;
     } catch (requestError) {
       setError(errorMessage(requestError, "No se pudo actualizar el contrato."));
+      return false;
     } finally {
       setBusyId(null);
     }
+  };
+
+  const confirmCancel = async () => {
+    if (!contractToCancel) return;
+    if (await changeState(contractToCancel, "cancel")) setContractToCancel(null);
   };
 
   return (
@@ -103,7 +112,7 @@ export function ContractsPage() {
                 {isActive(contract.estado) && (
                   <>
                     <button className="cc-primary-button" type="button" disabled={busyId === contract.id} onClick={() => void changeState(contract, "complete")}>Completar</button>
-                    <button className="cc-danger-button" type="button" disabled={busyId === contract.id} onClick={() => void changeState(contract, "cancel")}>Cancelar</button>
+                    <button className="cc-danger-button" type="button" disabled={busyId === contract.id} onClick={() => setContractToCancel(contract)}>Cancelar</button>
                   </>
                 )}
               </div>
@@ -111,6 +120,16 @@ export function ContractsPage() {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={contractToCancel !== null}
+        title="Cancelar contrato"
+        description={`¿Quieres cancelar el contrato${contractToCancel ? ` #${contractToCancel.id}` : ""}? Esta acción cambiará su estado y no se puede deshacer desde aquí.`}
+        confirmLabel="Cancelar contrato"
+        tone="danger"
+        loading={contractToCancel !== null && busyId === contractToCancel.id}
+        onConfirm={() => void confirmCancel()}
+        onCancel={() => setContractToCancel(null)}
+      />
     </main>
   );
 }
@@ -128,6 +147,7 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -155,19 +175,25 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
     return () => { cancelled = true; };
   }, [token, id, refreshKey]);
 
-  const changeState = async (action: "complete" | "cancel") => {
-    if (!token || !contract || !isActive(contract.estado)) return;
+  const changeState = async (action: "complete" | "cancel"): Promise<boolean> => {
+    if (!token || !contract || !isActive(contract.estado)) return false;
     setBusy(true);
     setError("");
     try {
       if (action === "complete") await completeContract(token, contract.id);
       else await cancelContract(token, contract.id);
       setRefreshKey((key) => key + 1);
+      return true;
     } catch (requestError) {
       setError(errorMessage(requestError, "No se pudo actualizar el contrato."));
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const confirmCancel = async () => {
+    if (await changeState("cancel")) setConfirmCancelOpen(false);
   };
 
   const submitRating = async (event: FormEvent<HTMLFormElement>) => {
@@ -223,7 +249,7 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
             {isActive(contract.estado) && (
               <div className="cc-actions">
                 <button className="cc-primary-button" type="button" disabled={busy} onClick={() => void changeState("complete")}>Completar contrato</button>
-                <button className="cc-danger-button" type="button" disabled={busy} onClick={() => void changeState("cancel")}>Cancelar contrato</button>
+                <button className="cc-danger-button" type="button" disabled={busy} onClick={() => setConfirmCancelOpen(true)}>Cancelar contrato</button>
               </div>
             )}
           </section>
@@ -267,6 +293,16 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
           </section>
         </>
       )}
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        title="Cancelar contrato"
+        description={`¿Quieres cancelar el contrato${contract ? ` #${contract.id}` : ""}? Esta acción cambiará su estado y no se puede deshacer desde aquí.`}
+        confirmLabel="Cancelar contrato"
+        tone="danger"
+        loading={busy}
+        onConfirm={() => void confirmCancel()}
+        onCancel={() => setConfirmCancelOpen(false)}
+      />
     </main>
   );
 }

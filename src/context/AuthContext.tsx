@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { rolDesdeId, User } from "../core/domain/entities/user";
+import type { Rol } from "../core/domain/entities/user";
 import type { Sesion } from "../core/application/ports/AuthRepositoryPort";
 import { obtenerPerfilUseCase } from "../di/container";
 
@@ -8,7 +9,7 @@ const STORAGE_KEY = "first_gig_sesion";
 
 interface SesionGuardada {
   token: string;
-  user: { id?: number | string; nombre: string; email: string; rol: "freelancer" | "cliente" };
+  user: { id?: number | string; nombre: string; email: string; rol: Rol };
 }
 
 interface AuthContextValue {

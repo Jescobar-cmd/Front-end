@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { Rol } from "../core/domain/entities/user";
+import { dashboardPorRol } from "./rutasPorRol";
 
 export function RutaProtegida({
   children,
@@ -13,7 +14,12 @@ export function RutaProtegida({
   const { user, token, cargando } = useAuth();
 
   if (cargando) {
-    return null;
+    return (
+      <div className="route-loading" role="status" aria-live="polite">
+        <span className="route-loading__spinner" aria-hidden="true" />
+        <span>Cargando tu cuenta…</span>
+      </div>
+    );
   }
 
   if (!user || !token) {
@@ -21,7 +27,7 @@ export function RutaProtegida({
   }
 
   if (roles && !roles.includes(user.rol)) {
-    return <Navigate to={user.rol === "freelancer" ? "/dashboard/freelancer" : "/dashboard/cliente"} replace />;
+    return <Navigate to={dashboardPorRol(user.rol)} replace />;
   }
 
   return <>{children}</>;
