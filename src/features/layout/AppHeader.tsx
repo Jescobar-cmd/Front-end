@@ -53,7 +53,7 @@ export function AppHeader({
             type="search"
             value={valor}
             onChange={handleChange}
-            placeholder={esFreelancer ? "Buscar proyectos por título o categoría" : "Buscar talento, servicios o categorías"}
+            placeholder={esFreelancer ? "Buscar proyectos por título o categoría" : "Buscar freelancers, habilidades o categorías"}
             aria-label={esFreelancer ? "Buscar proyectos" : "Buscar talento"}
           />
           <button type="submit">Buscar</button>

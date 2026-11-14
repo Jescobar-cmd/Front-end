@@ -28,6 +28,7 @@ import {
   FreelancerMarketplacePage,
   FreelancerServicesPage,
 } from "../pages/services-offers";
+import { FreelancerDirectoryPage } from "../features/freelancers";
 import { CreateProjectPage, CreateServicePage } from "../features/services-offers/CreatePages";
 import { ClientOffersRoute } from "./ClientOffersRoute";
 
@@ -114,6 +115,14 @@ export function AppRoutes() {
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
+        <Route
+          path="/talento"
+          element={
+            <RutaProtegida>
+              <FreelancerDirectoryPage />
+            </RutaProtegida>
+          }
+        />
         <Route
           path="/servicios"
           element={

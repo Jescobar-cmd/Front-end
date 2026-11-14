@@ -7,6 +7,7 @@ type IconName =
   | "home"
   | "folder"
   | "compass"
+  | "briefcase"
   | "message"
   | "contract"
   | "user"
@@ -48,7 +49,8 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
   return [
     { id: "inicio", icono: "home", label: "Inicio", href: "/dashboard/cliente", exact: true },
     { id: "proyectos", icono: "folder", label: "Mis proyectos", href: "/dashboard/cliente/ofertas" },
-    { id: "servicios", icono: "compass", label: "Explorar talento", href: "/servicios", exact: true, aliases: ["/dashboard/cliente/servicios"] },
+    { id: "talento", icono: "compass", label: "Explorar talento", href: "/talento", exact: true },
+    { id: "servicios", icono: "briefcase", label: "Servicios", href: "/servicios", exact: true, aliases: ["/dashboard/cliente/servicios"] },
     { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
     { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
     { id: "perfil", icono: "user", label: "Perfil", href: "/perfil/cliente" },
@@ -71,6 +73,13 @@ function Icono({ name }: { name: IconName }) {
       <>
         <circle cx="12" cy="12" r="9" />
         <path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9z" />
+      </>
+    ),
+    briefcase: (
+      <>
+        <rect x="3" y="7" width="18" height="13" rx="2" />
+        <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
+        <path d="M3 12h18M10 12v2h4v-2" />
       </>
     ),
     message: (
