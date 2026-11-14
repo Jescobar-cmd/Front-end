@@ -257,7 +257,7 @@ export function ChatContextPanel({
           </>
         )}
 
-        <Link className="cc-inline-link" to={`/perfil/usuario/${counterparty.id}`}>
+        <Link className="cc-inline-link" to={`/perfil/${counterparty.id}`}>
           Ver perfil
         </Link>
       </section>

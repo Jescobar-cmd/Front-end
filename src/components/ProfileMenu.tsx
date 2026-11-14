@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./ProfileMenu.css";
 
-type IconName = "chevron" | "user" | "logout";
+type IconName = "chevron" | "user" | "contract" | "logout";
 
 function Icono({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -13,6 +13,13 @@ function Icono({ name }: { name: IconName }) {
       <>
         <circle cx="12" cy="8" r="3.6" />
         <path d="M5 20a7 7 0 0 1 14 0" />
+      </>
+    ),
+    contract: (
+      <>
+        <path d="M7 3.5h7l4 4v13H7z" />
+        <path d="M14 3.5v4h4" />
+        <path d="M10 12h5M10 15.5h5" />
       </>
     ),
     logout: (
@@ -54,7 +61,7 @@ export function ProfileMenu() {
   const esFreelancer = user?.rol === "freelancer";
   const rolVisible = esFreelancer ? "Freelancer" : "Cliente";
   const handle = `@${nombreVisible.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".").replace(/[^a-z0-9._]/g, "") || "usuario"}`;
-  const perfilPath = esFreelancer ? "/perfil/freelancer" : "/perfil/cliente";
+  const perfilPath = "/perfil";
   const inicial = nombreVisible.charAt(0).toLocaleUpperCase();
 
   useEffect(() => {
@@ -171,6 +178,15 @@ export function ProfileMenu() {
             >
               <Icono name="user" />
               <span>Ver mi perfil</span>
+            </Link>
+            <Link
+              className="profile-menu__item"
+              to="/contracts"
+              role="menuitem"
+              onClick={() => setAbierto(false)}
+            >
+              <Icono name="contract" />
+              <span>Contratos</span>
             </Link>
             <span className="profile-menu__divider" role="separator" />
             <button

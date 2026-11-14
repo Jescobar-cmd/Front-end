@@ -758,7 +758,7 @@ function OfferDetails({
           <div>
             <dt>Cliente</dt>
             <dd>
-              <Link className="so-profile-link" to={`/perfil/usuario/${market.cliente.id}?proyectoId=${offer.id}`}>
+              <Link className="so-profile-link" to={`/perfil/${market.cliente.id}?proyectoId=${offer.id}`}>
                 {market.cliente.nombre}
               </Link>
             </dd>
@@ -800,7 +800,7 @@ function ProposalCards({
                 <div>
                   <h3>
                     {projectId ? (
-                      <Link className="so-profile-link" to={`/perfil/usuario/${proposal.freelancer.id}?proyectoId=${projectId}`}>
+                      <Link className="so-profile-link" to={`/perfil/${proposal.freelancer.id}?proyectoId=${projectId}`}>
                         {proposal.freelancer.nombre}
                       </Link>
                     ) : proposal.freelancer.nombre}
@@ -1709,7 +1709,7 @@ export function ClientServices({ token }: { token: string }) {
                     <div>
                       <strong>{selected.freelancer?.nombre ?? "Freelancer"}</strong>
                       <p>{selected.freelancer?.tituloProfesional ?? "Perfil profesional en First Gig"}</p>
-                      <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to={`/perfil/usuario/${selected.freelancer.id}?servicioId=${selected.id}`}>
+                      <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to={`/perfil/${selected.freelancer.id}?servicioId=${selected.id}`}>
                         Ver portafolio completo
                       </Link>
                     </div>

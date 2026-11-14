@@ -87,7 +87,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
       autorFoto: servicio.freelancer.fotoPerfil,
       autorTitulo: servicio.freelancer.tituloProfesional ?? "Freelancer",
       calificacion: servicio.freelancer.calificacionPromedio,
-      href: `/perfil/usuario/${servicio.freelancer.id}?servicioId=${servicio.id}`,
+      href: `/perfil/${servicio.freelancer.id}?servicioId=${servicio.id}`,
       ctaLabel: "Ver perfil",
     }));
   }, [estadoFeed, feed, tipoCuenta]);

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
@@ -12,7 +12,11 @@ import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 import { InternalLayout } from "../features/layout/InternalLayout";
-import { ClientProfilePage, FreelancerProfilePage, PublicProfilePage } from "../features/profile";
+import {
+  ClientProfilePage,
+  FreelancerProfilePage,
+  ProfessionalProfilePage,
+} from "../features/profile";
 import {
   ChatPage,
   ConversationDetailPage,
@@ -33,6 +37,19 @@ function RedireccionDashboard() {
   return <Navigate to={dashboardPorRol(user.rol)} replace />;
 }
 
+function MiPerfilRedirect() {
+  const { user, cargando } = useAuth();
+  if (cargando) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.id !== undefined) return <Navigate to={`/perfil/${user.id}`} replace />;
+  return <Navigate to={user.rol === "cliente" ? "/perfil/cliente" : "/perfil/freelancer"} replace />;
+}
+
+function LegacyProfileRedirect() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/perfil/${id}` : "/"} replace />;
+}
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -47,6 +64,16 @@ export function AppRoutes() {
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
       <Route path="/seleccionar-rol" element={<Navigate to="/dashboard" replace />} />
+
+      <Route path="/perfil" element={<MiPerfilRedirect />} />
+
+      {/* El perfil profesional es público: el layout se comparte, pero la ruta
+          no queda detrás de RutaProtegida. El backend aún exige JWT para los
+          datos, así que la página muestra un acceso a login cuando no hay sesión. */}
+      <Route element={<InternalLayout />}>
+        <Route path="/perfil/:id" element={<ProfessionalProfilePage />} />
+        <Route path="/perfil/usuario/:id" element={<LegacyProfileRedirect />} />
+      </Route>
 
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
 
@@ -83,7 +110,6 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
-        <Route path="/perfil/usuario/:id" element={<PublicProfilePage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />

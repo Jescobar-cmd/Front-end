@@ -5,6 +5,11 @@ import { Badge } from "../../components/ui/Badge";
 import { Button, buttonClassName } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import type { Categoria } from "../../core/domain/entities/categoria";
+import {
+  NIVELES_HABILIDAD,
+  type HabilidadSeleccionada,
+  type NivelHabilidad,
+} from "../../core/domain/entities/perfil";
 import { getCategories, getSkills } from "../../infrastructure/api/apiCatalogos";
 import {
   getClientProfile,
@@ -28,9 +33,16 @@ function fieldErrors(error: unknown): FieldErrors {
   const details = (error as ApiError | undefined)?.details;
   if (!details?.length) return {};
   return details.reduce<FieldErrors>((errors, detail) => {
-    errors[detail.field] = errors[detail.field] ? `${errors[detail.field]} ${detail.message}` : detail.message;
+    const field = detail.field.split(".")[0] || detail.field;
+    errors[field] = errors[field] ? `${errors[field]} ${detail.message}` : detail.message;
     return errors;
   }, {});
+}
+
+function normalizarNivel(nivel: string | null): NivelHabilidad {
+  return NIVELES_HABILIDAD.includes(nivel as NivelHabilidad)
+    ? (nivel as NivelHabilidad)
+    : "intermedio";
 }
 
 function httpsUrlError(value: string): string | undefined {
@@ -423,7 +435,7 @@ export function ClientProfilePage() {
               descripcion={values.descripcion}
               nombreEmpresa={values.nombreEmpresa}
               tipoCliente={values.tipoCliente}
-              publicPath={`/perfil/usuario/${profile.id}`}
+              publicPath={`/perfil/${profile.id}`}
               onEdit={() => setEditing(true)}
             />
           )}
@@ -554,7 +566,7 @@ export function FreelancerProfilePage() {
   const [saved, setSaved] = useState(false);
   const [editing, setEditing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<HabilidadSeleccionada[]>([]);
   const [values, setValues] = useState({
     nombre: "",
     telefono: "",
@@ -591,7 +603,12 @@ export function FreelancerProfilePage() {
           tituloProfesional: data.freelancer.tituloProfesional ?? "",
           biografia: data.freelancer.biografia ?? "",
         });
-        setSelectedSkillIds(data.freelancer.habilidades.map((skill) => skill.id));
+        setSelectedSkills(
+          data.freelancer.habilidades.map((skill) => ({
+            id: skill.id,
+            nivel: normalizarNivel(skill.nivel),
+          })),
+        );
       })
       .catch((error: unknown) => {
         if (active) setLoadError(errorMessage(error));
@@ -634,7 +651,12 @@ export function FreelancerProfilePage() {
       tituloProfesional: profile.freelancer.tituloProfesional ?? "",
       biografia: profile.freelancer.biografia ?? "",
     });
-    setSelectedSkillIds(profile.freelancer.habilidades.map((skill) => skill.id));
+    setSelectedSkills(
+      profile.freelancer.habilidades.map((skill) => ({
+        id: skill.id,
+        nivel: normalizarNivel(skill.nivel),
+      })),
+    );
     setSelectedCategoryId(null);
     setErrors({});
     setSaved(false);
@@ -662,16 +684,16 @@ export function FreelancerProfilePage() {
         fotoPerfil: values.fotoPerfil.trim() || null,
         tituloProfesional: values.tituloProfesional.trim() || null,
         biografia: values.biografia.trim() || null,
-        habilidadIds: selectedSkillIds,
+        habilidades: selectedSkills.map((skill) => ({ id: skill.id, nivel: skill.nivel })),
       });
       setSaved(true);
       setProfile((current) => {
         if (!current) return current;
-        const habilidades = selectedSkillIds.map((skillId) => {
+        const habilidades = selectedSkills.map(({ id: skillId, nivel }) => {
           const existente = current.freelancer.habilidades.find((skill) => skill.id === skillId);
-          if (existente) return existente;
+          if (existente) return { ...existente, nivel: nivel ?? null };
           const catalogo = skills.find((skill) => skill.id === skillId);
-          return { id: skillId, nombre: catalogo?.nombre ?? "Habilidad", nivel: null };
+          return { id: skillId, nombre: catalogo?.nombre ?? "Habilidad", nivel: nivel ?? null };
         });
         return {
           ...current,
@@ -713,7 +735,7 @@ export function FreelancerProfilePage() {
               titulo={values.tituloProfesional}
               descripcion={values.biografia}
               habilidades={profile.freelancer.habilidades.map((habilidad) => habilidad.nombre)}
-              publicPath={`/perfil/usuario/${profile.id}`}
+              publicPath={`/perfil/${profile.id}`}
               onEdit={() => setEditing(true)}
             />
           )}
@@ -802,13 +824,13 @@ export function FreelancerProfilePage() {
                     categories={categories}
                     skills={skills}
                     selectedCategoryId={selectedCategoryId}
-                    selectedSkillIds={selectedSkillIds}
+                    selectedSkills={selectedSkills}
                     disabled={saving}
-                    error={errors.habilidadIds}
+                    error={errors.habilidades}
                     onCategoryChange={setSelectedCategoryId}
-                    onSkillsChange={(skillIds) => {
-                      setSelectedSkillIds(skillIds);
-                      setErrors((current) => ({ ...current, habilidadIds: "" }));
+                    onSkillsChange={(nextSkills) => {
+                      setSelectedSkills(nextSkills);
+                      setErrors((current) => ({ ...current, habilidades: "" }));
                       setSaveError("");
                       setSaved(false);
                     }}

@@ -24,7 +24,7 @@ body:has(.feed-layout) {
   gap: var(--fg-space-5);
   margin: 0 auto;
   padding: 0 clamp(1rem, 3vw, 2rem);
-  grid-template-columns: auto auto minmax(220px, 1fr) auto;
+  grid-template-columns: auto minmax(220px, 1fr) auto;
 }
 
 .app-header__brand {
@@ -169,6 +169,32 @@ body:has(.feed-layout) {
 .app-header__icon-link:hover {
   color: var(--fg-accent);
   background: var(--fg-fill);
+}
+
+.app-header__login {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  padding: 0 15px;
+  border: 1px solid var(--fg-line-strong);
+  border-radius: var(--fg-r-pill);
+  background: var(--fg-surface);
+  color: var(--fg-text);
+  font-size: var(--fg-text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--fg-transition), border-color var(--fg-transition), color var(--fg-transition);
+}
+
+.app-header__login:hover {
+  border-color: var(--fg-accent);
+  background: var(--fg-accent-soft);
+  color: var(--fg-accent);
+}
+
+.app-header__login:focus-visible {
+  outline: 3px solid var(--fg-focus);
+  outline-offset: 3px;
 }
 
 .app-header__menu-button {
@@ -1006,7 +1032,7 @@ body:has(.feed-layout) {
 /* ---------- Responsive shell ---------- */
 @media (max-width: 1100px) {
   .app-header__inner {
-    grid-template-columns: auto auto minmax(180px, 1fr) auto;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
     gap: 12px;
   }
 
@@ -1020,14 +1046,6 @@ body:has(.feed-layout) {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px;
     padding: 0 14px;
-  }
-
-  .app-header__brand {
-    display: none;
-  }
-
-  .app-header__menu-button {
-    display: inline-grid;
   }
 
   .app-header__search input {

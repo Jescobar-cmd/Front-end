@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   acceptChatOffer,
   counterChatOffer,
@@ -28,6 +29,7 @@ function isExpired(value: string | null): boolean {
 }
 
 export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCardProps) {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState<"accept" | "reject" | "counter" | null>(null);
   const [error, setError] = useState("");
   const [counterOpen, setCounterOpen] = useState(false);
@@ -47,8 +49,11 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
     setBusy("accept");
     setError("");
     try {
-      await acceptChatOffer(token, offer.id);
+      const result = await acceptChatOffer(token, offer.id);
       onChanged();
+      if (result.contrato?.id) {
+        navigate(`/contracts/${result.contrato.id}`);
+      }
     } catch (cause) {
       setError(errorMessage(cause, "No se pudo aceptar la oferta."));
     } finally {

@@ -1,5 +1,13 @@
 export type TipoCliente = "natural" | "empresa";
 
+export const NIVELES_HABILIDAD = ["basico", "intermedio", "avanzado", "experto"] as const;
+export type NivelHabilidad = (typeof NIVELES_HABILIDAD)[number];
+
+export interface HabilidadSeleccionada {
+  id: number;
+  nivel?: NivelHabilidad | null;
+}
+
 export interface ClientePerfil {
   nombreEmpresa: string | null;
   tipoCliente: string;
@@ -9,7 +17,7 @@ export interface ClientePerfil {
 export interface HabilidadPerfil {
   id: number;
   nombre: string;
-  nivel: string | null;
+  nivel: NivelHabilidad | null;
 }
 
 export interface FreelancerPerfil {
@@ -87,5 +95,5 @@ export interface DatosPerfilFreelancer {
   fotoPerfil?: string | null;
   tituloProfesional?: string | null;
   biografia?: string | null;
-  habilidadIds?: number[];
+  habilidades?: HabilidadSeleccionada[];
 }

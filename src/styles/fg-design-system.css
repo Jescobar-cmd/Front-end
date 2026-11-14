@@ -21,6 +21,8 @@
   --fg-accent-deep: #123f57;
   --fg-accent-soft: #eaf1f6;
   --fg-accent-soft-strong: #d8e7ef;
+  --fg-accent-contrast: #ffffff;
+  --fg-scrim: rgba(8, 24, 37, 0.52);
   --fg-star: #c27c0e;
 
   /* Verde oscuro reservado para acciones de avance (contactar, publicar, confirmar). */
@@ -97,6 +99,8 @@
   --fg-accent-deep: #0d2c3d;
   --fg-accent-soft: rgba(79, 155, 196, 0.16);
   --fg-accent-soft-strong: rgba(79, 155, 196, 0.26);
+  --fg-accent-contrast: #ffffff;
+  --fg-scrim: rgba(0, 0, 0, 0.68);
   --fg-star: #e0a83e;
 
   --fg-action: #62c894;

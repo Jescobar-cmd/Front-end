@@ -1,5 +1,10 @@
 import type { PerfilRepositoryPort } from "../ports/PerfilRepositoryPort";
-import type { DatosPerfilFreelancer, PerfilFreelancer } from "../../domain/entities/perfil";
+import {
+  NIVELES_HABILIDAD,
+  type DatosPerfilFreelancer,
+  type NivelHabilidad,
+  type PerfilFreelancer,
+} from "../../domain/entities/perfil";
 import { Telefono } from "../../domain/value-objects/telefono";
 
 /** Texto opcional: "" o null borra el valor (el backend lo guarda como null). */
@@ -55,20 +60,32 @@ export class ActualizarMiPerfilFreelancerUseCase {
       );
     }
 
-    if (datos.habilidadIds !== undefined) {
-      if (!Array.isArray(datos.habilidadIds)) {
-        throw new Error("Las habilidades deben ser una lista de ids");
+    if (datos.habilidades !== undefined) {
+      if (!Array.isArray(datos.habilidades)) {
+        throw new Error("Las habilidades deben ser una lista");
       }
-      if (datos.habilidadIds.length > 20) {
+      if (datos.habilidades.length > 20) {
         throw new Error("No puedes asignar más de 20 habilidades");
       }
-      if (datos.habilidadIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+      if (datos.habilidades.some((habilidad) => !Number.isInteger(habilidad.id) || habilidad.id <= 0)) {
         throw new Error("Las habilidades deben ser ids numéricos");
       }
-      if (new Set(datos.habilidadIds).size !== datos.habilidadIds.length) {
+      if (new Set(datos.habilidades.map((habilidad) => habilidad.id)).size !== datos.habilidades.length) {
         throw new Error("No puedes repetir una habilidad");
       }
-      payload.habilidadIds = [...datos.habilidadIds];
+      if (
+        datos.habilidades.some(
+          (habilidad) =>
+            habilidad.nivel != null &&
+            !NIVELES_HABILIDAD.includes(habilidad.nivel as NivelHabilidad),
+        )
+      ) {
+        throw new Error("El nivel de la habilidad no es válido");
+      }
+      payload.habilidades = datos.habilidades.map((habilidad) => ({
+        id: habilidad.id,
+        nivel: habilidad.nivel ?? null,
+      }));
     }
 
     if (Object.keys(payload).length === 0) {
