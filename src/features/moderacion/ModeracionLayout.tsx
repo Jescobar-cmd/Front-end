@@ -11,6 +11,7 @@ import "./moderacion.css";
 
 type IconName =
   | "dashboard"
+  | "publicaciones"
   | "reportes"
   | "disputas"
   | "liquidaciones"
@@ -25,6 +26,13 @@ function NavIcon({ name }: { name: IconName }) {
         <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" />
         <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
         <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />
+      </>
+    ),
+    publicaciones: (
+      <>
+        <path d="M12 3.5 3.5 8 12 12.5 20.5 8 12 3.5Z" />
+        <path d="M3.5 12 12 16.5 20.5 12" />
+        <path d="M3.5 16 12 20.5 20.5 16" />
       </>
     ),
     reportes: (
@@ -156,6 +164,11 @@ export function ModeracionLayout() {
 
   const items: NavItem[] = [
     { to: "/moderacion", label: "Dashboard", icon: "dashboard", end: true },
+    {
+      to: "/moderacion/publicaciones",
+      label: "Publicaciones",
+      icon: "publicaciones",
+    },
     {
       to: "/moderacion/reportes",
       label: "Reportes",

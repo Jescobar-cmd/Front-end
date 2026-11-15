@@ -44,7 +44,7 @@ export interface Reporte {
 export interface ReporteDetalle extends Reporte {
   usuarioReporta: PersonaResumen;
   usuarioReportado: PersonaResumen | null;
-  proyecto: { id: number; titulo: string } | null;
+  proyecto: ProyectoReporte | null;
 }
 
 export interface ReportesPaginados {
@@ -178,6 +178,153 @@ export interface ResultadoSuspension {
   };
 }
 
+/* ---------- Publicaciones (servicios y proyectos) ---------- */
+
+export type TipoPublicacion = "servicio" | "proyecto";
+
+export interface AutorPublicacionModerada {
+  id: number;
+  nombre: string;
+  fotoPerfil: string | null;
+  estado?: string | null;
+}
+
+export interface ContratoPublicacion {
+  id: number;
+  estado: string;
+  montoAcordado: number;
+}
+
+export interface RegistroModeracionPublicacion {
+  id?: number;
+  retirada: boolean;
+  motivo: string | null;
+  fecha: string | null;
+  moderador: PersonaResumen | null;
+  estadoAnterior?: string | null;
+  estadoNuevo?: string | null;
+}
+
+export interface PublicacionModerada {
+  id: number;
+  tipo: TipoPublicacion;
+  titulo: string;
+  descripcion: string;
+  precio: number;
+  estado: string;
+  autor: AutorPublicacionModerada;
+  categoria: string | null;
+  fechaPublicacion: string;
+  moderacion: RegistroModeracionPublicacion;
+  contratosActivos: ContratoPublicacion[];
+  historial?: RegistroModeracionPublicacion[];
+}
+
+export interface PublicacionesPaginadas {
+  page: number;
+  limit: number;
+  total: number;
+  items: PublicacionModerada[];
+}
+
+export interface FiltrosPublicaciones {
+  tipo?: TipoPublicacion;
+  estado?: string;
+  texto?: string;
+  page?: number;
+  limit?: number;
+}
+
+/* ---------- Reportes: contexto de pago ---------- */
+
+export interface PagoResumenReporte {
+  id: number;
+  estado: string;
+  monto: number;
+}
+
+export interface ContratoReporte {
+  id: number;
+  estado: string;
+  montoAcordado: number;
+  pago: PagoResumenReporte | null;
+}
+
+export interface ProyectoReporte {
+  id: number;
+  titulo: string;
+  estado: string;
+  contrato: ContratoReporte | null;
+}
+
+export interface ResultadoDerivarDisputa {
+  reporte: Reporte;
+  disputa: Disputa;
+}
+
+/* ---------- Usuarios ---------- */
+
+export interface SancionUsuario {
+  id: number;
+  tipo: string;
+  motivo: string;
+  fecha: string;
+  moderador: PersonaResumen | null;
+}
+
+export interface UsuarioModeracionResumen {
+  id: number;
+  nombre: string;
+  email: string;
+  rolId: number;
+  rol: string;
+  estado: EstadoCuenta;
+  fotoPerfil: string | null;
+  fechaRegistro: string;
+  suspension: {
+    motivo: string | null;
+    fecha: string | null;
+    por: string | null;
+  } | null;
+}
+
+export interface UsuariosPaginados {
+  page: number;
+  limit: number;
+  total: number;
+  items: UsuarioModeracionResumen[];
+}
+
+export interface FiltrosUsuarios {
+  texto?: string;
+  rol?: number | "";
+  estado?: EstadoCuenta | "";
+  page?: number;
+  limit?: number;
+}
+
+export interface UsuarioModeracionDetalle extends UsuarioModeracionResumen {
+  telefono?: string | null;
+  cedula?: string | null;
+  calificacionPromedio?: number | null;
+  totalContratos?: number;
+  totalPublicaciones?: number;
+  sanciones: SancionUsuario[];
+}
+
+function normalizarPublicacion(publicacion: PublicacionModerada): PublicacionModerada {
+  return {
+    ...publicacion,
+    moderacion: publicacion.moderacion ?? {
+      retirada: false,
+      motivo: null,
+      fecha: null,
+      moderador: null,
+    },
+    contratosActivos: publicacion.contratosActivos ?? [],
+  };
+}
+
 const SUSPENSION_EVENT = "fg:cuenta-suspendida";
 export const CUENTA_SUSPENDIDA_EVENT = SUSPENSION_EVENT;
 
@@ -244,6 +391,19 @@ export const moderacionApi = {
 
   obtenerReporte(token: string, id: number): Promise<ReporteDetalle> {
     return pedir<ReporteDetalle>({ token, path: `/moderador/reportes/${id}` });
+  },
+
+  derivarReporteADisputa(
+    token: string,
+    id: number,
+    datos: { descripcion?: string } = {},
+  ): Promise<ResultadoDerivarDisputa> {
+    return pedir<ResultadoDerivarDisputa>({
+      method: "POST",
+      token,
+      path: `/moderador/reportes/${id}/derivar-disputa`,
+      body: datos,
+    });
   },
 
   async resolverReporte(
@@ -382,6 +542,141 @@ export const moderacionApi = {
       token,
       path: "/moderador/notificaciones/leidas",
     });
+  },
+
+  async listarPublicaciones(
+    token: string,
+    filtros: FiltrosPublicaciones = {},
+  ): Promise<PublicacionesPaginadas> {
+    const respuesta = await pedir<PublicacionesPaginadas>({
+      token,
+      path: `/moderador/publicaciones${query({
+        tipo: filtros.tipo,
+        estado: filtros.estado,
+        texto: filtros.texto,
+        page: filtros.page,
+        limit: filtros.limit,
+      })}`,
+    });
+    const items = (respuesta.items ?? []).map(normalizarPublicacion);
+    return {
+      page: respuesta.page ?? filtros.page ?? 1,
+      limit: respuesta.limit ?? filtros.limit ?? 20,
+      total: respuesta.total ?? items.length,
+      items,
+    };
+  },
+
+  async obtenerPublicacion(
+    token: string,
+    tipo: TipoPublicacion,
+    id: number,
+  ): Promise<PublicacionModerada> {
+    const respuesta = await pedir<
+      PublicacionModerada | { publicacion: PublicacionModerada }
+    >({
+      token,
+      path: `/moderador/publicaciones/${tipo}/${id}`,
+    });
+    const publicacion =
+      (respuesta as { publicacion?: PublicacionModerada }).publicacion ??
+      (respuesta as PublicacionModerada);
+    return normalizarPublicacion(publicacion);
+  },
+
+  async retirarPublicacion(
+    token: string,
+    tipo: TipoPublicacion,
+    id: number,
+    motivo: string,
+  ): Promise<void> {
+    await pedir<unknown>({
+      method: "POST",
+      token,
+      path: `/moderador/publicaciones/${tipo}/${id}/retirar`,
+      body: { motivo },
+    });
+  },
+
+  async reactivarPublicacion(
+    token: string,
+    tipo: TipoPublicacion,
+    id: number,
+  ): Promise<void> {
+    await pedir<unknown>({
+      method: "POST",
+      token,
+      path: `/moderador/publicaciones/${tipo}/${id}/reactivar`,
+    });
+  },
+
+  async listarUsuarios(
+    token: string,
+    filtros: FiltrosUsuarios = {},
+  ): Promise<UsuariosPaginados> {
+    const respuesta = await pedir<
+      | UsuariosPaginados
+      | UsuarioModeracionResumen[]
+      | {
+          usuarios: UsuarioModeracionResumen[];
+          total?: number;
+          page?: number;
+          limit?: number;
+        }
+    >({
+      token,
+      path: `/moderador/usuarios${query({
+        texto: filtros.texto,
+        rol: filtros.rol,
+        estado: filtros.estado,
+        page: filtros.page,
+        limit: filtros.limit,
+      })}`,
+    });
+
+    if (Array.isArray(respuesta)) {
+      return {
+        page: filtros.page ?? 1,
+        limit: filtros.limit ?? respuesta.length,
+        total: respuesta.length,
+        items: respuesta,
+      };
+    }
+
+    if ("usuarios" in respuesta) {
+      const items = respuesta.usuarios ?? [];
+      return {
+        page: respuesta.page ?? filtros.page ?? 1,
+        limit: respuesta.limit ?? filtros.limit ?? 20,
+        total: respuesta.total ?? items.length,
+        items,
+      };
+    }
+
+    const items = respuesta.items ?? [];
+    return {
+      page: respuesta.page ?? filtros.page ?? 1,
+      limit: respuesta.limit ?? filtros.limit ?? 20,
+      total: respuesta.total ?? items.length,
+      items,
+    };
+  },
+
+  async obtenerUsuario(token: string, id: number): Promise<UsuarioModeracionDetalle> {
+    const respuesta = await pedir<
+      UsuarioModeracionDetalle | { usuario: UsuarioModeracionDetalle }
+    >({
+      token,
+      path: `/moderador/usuarios/${id}`,
+    });
+    const usuario =
+      (respuesta as { usuario?: UsuarioModeracionDetalle }).usuario ??
+      (respuesta as UsuarioModeracionDetalle);
+    return {
+      ...usuario,
+      suspension: usuario.suspension ?? null,
+      sanciones: usuario.sanciones ?? [],
+    };
   },
 
   obtenerPerfilPublico(token: string, id: number): Promise<PerfilPublicoModeracion> {

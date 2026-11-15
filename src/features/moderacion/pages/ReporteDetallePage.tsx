@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, buttonClassName } from "../../../components/ui/Button";
 import { Select } from "../../../components/ui/Select";
 import { useAuth } from "../../../context/AuthContext";
@@ -15,13 +15,21 @@ import { PageHeader } from "../components/PageHeader";
 import { PanelDialog } from "../components/PanelDialog";
 import { useToast } from "../components/Toast";
 import { useTemporaryLock } from "../hooks/useTemporaryLock";
-import { esApiError, erroresPorCampo, formatearFechaHora, mensajeError } from "../utils";
+import {
+  esApiError,
+  erroresPorCampo,
+  etiquetaEstado,
+  formatearFechaHora,
+  formatearMoneda,
+  mensajeError,
+} from "../utils";
 import { useModeracionPanel } from "../ModeracionContext";
 
 export function ReporteDetallePage() {
   const { id } = useParams();
   const reporteId = Number(id);
   const { token } = useAuth();
+  const navigate = useNavigate();
   const { mostrarToast } = useToast();
   const { recargarContadores } = useModeracionPanel();
   const [reporte, setReporte] = useState<ReporteDetalle | null>(null);
@@ -35,6 +43,12 @@ export function ReporteDetallePage() {
   const [resolucion, setResolucion] = useState("");
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
+
+  const [derivarAbierto, setDerivarAbierto] = useState(false);
+  const [notaDerivacion, setNotaDerivacion] = useState("");
+  const [errorDerivacion, setErrorDerivacion] = useState("");
+  const [enviandoDerivacion, setEnviandoDerivacion] = useState(false);
+
   const { bloqueado, bloquear } = useTemporaryLock();
 
   const cargar = useCallback(async () => {
@@ -120,6 +134,45 @@ export function ReporteDetallePage() {
     }
   };
 
+  const derivarADisputa = async () => {
+    if (!token || !reporte) return;
+    setEnviandoDerivacion(true);
+    setErrorDerivacion("");
+    try {
+      const resultado = await moderacionApi.derivarReporteADisputa(token, reporte.id, {
+        ...(notaDerivacion.trim() ? { descripcion: notaDerivacion.trim() } : {}),
+      });
+      mostrarToast(
+        `El reporte fue derivado a la disputa #${resultado.disputa.id}.`,
+        "success",
+      );
+      setDerivarAbierto(false);
+      setNotaDerivacion("");
+      void recargarContadores();
+      navigate(`/moderacion/disputas/${resultado.disputa.id}`);
+    } catch (reason) {
+      if (esApiError(reason) && reason.status === 422) {
+        setErrorDerivacion(
+          erroresPorCampo(reason).descripcion ?? mensajeError(reason),
+        );
+      } else if (esApiError(reason) && reason.status === 409) {
+        mostrarToast(mensajeError(reason), "warning");
+        setDerivarAbierto(false);
+        setRecarga((valor) => valor + 1);
+      } else if (esApiError(reason) && reason.status === 429) {
+        mostrarToast(
+          "Demasiados intentos. Espera unos segundos antes de reintentar.",
+          "warning",
+        );
+        bloquear();
+      } else {
+        mostrarToast(mensajeError(reason), "error");
+      }
+    } finally {
+      setEnviandoDerivacion(false);
+    }
+  };
+
   if (cargando && !reporte) {
     return (
       <div className="mod-page">
@@ -151,6 +204,11 @@ export function ReporteDetallePage() {
   if (!reporte) return null;
 
   const puedeResolver = reporte.estado === "pendiente";
+  const contrato = reporte.proyecto?.contrato ?? null;
+  const pago = contrato?.pago ?? null;
+  const puedeDerivar =
+    reporte.estado === "pendiente" &&
+    Boolean(contrato && contrato.estado === "activo");
 
   return (
     <div className="mod-page">
@@ -161,13 +219,28 @@ export function ReporteDetallePage() {
         backTo="/moderacion/reportes"
         backLabel="Volver a reportes"
         actions={
-          puedeResolver ? (
-            <Button variant="primary" onClick={abrirResolver}>
-              Resolver reporte
-            </Button>
-          ) : (
-            <EstadoBadge estado={reporte.estado} />
-          )
+          <div className="mod-row-actions">
+            {puedeDerivar ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setNotaDerivacion("");
+                  setErrorDerivacion("");
+                  setDerivarAbierto(true);
+                }}
+                disabled={bloqueado}
+              >
+                Derivar a disputa
+              </Button>
+            ) : null}
+            {puedeResolver ? (
+              <Button variant="primary" onClick={abrirResolver}>
+                Resolver reporte
+              </Button>
+            ) : (
+              <EstadoBadge estado={reporte.estado} />
+            )}
+          </div>
         }
       />
 
@@ -262,6 +335,80 @@ export function ReporteDetallePage() {
             </div>
           </section>
 
+          <section className="mod-panel" aria-labelledby="reporte-pago">
+            <div className="mod-panel__head">
+              <div>
+                <h2 id="reporte-pago">Contexto de pago</h2>
+                <p>Proyecto, contrato y pago asociados al reporte.</p>
+              </div>
+            </div>
+
+            {reporte.proyecto ? (
+              <>
+                <dl className="mod-info">
+                  <div className="mod-info__wide">
+                    <dt>Proyecto</dt>
+                    <dd>
+                      {reporte.proyecto.titulo}{" "}
+                      <span className="mod-muted">(#{reporte.proyecto.id})</span>{" "}
+                      {reporte.proyecto.estado ? (
+                        <EstadoBadge estado={reporte.proyecto.estado} />
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Contrato</dt>
+                    <dd>
+                      {contrato ? (
+                        <>
+                          #{contrato.id} · <EstadoBadge estado={contrato.estado} />
+                        </>
+                      ) : (
+                        "Sin contrato asociado"
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Monto acordado</dt>
+                    <dd className="mod-amount">
+                      {contrato ? formatearMoneda(contrato.montoAcordado) : "—"}
+                    </dd>
+                  </div>
+                  <div className="mod-info__wide">
+                    <dt>Pago</dt>
+                    <dd>
+                      {pago ? (
+                        <>
+                          {formatearMoneda(pago.monto)} ·{" "}
+                          {etiquetaEstado(pago.estado)}
+                        </>
+                      ) : (
+                        "Sin pago registrado"
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+
+                {!puedeDerivar && reporte.estado === "pendiente" ? (
+                  <div className="mod-alert mod-alert--warning" role="note">
+                    <span>
+                      {!contrato
+                        ? "El proyecto no tiene un contrato asociado; no se puede derivar a disputa."
+                        : contrato.estado !== "activo"
+                          ? `El contrato está ${etiquetaEstado(contrato.estado).toLowerCase()}; solo se puede derivar un contrato activo.`
+                          : "El reporte no se puede derivar en este momento."}
+                    </span>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="mod-muted">
+                El reporte apunta a un usuario y no a un proyecto, por lo que no tiene
+                contrato ni pago asociado. Puedes resolverlo o moderar la cuenta.
+              </p>
+            )}
+          </section>
+
           <Link className={buttonClassName({ variant: "ghost", size: "sm" })} to="/moderacion/reportes">
             ← Volver al listado
           </Link>
@@ -334,6 +481,84 @@ export function ReporteDetallePage() {
           {errores.resolucion ? (
             <p className="ui-error" id="resolucion-reporte-error" role="alert">
               {errores.resolucion}
+            </p>
+          ) : null}
+        </form>
+      </PanelDialog>
+
+      <PanelDialog
+        open={derivarAbierto}
+        title="Derivar reporte a disputa"
+        description="La disputa quedará abierta con el contrato asociado y el dinero se gestionará desde el módulo de disputas."
+        busy={enviandoDerivacion}
+        onClose={() => {
+          if (!enviandoDerivacion) setDerivarAbierto(false);
+        }}
+        footer={
+          <Button
+            type="submit"
+            form="form-derivar-reporte"
+            variant="primary"
+            disabled={enviandoDerivacion || bloqueado}
+          >
+            {enviandoDerivacion
+              ? "Derivando…"
+              : bloqueado
+                ? "Espera un momento…"
+                : "Derivar a disputa"}
+          </Button>
+        }
+      >
+        <form
+          id="form-derivar-reporte"
+          className="mod-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void derivarADisputa();
+          }}
+        >
+          <div className="mod-summary-box mod-summary-box--inline">
+            <span className="mod-summary-box__label">Contrato que se disputará</span>
+            <p>
+              {contrato ? (
+                <>
+                  Contrato #{contrato.id} · {formatearMoneda(contrato.montoAcordado)} ·{" "}
+                  {etiquetaEstado(contrato.estado)}
+                </>
+              ) : (
+                "Sin contrato asociado"
+              )}
+            </p>
+            <p>
+              {pago
+                ? `Pago ${etiquetaEstado(pago.estado).toLowerCase()} por ${formatearMoneda(pago.monto)}.`
+                : "El contrato no tiene un pago registrado."}
+            </p>
+          </div>
+
+          <label className="mod-field" htmlFor="nota-derivacion">
+            <span className="ui-label">Nota para la disputa (opcional)</span>
+            <textarea
+              id="nota-derivacion"
+              className="mod-textarea"
+              rows={4}
+              maxLength={1000}
+              value={notaDerivacion}
+              placeholder="Agrega contexto adicional para quien revise la disputa."
+              aria-invalid={errorDerivacion ? "true" : undefined}
+              aria-describedby={errorDerivacion ? "nota-derivacion-error" : "nota-derivacion-hint"}
+              onChange={(event) => {
+                setNotaDerivacion(event.target.value);
+                if (errorDerivacion) setErrorDerivacion("");
+              }}
+            />
+          </label>
+          <p className="mod-hint" id="nota-derivacion-hint">
+            Máximo 1000 caracteres. {notaDerivacion.trim().length}/1000.
+          </p>
+          {errorDerivacion ? (
+            <p className="ui-error" id="nota-derivacion-error" role="alert">
+              {errorDerivacion}
             </p>
           ) : null}
         </form>

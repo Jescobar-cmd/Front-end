@@ -89,10 +89,33 @@ export function etiquetaRol(rolId: number | undefined): string {
   return ETIQUETAS_ROL[rolId] ?? "Usuario";
 }
 
+const ETIQUETAS_ROL_NOMBRE: Record<string, string> = {
+  admin: "Administrador",
+  administrador: "Administrador",
+  freelancer: "Freelancer",
+  cliente: "Cliente",
+  moderador: "Moderador",
+};
+
+/** Etiqueta de rol cuando el backend devuelve el nombre en lugar del id. */
+export function etiquetaRolDesdeNombre(
+  rol: string | undefined,
+  rolId?: number,
+): string {
+  if (rol) {
+    return ETIQUETAS_ROL_NOMBRE[rol.toLowerCase()] ?? rol;
+  }
+  return etiquetaRol(rolId);
+}
+
 export const ETIQUETAS_ESTADO: Record<string, string> = {
   activo: "Activo",
   inactivo: "Inactivo",
   suspendido: "Suspendido",
+  abierto: "Abierto",
+  en_progreso: "En progreso",
+  pausado: "Pausado",
+  eliminado: "Eliminado",
   pendiente: "Pendiente",
   resuelto: "Resuelto",
   rechazado: "Rechazado",
