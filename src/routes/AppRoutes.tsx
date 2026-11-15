@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
@@ -22,6 +22,7 @@ import {
   ConversationDetailPage,
   ContractDetailPage,
   ContractsPage,
+  PagoSimuladoPage,
 } from "../features/chat-contracts";
 import {
   ClientServicesPage,
@@ -65,6 +66,20 @@ function MiPerfilRedirect() {
 function LegacyProfileRedirect() {
   const { id } = useParams();
   return <Navigate to={id ? `/perfil/${id}` : "/"} replace />;
+}
+
+// El backend (back_urls de Mercado Pago y enlaces de notificaciones) usa
+// /contratos/:id; la ruta canónica del frontend es /contracts/:id.
+function ContratoLegacyRedirect() {
+  const { contractId } = useParams();
+  const [searchParams] = useSearchParams();
+  const query = searchParams.toString();
+  return (
+    <Navigate
+      to={`/contracts/${contractId ?? ""}${query ? `?${query}` : ""}`}
+      replace
+    />
+  );
 }
 
 export function AppRoutes() {
@@ -156,6 +171,8 @@ export function AppRoutes() {
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
+        <Route path="/contratos/:contractId" element={<ContratoLegacyRedirect />} />
+        <Route path="/pago/simulado" element={<PagoSimuladoPage />} />
         <Route
           path="/talento"
           element={

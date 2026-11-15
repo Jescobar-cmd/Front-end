@@ -34,6 +34,10 @@ export function isPending(value: string): boolean {
   return ["pendiente", "pending"].includes(normalizedState(value));
 }
 
+export function isPendingPayment(value: string): boolean {
+  return normalizedState(value) === "pendiente_pago";
+}
+
 export function isActive(value: string): boolean {
   return ["activo", "active"].includes(normalizedState(value));
 }
@@ -63,12 +67,24 @@ export function statusLabel(value: string): string {
     canceled: "Cancelado",
     pendiente: "Pendiente",
     pending: "Pendiente",
+    pendiente_pago: "Pendiente de pago",
     aceptada: "Aceptada",
     accepted: "Aceptada",
     rechazada: "Rechazada",
     rejected: "Rechazada",
     contraofertada: "Contraofertada",
     expirada: "Expirada",
+  };
+  return labels[normalized] ?? value;
+}
+
+export function pagoEstadoLabel(value: string): string {
+  const normalized = normalizedState(value);
+  const labels: Record<string, string> = {
+    pendiente: "Pago pendiente",
+    retenido: "Pago retenido en FirstGig",
+    liberado: "Pago liberado",
+    reembolsado: "Pago reembolsado",
   };
   return labels[normalized] ?? value;
 }
