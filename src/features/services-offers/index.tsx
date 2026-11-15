@@ -693,7 +693,7 @@ export function OfferForm({
 
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
-            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving || imageUploading} onClick={onCancel}>Cancelar</button>}
+            {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
             <button className="so-button so-button--action" type="submit" disabled={saving}>
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Publicar proyecto"}
             </button>

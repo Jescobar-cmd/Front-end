@@ -31,7 +31,15 @@ import {
 import { FreelancerDirectoryPage } from "../features/freelancers";
 import { CreateProjectPage, CreateServicePage } from "../features/services-offers/CreatePages";
 import { ClientOffersRoute } from "./ClientOffersRoute";
-import { RoleHomePage } from "../features/account/RoleHomePage";
+import { ModeracionLayout } from "../features/moderacion/ModeracionLayout";
+import { DashboardModeracionPage } from "../features/moderacion/pages/DashboardModeracionPage";
+import { ReportesPage } from "../features/moderacion/pages/ReportesPage";
+import { ReporteDetallePage } from "../features/moderacion/pages/ReporteDetallePage";
+import { DisputasPage } from "../features/moderacion/pages/DisputasPage";
+import { DisputaDetallePage } from "../features/moderacion/pages/DisputaDetallePage";
+import { LiquidacionesPage } from "../features/moderacion/pages/LiquidacionesPage";
+import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesPage";
+import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
 import { SecurityPage } from "../features/account/SecurityPage";
 
 function RedireccionDashboard() {
@@ -104,7 +112,7 @@ export function AppRoutes() {
           path="/dashboard/moderador"
           element={
             <RutaProtegida roles={["moderador", "administrador"]}>
-              <RoleHomePage />
+              <Navigate to="/moderacion" replace />
             </RutaProtegida>
           }
         />
@@ -112,7 +120,7 @@ export function AppRoutes() {
           path="/dashboard/administrador"
           element={
             <RutaProtegida roles={["administrador"]}>
-              <RoleHomePage />
+              <Navigate to="/moderacion" replace />
             </RutaProtegida>
           }
         />
@@ -209,6 +217,24 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
+      </Route>
+
+      {/* Panel de moderación: shell propio, sin el header del marketplace. */}
+      <Route
+        element={
+          <RutaProtegida roles={["moderador", "administrador"]}>
+            <ModeracionLayout />
+          </RutaProtegida>
+        }
+      >
+        <Route path="/moderacion" element={<DashboardModeracionPage />} />
+        <Route path="/moderacion/reportes" element={<ReportesPage />} />
+        <Route path="/moderacion/reportes/:id" element={<ReporteDetallePage />} />
+        <Route path="/moderacion/disputas" element={<DisputasPage />} />
+        <Route path="/moderacion/disputas/:id" element={<DisputaDetallePage />} />
+        <Route path="/moderacion/liquidaciones" element={<LiquidacionesPage />} />
+        <Route path="/moderacion/notificaciones" element={<NotificacionesPage />} />
+        <Route path="/moderacion/usuarios" element={<UsuariosPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

@@ -50,9 +50,12 @@ function esUrlLocal(url: string): boolean {
   }
 }
 
-// Nunca permitimos que el navegador envíe solicitudes a hosts locales o privados.
+// En desarrollo se permite apuntar a un backend local (por ejemplo
+// http://localhost:4000/api). Los builds de producción siguen rechazando hosts
+// locales y privados para no exponer la app a solicitudes de red local.
+const permiteHostLocal = import.meta.env.DEV;
 const usableUrl =
-  configuredUrl && !esUrlLocal(configuredUrl)
+  configuredUrl && (permiteHostLocal || !esUrlLocal(configuredUrl))
     ? configuredUrl
     : DEFAULT_API_URL;
 
