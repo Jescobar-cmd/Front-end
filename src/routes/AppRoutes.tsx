@@ -33,6 +33,8 @@ import { CreateProjectPage, CreateServicePage } from "../features/services-offer
 import { ClientOffersRoute } from "./ClientOffersRoute";
 import { ModeracionLayout } from "../features/moderacion/ModeracionLayout";
 import { DashboardModeracionPage } from "../features/moderacion/pages/DashboardModeracionPage";
+import { PublicacionesPage } from "../features/moderacion/pages/PublicacionesPage";
+import { PublicacionDetallePage } from "../features/moderacion/pages/PublicacionDetallePage";
 import { ReportesPage } from "../features/moderacion/pages/ReportesPage";
 import { ReporteDetallePage } from "../features/moderacion/pages/ReporteDetallePage";
 import { DisputasPage } from "../features/moderacion/pages/DisputasPage";
@@ -40,6 +42,7 @@ import { DisputaDetallePage } from "../features/moderacion/pages/DisputaDetalleP
 import { LiquidacionesPage } from "../features/moderacion/pages/LiquidacionesPage";
 import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesPage";
 import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
+import { UsuarioDetallePage } from "../features/moderacion/pages/UsuarioDetallePage";
 import { SecurityPage } from "../features/account/SecurityPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 
@@ -227,6 +230,11 @@ export function AppRoutes() {
           }
         >
           <Route path="/moderacion" element={<DashboardModeracionPage />} />
+          <Route path="/moderacion/publicaciones" element={<PublicacionesPage />} />
+          <Route
+            path="/moderacion/publicaciones/:tipo/:id"
+            element={<PublicacionDetallePage />}
+          />
           <Route path="/moderacion/reportes" element={<ReportesPage />} />
           <Route path="/moderacion/reportes/:id" element={<ReporteDetallePage />} />
           <Route path="/moderacion/disputas" element={<DisputasPage />} />
@@ -234,6 +242,7 @@ export function AppRoutes() {
           <Route path="/moderacion/liquidaciones" element={<LiquidacionesPage />} />
           <Route path="/moderacion/notificaciones" element={<NotificacionesPage />} />
           <Route path="/moderacion/usuarios" element={<UsuariosPage />} />
+          <Route path="/moderacion/usuarios/:id" element={<UsuarioDetallePage />} />
         </Route>
       </Route>
 
