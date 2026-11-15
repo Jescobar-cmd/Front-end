@@ -217,24 +217,22 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
-      </Route>
-
-      {/* Panel de moderación: shell propio, sin el header del marketplace. */}
-      <Route
-        element={
-          <RutaProtegida roles={["moderador", "administrador"]}>
-            <ModeracionLayout />
-          </RutaProtegida>
-        }
-      >
-        <Route path="/moderacion" element={<DashboardModeracionPage />} />
-        <Route path="/moderacion/reportes" element={<ReportesPage />} />
-        <Route path="/moderacion/reportes/:id" element={<ReporteDetallePage />} />
-        <Route path="/moderacion/disputas" element={<DisputasPage />} />
-        <Route path="/moderacion/disputas/:id" element={<DisputaDetallePage />} />
-        <Route path="/moderacion/liquidaciones" element={<LiquidacionesPage />} />
-        <Route path="/moderacion/notificaciones" element={<NotificacionesPage />} />
-        <Route path="/moderacion/usuarios" element={<UsuariosPage />} />
+        <Route
+          element={
+            <RutaProtegida roles={["moderador", "administrador"]}>
+              <ModeracionLayout />
+            </RutaProtegida>
+          }
+        >
+          <Route path="/moderacion" element={<DashboardModeracionPage />} />
+          <Route path="/moderacion/reportes" element={<ReportesPage />} />
+          <Route path="/moderacion/reportes/:id" element={<ReporteDetallePage />} />
+          <Route path="/moderacion/disputas" element={<DisputasPage />} />
+          <Route path="/moderacion/disputas/:id" element={<DisputaDetallePage />} />
+          <Route path="/moderacion/liquidaciones" element={<LiquidacionesPage />} />
+          <Route path="/moderacion/notificaciones" element={<NotificacionesPage />} />
+          <Route path="/moderacion/usuarios" element={<UsuariosPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

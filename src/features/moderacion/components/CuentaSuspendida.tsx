@@ -12,7 +12,7 @@ export function CuentaSuspendida() {
   };
 
   return (
-    <main className="mod-suspended" role="main">
+    <div className="mod-suspended">
       <div className="mod-suspended__card">
         <span className="mod-suspended__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +37,6 @@ export function CuentaSuspendida() {
           </a>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
