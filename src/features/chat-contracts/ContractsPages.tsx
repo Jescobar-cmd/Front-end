@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
@@ -13,7 +13,9 @@ import {
   rateContract,
 } from "../../infrastructure/api/apiContratos";
 import type { Calificacion, Contrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
-import { errorMessage, formatDate, formatMoney, isActive, isCancelled, isCompleted, statusLabel } from "./chatContractsUtils";
+import { consultarPagoContrato, iniciarPagoContrato } from "../../infrastructure/api/apiPagos";
+import type { PagoEscrow } from "../../infrastructure/api/apiPagos";
+import { errorMessage, formatDate, formatMoney, isActive, isCancelled, isCompleted, isPendingPayment, pagoEstadoLabel, statusLabel } from "./chatContractsUtils";
 import "./chat-contracts.css";
 
 function contractStateDescription(contract: Contrato): string {
@@ -82,7 +84,10 @@ export function ContractsPage() {
           <h1>Contratos</h1>
           <p className="cc-subtitle">Consulta acuerdos, estados y calificaciones.</p>
         </div>
-        <Link className="cc-link-button cc-secondary-button" to="/chat">Ir al chat</Link>
+        <div className="cc-actions">
+          <Link className="cc-link-button cc-secondary-button" to="/facturas">Facturas</Link>
+          <Link className="cc-link-button cc-secondary-button" to="/chat">Ir al chat</Link>
+        </div>
       </header>
       {error && <p className="cc-alert" role="alert">{error}</p>}
       {loading ? <section className="cc-panel"><p className="cc-muted">Cargando contratos…</p></section> : contracts.length === 0 ? (
@@ -137,19 +142,30 @@ export function ContractsPage() {
 interface RatingState extends RespuestaListadoCalificaciones {}
 
 export function ContractDetailPage({ contractId }: { contractId?: number }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const parsed = Number(params.contractId);
   const id = contractId ?? (Number.isInteger(parsed) && parsed > 0 ? parsed : undefined);
   const [contract, setContract] = useState<Contrato | null>(null);
+  const [pago, setPago] = useState<PagoEscrow | null>(null);
   const [ratings, setRatings] = useState<RatingState | null>(null);
   const [score, setScore] = useState("5");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Al volver de Mercado Pago la URL trae parámetros de la pasarela
+  // (payment_id, collection_id, status...). Mientras el webhook confirma,
+  // consultamos el pago cada pocos segundos.
+  const volvioDePasarela = ["payment_id", "collection_id", "status", "preference_id"].some(
+    (clave) => searchParams.get(clave) !== null,
+  );
 
   useEffect(() => {
     if (!token || !id) {
@@ -160,11 +176,16 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
     let cancelled = false;
     setLoading(true);
     setError("");
-    Promise.all([getContract(token, id), getContractRatings(token, id)])
-      .then(([details, ratingList]) => {
+    Promise.all([
+      getContract(token, id),
+      getContractRatings(token, id),
+      consultarPagoContrato(token, id).catch(() => null),
+    ])
+      .then(([details, ratingList, pagoContrato]) => {
         if (cancelled) return;
         setContract(details);
         setRatings(ratingList);
+        setPago(pagoContrato);
       })
       .catch((requestError: unknown) => {
         if (!cancelled) setError(errorMessage(requestError, "No se pudo cargar el contrato."));
@@ -174,6 +195,30 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
       });
     return () => { cancelled = true; };
   }, [token, id, refreshKey]);
+
+  useEffect(() => {
+    if (!volvioDePasarela || !token || !id) return;
+    let intentos = 0;
+    pollRef.current = setInterval(() => {
+      intentos += 1;
+      consultarPagoContrato(token, id)
+        .then((actual) => {
+          setPago(actual);
+          if (actual && actual.estado !== "pendiente") {
+            setRefreshKey((key) => key + 1);
+          }
+        })
+        .catch(() => undefined);
+      if (intentos >= 20 && pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    }, 3000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = null;
+    };
+  }, [volvioDePasarela, token, id]);
 
   const changeState = async (action: "complete" | "cancel"): Promise<boolean> => {
     if (!token || !contract || !isActive(contract.estado)) return false;
@@ -194,6 +239,19 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
 
   const confirmCancel = async () => {
     if (await changeState("cancel")) setConfirmCancelOpen(false);
+  };
+
+  const startPayment = async () => {
+    if (!token || !contract || !isPendingPayment(contract.estado) || user?.rol !== "cliente") return;
+    setPayBusy(true);
+    setError("");
+    try {
+      const preferencia = await iniciarPagoContrato(token, contract.id);
+      window.location.href = preferencia.initPoint;
+    } catch (requestError) {
+      setError(errorMessage(requestError, "No se pudo iniciar el pago."));
+      setPayBusy(false);
+    }
   };
 
   const submitRating = async (event: FormEvent<HTMLFormElement>) => {
@@ -232,6 +290,9 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
         <Link className="cc-link-button cc-secondary-button" to="/chat">Ir al chat</Link>
       </header>
       {error && <p className="cc-alert" role="alert">{error}</p>}
+      {volvioDePasarela && (!pago || pago.estado === "pendiente") && (
+        <p className="cc-inline-alert" role="status">Estamos confirmando tu pago con la pasarela…</p>
+      )}
       {loading ? <section className="cc-panel"><p className="cc-muted">Cargando contrato…</p></section> : contract && (
         <>
           <section className="cc-panel cc-contract-detail">
@@ -253,6 +314,40 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
               </div>
             )}
           </section>
+
+          {(pago !== null || isPendingPayment(contract.estado)) && (
+            <section className="cc-panel" aria-labelledby="cc-payment-title">
+              <div className="cc-panel-heading">
+                <div><p className="cc-eyebrow">PAGO EN ESCROW</p><h2 id="cc-payment-title">Pago del contrato</h2></div>
+                {pago && <span className="cc-status">{pagoEstadoLabel(pago.estado)}</span>}
+              </div>
+              <dl className="cc-definition-list">
+                <div><dt>Monto total</dt><dd>{formatMoney(pago?.monto ?? contract.montoAcordado)}</dd></div>
+                {pago?.metodoPago && <div><dt>Método de pago</dt><dd>{pago.metodoPago}</dd></div>}
+              </dl>
+              {pago?.estado === "retenido" && (
+                <p className="cc-muted">El dinero está retenido por FirstGig y se libera cuando el cliente apruebe la entrega.</p>
+              )}
+              {pago?.estado === "reembolsado" && (
+                <p className="cc-muted">Este pago fue reembolsado al cliente.</p>
+              )}
+              {(pago?.estado === "retenido" || pago?.estado === "liberado") && (
+                <p className="cc-muted">
+                  <Link to="/facturas">Ver comprobante emitido</Link>
+                </p>
+              )}
+              {isPendingPayment(contract.estado) && user?.rol === "cliente" && (
+                <div className="cc-actions">
+                  <button className="cc-primary-button" type="button" disabled={payBusy} onClick={() => void startPayment()}>
+                    {payBusy ? "Redirigiendo…" : `Pagar ${formatMoney(pago?.monto ?? contract.montoAcordado)}`}
+                  </button>
+                </div>
+              )}
+              {isPendingPayment(contract.estado) && user?.rol !== "cliente" && (
+                <p className="cc-muted">El cliente debe completar el pago para activar el contrato.</p>
+              )}
+            </section>
+          )}
 
           <section className="cc-panel" aria-labelledby="cc-ratings-title">
             <div className="cc-panel-heading"><div><p className="cc-eyebrow">OPINIONES</p><h2 id="cc-ratings-title">Calificaciones</h2></div><span className="cc-muted">{ratings?.total ?? 0}</span></div>

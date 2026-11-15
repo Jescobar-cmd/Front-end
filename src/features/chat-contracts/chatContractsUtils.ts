@@ -34,6 +34,10 @@ export function isPending(value: string): boolean {
   return ["pendiente", "pending"].includes(normalizedState(value));
 }
 
+export function isPendingPayment(value: string): boolean {
+  return normalizedState(value) === "pendiente_pago";
+}
+
 export function isActive(value: string): boolean {
   return ["activo", "active"].includes(normalizedState(value));
 }
@@ -63,6 +67,7 @@ export function statusLabel(value: string): string {
     canceled: "Cancelado",
     pendiente: "Pendiente",
     pending: "Pendiente",
+    pendiente_pago: "Pendiente de pago",
     aceptada: "Aceptada",
     accepted: "Aceptada",
     rechazada: "Rechazada",
@@ -73,8 +78,19 @@ export function statusLabel(value: string): string {
   return labels[normalized] ?? value;
 }
 
+export function pagoEstadoLabel(value: string): string {
+  const normalized = normalizedState(value);
+  const labels: Record<string, string> = {
+    pendiente: "Pago pendiente",
+    retenido: "Pago retenido en FirstGig",
+    liberado: "Pago liberado",
+    reembolsado: "Pago reembolsado",
+  };
+  return labels[normalized] ?? value;
+}
+
 export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("es", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 2 }).format(amount);
 }
 
 export function roleLabel(role: number | string | undefined): string {
