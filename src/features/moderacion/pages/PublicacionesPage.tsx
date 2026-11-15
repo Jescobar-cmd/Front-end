@@ -255,7 +255,7 @@ export function PublicacionesPage() {
             label="Buscar publicación"
             type="search"
             value={busqueda}
-            placeholder="Título, descripción o autor"
+            placeholder="Título o descripción"
             onChange={(event) => setBusqueda(event.target.value)}
           />
           <Button type="submit" variant="secondary">
