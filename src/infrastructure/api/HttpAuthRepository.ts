@@ -9,7 +9,6 @@ import type {
   RegistroData,
   RestablecerData,
   ResultadoGoogle,
-  SeleccionarRolData,
   Sesion,
   VerificarData,
 } from "../../core/application/ports/AuthRepositoryPort";
@@ -104,14 +103,18 @@ export class HttpAuthRepository implements AuthRepositoryPort {
     return sesionDesdeDto(dto);
   }
 
-  async loginConGoogle(idToken: string, options?: LoginGoogleOptions): Promise<ResultadoGoogle> {
+  async loginConGoogle(
+    idToken: string,
+    options?: LoginGoogleOptions | 2 | 3,
+  ): Promise<ResultadoGoogle> {
+    const normalized = typeof options === "number" ? { rolId: options } : options;
     const { status, data } = await apiFetch<SesionDto & { needsOnboarding?: boolean; email?: string }>({
       method: "POST",
       path: "/auth/google",
       body: {
         idToken,
-        ...(options?.rolId ? { rolId: options.rolId } : {}),
-        ...(options?.cedula ? { cedula: options.cedula } : {}),
+        ...(normalized?.rolId ? { rolId: normalized.rolId } : {}),
+        ...(normalized?.cedula ? { cedula: normalized.cedula } : {}),
       },
       mensajeError: "No se pudo iniciar sesión con Google",
     });
@@ -127,17 +130,6 @@ export class HttpAuthRepository implements AuthRepositoryPort {
       path: "/auth/google/complete-profile",
       body: data,
       mensajeError: "No se pudo completar tu perfil",
-    });
-    return sesionDesdeDto(dto);
-  }
-
-  async seleccionarRol(token: string, data: SeleccionarRolData): Promise<Sesion> {
-    const { data: dto } = await apiFetch<SesionDto>({
-      method: "POST",
-      path: "/auth/me/seleccionar-rol",
-      token,
-      body: data,
-      mensajeError: "No se pudo guardar tu rol",
     });
     return sesionDesdeDto(dto);
   }

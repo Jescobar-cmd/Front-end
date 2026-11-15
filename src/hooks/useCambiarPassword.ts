@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { SyntheticEvent } from "react";
 import { cambiarPasswordUseCase } from "../di/container";
 
 export function useCambiarPassword(token: string | null) {

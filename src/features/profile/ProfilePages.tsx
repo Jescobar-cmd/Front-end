@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "../../components/ui/Badge";
+import { Button, buttonClassName } from "../../components/ui/Button";
+import { ImageUploader } from "../../components/ui/ImageUploader";
 import { useAuth } from "../../context/AuthContext";
 import type { Categoria } from "../../core/domain/entities/categoria";
+import {
+  NIVELES_HABILIDAD,
+  type HabilidadSeleccionada,
+  type NivelHabilidad,
+} from "../../core/domain/entities/perfil";
 import { getCategories, getSkills } from "../../infrastructure/api/apiCatalogos";
 import {
   getClientProfile,
@@ -25,9 +34,16 @@ function fieldErrors(error: unknown): FieldErrors {
   const details = (error as ApiError | undefined)?.details;
   if (!details?.length) return {};
   return details.reduce<FieldErrors>((errors, detail) => {
-    errors[detail.field] = errors[detail.field] ? `${errors[detail.field]} ${detail.message}` : detail.message;
+    const field = detail.field.split(".")[0] || detail.field;
+    errors[field] = errors[field] ? `${errors[field]} ${detail.message}` : detail.message;
     return errors;
   }, {});
+}
+
+function normalizarNivel(nivel: string | null): NivelHabilidad {
+  return NIVELES_HABILIDAD.includes(nivel as NivelHabilidad)
+    ? (nivel as NivelHabilidad)
+    : "intermedio";
 }
 
 function httpsUrlError(value: string): string | undefined {
@@ -113,29 +129,25 @@ function PhotoUrlField({
   error,
   disabled,
   onChange,
+  onUploadingChange,
 }: {
   value: string;
   error?: string;
   disabled: boolean;
   onChange: (value: string) => void;
+  onUploadingChange: (uploading: boolean) => void;
 }) {
   return (
-    <Field label="URL de foto de perfil" name="fotoPerfil" error={error}>
-      <input
+      <ImageUploader
         id="fotoPerfil"
-        name="fotoPerfil"
-        type="url"
-        inputMode="url"
-        autoComplete="url"
-        placeholder="https://ejemplo.com/mi-foto.jpg"
-        value={value}
+        label="Foto de perfil"
+        value={value ? [value] : []}
+        onChange={(urls) => onChange(urls[0] ?? "")}
+        onUploadingChange={onUploadingChange}
         disabled={disabled}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? "fotoPerfil-error" : "fotoPerfil-help"}
-        onChange={(event) => onChange(event.target.value)}
+        error={error}
+        helpText="JPG, PNG o WebP. Máximo 5 MB."
       />
-      {!error && <small id="fotoPerfil-help">Usa una URL HTTPS. La carga de archivos no está disponible.</small>}
-    </Field>
   );
 }
 
@@ -167,6 +179,110 @@ function ProfilePreview({
   );
 }
 
+function ProfileOverview({
+  nombre,
+  fotoPerfil,
+  rol,
+  email,
+  telefono,
+  titulo,
+  descripcion,
+  nombreEmpresa,
+  tipoCliente,
+  habilidades,
+  publicPath,
+  onEdit,
+}: {
+  nombre: string;
+  fotoPerfil: string;
+  rol: string;
+  email: string;
+  telefono?: string;
+  titulo?: string;
+  descripcion?: string;
+  nombreEmpresa?: string;
+  tipoCliente?: string;
+  habilidades?: string[];
+  publicPath: string;
+  onEdit: () => void;
+}) {
+  const inicial = nombre.trim().charAt(0).toLocaleUpperCase() || "F";
+  const esFreelancer = rol === "Freelancer";
+
+  return (
+    <section className="profile-overview">
+      <div className="profile-overview__cover" aria-hidden="true" />
+      <div className="profile-overview__head">
+        <div className="profile-overview__identity">
+          {fotoPerfil.trim() ? (
+            <img className="profile-overview__avatar" src={fotoPerfil.trim()} alt="" />
+          ) : (
+            <span className="profile-overview__avatar profile-overview__avatar--initial" aria-hidden="true">
+              {inicial}
+            </span>
+          )}
+          <div>
+            <p className="ui-eyebrow">Tu perfil · {rol}</p>
+            <h2>{nombre.trim() || "Tu perfil"}</h2>
+            <p>{titulo?.trim() || (esFreelancer ? "Talento First Gig" : "Cliente First Gig")}</p>
+            <div className="profile-overview__badges">
+              <Badge tone="blue">Perfil público</Badge>
+              {nombreEmpresa ? <Badge tone="blue">{nombreEmpresa}</Badge> : null}
+              {tipoCliente ? <Badge>{tipoCliente === "empresa" ? "Empresa" : "Persona"}</Badge> : null}
+            </div>
+          </div>
+        </div>
+        <div className="profile-overview__actions">
+          <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to={publicPath}>
+            Ver perfil público
+          </Link>
+          <Button variant="action" size="sm" onClick={onEdit}>
+            Editar perfil
+          </Button>
+        </div>
+      </div>
+
+      <div className="profile-overview__grid">
+        <section className="profile-overview__panel">
+          <h3>Presentación</h3>
+          <p>{descripcion?.trim() || (esFreelancer ? "Añade una biografía para que los clientes conozcan tu experiencia y forma de trabajar." : "Añade una descripción para que los freelancers entiendan tu proyecto y tu forma de trabajar.")}</p>
+          {esFreelancer ? (
+            <div className="profile-overview__portfolio">
+              <div>
+                <h3>Tu portafolio</h3>
+                <p>Los servicios que publiques aparecerán en tu perfil público. El portafolio va primero.</p>
+              </div>
+              <Link className={buttonClassName({ variant: "primary", size: "sm" })} to="/dashboard/freelancer/servicios">
+                Gestionar servicios
+              </Link>
+            </div>
+          ) : null}
+        </section>
+
+        <aside className="profile-overview__panel">
+          <h3>Datos de contacto</h3>
+          <dl className="profile-overview__facts">
+            <div><dt>Correo</dt><dd>{email}</dd></div>
+            {telefono ? <div><dt>Teléfono</dt><dd>{telefono}</dd></div> : null}
+            <div><dt>Rol</dt><dd>{rol}</dd></div>
+          </dl>
+        </aside>
+      </div>
+
+      {habilidades && habilidades.length > 0 ? (
+        <section className="profile-overview__panel">
+          <h3>Habilidades</h3>
+          <div className="profile-overview__skills">
+            {habilidades.map((habilidad) => (
+              <Badge key={habilidad} tone="blue">{habilidad}</Badge>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </section>
+  );
+}
+
 function useProfileToken() {
   const { token, user, actualizarNombre } = useAuth();
   return { token, user, actualizarNombre };
@@ -177,10 +293,12 @@ export function ClientProfilePage() {
   const [profile, setProfile] = useState<PerfilCliente | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [values, setValues] = useState({
     nombre: "",
     telefono: "",
@@ -255,7 +373,7 @@ export function ClientProfilePage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token || imageUploading) return;
     const photoError = httpsUrlError(values.fotoPerfil);
     if (photoError) {
       setErrors({ fotoPerfil: photoError });
@@ -304,7 +422,22 @@ export function ClientProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+        <>
+          {!editing && (
+            <ProfileOverview
+              nombre={values.nombre}
+              fotoPerfil={values.fotoPerfil}
+              rol="Cliente"
+              email={profile.email}
+              telefono={values.telefono}
+              descripcion={values.descripcion}
+              nombreEmpresa={values.nombreEmpresa}
+              tipoCliente={values.tipoCliente}
+              publicPath={`/perfil/${profile.id}`}
+              onEdit={() => setEditing(true)}
+            />
+          )}
+          <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate hidden={!editing}>
           <div className="profile-layout">
             <div className="profile-main">
               <section className="profile-section-card">
@@ -345,6 +478,7 @@ export function ClientProfilePage() {
                     error={errors.fotoPerfil}
                     disabled={saving}
                     onChange={(value) => updateValue("fotoPerfil", value)}
+                    onUploadingChange={setImageUploading}
                   />
                   <Field label="Tipo de cliente" name="tipoCliente" error={errors.tipoCliente}>
                     <select
@@ -392,10 +526,10 @@ export function ClientProfilePage() {
               <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Cliente" email={profile.email} />
               <div className="profile-savebar">
                 <ProfileFormStatus saving={saving} />
-                <button className="profile-save" type="submit" disabled={saving}>
+                <button className="profile-save" type="submit" disabled={saving || imageUploading}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                <button className="profile-cancel" type="button" disabled={saving || imageUploading} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>
@@ -410,6 +544,7 @@ export function ClientProfilePage() {
             }}
           />
         </form>
+        </>
       ) : null}
     </ProfileFrame>
   );
@@ -423,13 +558,15 @@ export function FreelancerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [catalogError, setCatalogError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<HabilidadSeleccionada[]>([]);
   const [values, setValues] = useState({
     nombre: "",
     telefono: "",
@@ -466,7 +603,12 @@ export function FreelancerProfilePage() {
           tituloProfesional: data.freelancer.tituloProfesional ?? "",
           biografia: data.freelancer.biografia ?? "",
         });
-        setSelectedSkillIds(data.freelancer.habilidades.map((skill) => skill.id));
+        setSelectedSkills(
+          data.freelancer.habilidades.map((skill) => ({
+            id: skill.id,
+            nivel: normalizarNivel(skill.nivel),
+          })),
+        );
       })
       .catch((error: unknown) => {
         if (active) setLoadError(errorMessage(error));
@@ -509,7 +651,12 @@ export function FreelancerProfilePage() {
       tituloProfesional: profile.freelancer.tituloProfesional ?? "",
       biografia: profile.freelancer.biografia ?? "",
     });
-    setSelectedSkillIds(profile.freelancer.habilidades.map((skill) => skill.id));
+    setSelectedSkills(
+      profile.freelancer.habilidades.map((skill) => ({
+        id: skill.id,
+        nivel: normalizarNivel(skill.nivel),
+      })),
+    );
     setSelectedCategoryId(null);
     setErrors({});
     setSaved(false);
@@ -518,7 +665,7 @@ export function FreelancerProfilePage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!token) return;
+    if (!token || imageUploading) return;
     const photoError = httpsUrlError(values.fotoPerfil);
     if (photoError) {
       setErrors({ fotoPerfil: photoError });
@@ -537,16 +684,16 @@ export function FreelancerProfilePage() {
         fotoPerfil: values.fotoPerfil.trim() || null,
         tituloProfesional: values.tituloProfesional.trim() || null,
         biografia: values.biografia.trim() || null,
-        habilidadIds: selectedSkillIds,
+        habilidades: selectedSkills.map((skill) => ({ id: skill.id, nivel: skill.nivel })),
       });
       setSaved(true);
       setProfile((current) => {
         if (!current) return current;
-        const habilidades = selectedSkillIds.map((skillId) => {
+        const habilidades = selectedSkills.map(({ id: skillId, nivel }) => {
           const existente = current.freelancer.habilidades.find((skill) => skill.id === skillId);
-          if (existente) return existente;
+          if (existente) return { ...existente, nivel: nivel ?? null };
           const catalogo = skills.find((skill) => skill.id === skillId);
-          return { id: skillId, nombre: catalogo?.nombre ?? "Habilidad", nivel: null };
+          return { id: skillId, nombre: catalogo?.nombre ?? "Habilidad", nivel: nivel ?? null };
         });
         return {
           ...current,
@@ -577,7 +724,22 @@ export function FreelancerProfilePage() {
       ) : loadError ? (
         <ProfileLoadError message={loadError} />
       ) : profile ? (
-        <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate>
+        <>
+          {!editing && (
+            <ProfileOverview
+              nombre={values.nombre}
+              fotoPerfil={values.fotoPerfil}
+              rol="Freelancer"
+              email={profile.email}
+              telefono={values.telefono}
+              titulo={values.tituloProfesional}
+              descripcion={values.biografia}
+              habilidades={profile.freelancer.habilidades.map((habilidad) => habilidad.nombre)}
+              publicPath={`/perfil/${profile.id}`}
+              onEdit={() => setEditing(true)}
+            />
+          )}
+          <form className="profile-card profile-form" onSubmit={handleSubmit} noValidate hidden={!editing}>
           <div className="profile-layout">
             <div className="profile-main">
               <section className="profile-section-card">
@@ -618,6 +780,7 @@ export function FreelancerProfilePage() {
                     error={errors.fotoPerfil}
                     disabled={saving}
                     onChange={(value) => updateValue("fotoPerfil", value)}
+                    onUploadingChange={setImageUploading}
                   />
                   <Field label="Título profesional" name="tituloProfesional" error={errors.tituloProfesional}>
                     <input
@@ -662,13 +825,13 @@ export function FreelancerProfilePage() {
                     categories={categories}
                     skills={skills}
                     selectedCategoryId={selectedCategoryId}
-                    selectedSkillIds={selectedSkillIds}
+                    selectedSkills={selectedSkills}
                     disabled={saving}
-                    error={errors.habilidadIds}
+                    error={errors.habilidades}
                     onCategoryChange={setSelectedCategoryId}
-                    onSkillsChange={(skillIds) => {
-                      setSelectedSkillIds(skillIds);
-                      setErrors((current) => ({ ...current, habilidadIds: "" }));
+                    onSkillsChange={(nextSkills) => {
+                      setSelectedSkills(nextSkills);
+                      setErrors((current) => ({ ...current, habilidades: "" }));
                       setSaveError("");
                       setSaved(false);
                     }}
@@ -681,10 +844,10 @@ export function FreelancerProfilePage() {
               <ProfilePreview nombre={values.nombre} fotoPerfil={values.fotoPerfil} rol="Freelancer" email={profile.email} />
               <div className="profile-savebar">
                 <ProfileFormStatus saving={saving} />
-                <button className="profile-save" type="submit" disabled={saving || catalogLoading || Boolean(catalogError)}>
+                <button className="profile-save" type="submit" disabled={saving || imageUploading || catalogLoading || Boolean(catalogError)}>
                   {saving ? "Guardando…" : "Guardar cambios"}
                 </button>
-                <button className="profile-cancel" type="button" disabled={saving} onClick={resetValues}>
+                <button className="profile-cancel" type="button" disabled={saving || imageUploading} onClick={() => { resetValues(); setEditing(false); }}>
                   Cancelar
                 </button>
               </div>
@@ -699,6 +862,7 @@ export function FreelancerProfilePage() {
             }}
           />
         </form>
+        </>
       ) : null}
     </ProfileFrame>
   );

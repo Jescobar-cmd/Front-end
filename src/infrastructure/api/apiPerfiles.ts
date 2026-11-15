@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { HabilidadSeleccionada, NivelHabilidad } from "../../core/domain/entities/perfil";
 
 export interface ClientePerfil {
   nombreEmpresa: string | null;
@@ -9,7 +10,15 @@ export interface ClientePerfil {
 export interface HabilidadAsignada {
   id: number;
   nombre: string;
-  nivel: string | null;
+  nivel: NivelHabilidad | null;
+}
+
+export interface EnlacesPerfil {
+  linkedin?: string | null;
+  behance?: string | null;
+  github?: string | null;
+  instagram?: string | null;
+  sitioWeb?: string | null;
 }
 
 export interface FreelancerPerfil {
@@ -17,6 +26,19 @@ export interface FreelancerPerfil {
   biografia: string | null;
   calificacionPromedio: number;
   habilidades: HabilidadAsignada[];
+  /**
+   * Campos que el backend todavía no expone. Se declaran como opcionales para
+   * que la UI los muestre automáticamente cuando la API los incorpore, sin
+   * inventar datos ni romper el contrato actual.
+   */
+  propuesta?: string | null;
+  ubicacion?: string | null;
+  remoto?: boolean | null;
+  disponibilidad?: string | null;
+  verificado?: boolean | null;
+  idiomas?: string[] | null;
+  tarifaHora?: number | null;
+  enlaces?: EnlacesPerfil | null;
 }
 
 export interface PerfilCliente {
@@ -41,6 +63,7 @@ export interface PerfilPublico {
   fechaRegistro: string;
   cliente: ClientePerfil | null;
   freelancer: FreelancerPerfil | null;
+  totalResenas?: number;
 }
 
 export interface PerfilFreelancer {
@@ -71,7 +94,7 @@ export interface DatosPerfilFreelancer {
   fotoPerfil?: string | null;
   tituloProfesional?: string | null;
   biografia?: string | null;
-  habilidadIds?: number[];
+  habilidades?: HabilidadSeleccionada[];
 }
 
 export interface RespuestaPerfilCliente {
@@ -143,7 +166,7 @@ export async function updateFreelancerProfile(token: string, datos: DatosPerfilF
   return data;
 }
 
-export async function getPublicProfile(token: string, id: number): Promise<PerfilPublico> {
+export async function getPublicProfile(token: string | undefined, id: number): Promise<PerfilPublico> {
   const { data } = await apiFetch<PerfilPublico>({
     method: "GET",
     path: `/usuarios/${id}`,

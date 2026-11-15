@@ -1,15 +1,16 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Brand } from "../../components/Brand";
 import { useTema } from "../../hooks/useTema";
 
 type IconName =
   | "home"
   | "folder"
   | "compass"
+  | "briefcase"
   | "message"
   | "contract"
+  | "user"
   | "plus"
   | "chevronLeft"
   | "chevronRight"
@@ -38,16 +39,21 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
   if (esFreelancer) {
     return [
       { id: "inicio", icono: "home", label: "Inicio", href: "/dashboard/freelancer", exact: true },
+      { id: "servicios", icono: "folder", label: "Mis servicios", href: "/dashboard/freelancer/servicios" },
       { id: "marketplace", icono: "compass", label: "Explorar proyectos", href: "/dashboard/freelancer/ofertas" },
-      { id: "servicios", icono: "plus", label: "Mis servicios", href: "/dashboard/freelancer/servicios" },
       { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
+      { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
+      { id: "perfil", icono: "user", label: "Perfil", href: "/perfil/freelancer" },
     ];
   }
   return [
     { id: "inicio", icono: "home", label: "Inicio", href: "/dashboard/cliente", exact: true },
     { id: "proyectos", icono: "folder", label: "Mis proyectos", href: "/dashboard/cliente/ofertas" },
-    { id: "servicios", icono: "compass", label: "Explorar talento", href: "/servicios", exact: true, aliases: ["/dashboard/cliente/servicios"] },
+    { id: "talento", icono: "compass", label: "Explorar talento", href: "/talento", exact: true },
+    { id: "servicios", icono: "briefcase", label: "Servicios", href: "/servicios", exact: true, aliases: ["/dashboard/cliente/servicios"] },
     { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
+    { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
+    { id: "perfil", icono: "user", label: "Perfil", href: "/perfil/cliente" },
   ];
 }
 
@@ -69,6 +75,13 @@ function Icono({ name }: { name: IconName }) {
         <path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9z" />
       </>
     ),
+    briefcase: (
+      <>
+        <rect x="3" y="7" width="18" height="13" rx="2" />
+        <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
+        <path d="M3 12h18M10 12v2h4v-2" />
+      </>
+    ),
     message: (
       <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 9.3 9.3 0 0 1-3.7-.8L3 21l1.9-5.6A8.4 8.4 0 1 1 21 11.5Z" />
     ),
@@ -77,6 +90,12 @@ function Icono({ name }: { name: IconName }) {
         <path d="M7 3.5h7l4 4v13H7z" />
         <path d="M14 3.5v4h4" />
         <path d="M10 12h5M10 15.5h5" />
+      </>
+    ),
+    user: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
       </>
     ),
     plus: <path d="M12 5v14M5 12h14" />,
@@ -185,15 +204,6 @@ export function FeedSidebar({
         role={abierta ? "dialog" : undefined}
         aria-modal={abierta ? true : undefined}
       >
-        <Link
-          className="feed-sidebar__brand"
-          to={esFreelancer ? "/dashboard/freelancer" : "/dashboard/cliente"}
-          aria-label="FirstGig, ir al inicio"
-          onClick={onCerrar}
-        >
-          <Brand />
-        </Link>
-
         <div className="feed-sidebar__head">
           <span className="feed-sidebar__label">Mi espacio</span>
           <button

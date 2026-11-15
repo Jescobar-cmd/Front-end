@@ -1,4 +1,9 @@
 import type { Categoria } from "../../core/domain/entities/categoria";
+import {
+  NIVELES_HABILIDAD,
+  type HabilidadSeleccionada,
+  type NivelHabilidad,
+} from "../../core/domain/entities/perfil";
 
 export interface HabilidadCatalogo {
   id: number;
@@ -6,21 +11,28 @@ export interface HabilidadCatalogo {
   categoriaId: number | null;
 }
 
+const ETIQUETAS_NIVEL: Record<NivelHabilidad, string> = {
+  basico: "Básico",
+  intermedio: "Intermedio",
+  avanzado: "Avanzado",
+  experto: "Experto",
+};
+
 interface CategorySkillSelectorProps {
   categories: Categoria[];
   skills: HabilidadCatalogo[];
-  selectedSkillIds: number[];
+  selectedSkills: HabilidadSeleccionada[];
   selectedCategoryId: number | null;
   disabled?: boolean;
   error?: string;
   onCategoryChange: (categoryId: number | null) => void;
-  onSkillsChange: (skillIds: number[]) => void;
+  onSkillsChange: (skills: HabilidadSeleccionada[]) => void;
 }
 
 export function CategorySkillSelector({
   categories,
   skills,
-  selectedSkillIds,
+  selectedSkills,
   selectedCategoryId,
   disabled = false,
   error,
@@ -34,9 +46,18 @@ export function CategorySkillSelector({
 
   const toggleSkill = (skillId: number, checked: boolean) => {
     const next = checked
-      ? [...new Set([...selectedSkillIds, skillId])]
-      : selectedSkillIds.filter((id) => id !== skillId);
+      ? [
+          ...selectedSkills.filter((skill) => skill.id !== skillId),
+          { id: skillId, nivel: "intermedio" as NivelHabilidad },
+        ]
+      : selectedSkills.filter((skill) => skill.id !== skillId);
     onSkillsChange(next);
+  };
+
+  const changeLevel = (skillId: number, nivel: NivelHabilidad) => {
+    onSkillsChange(
+      selectedSkills.map((skill) => (skill.id === skillId ? { ...skill, nivel } : skill)),
+    );
   };
 
   return (
@@ -65,25 +86,45 @@ export function CategorySkillSelector({
 
       <div className="profile-skill-list" aria-label="Selecciona tus habilidades">
         {visibleSkills.length ? (
-          visibleSkills.map((skill) => (
-            <label
-              className={`profile-skill-option${selectedSkillIds.includes(skill.id) ? " is-selected" : ""}`}
-              key={skill.id}
-            >
-              <input
-                type="checkbox"
-                checked={selectedSkillIds.includes(skill.id)}
-                onChange={(event) => toggleSkill(skill.id, event.target.checked)}
-              />
-              <span>{skill.nombre}</span>
-            </label>
-          ))
+          visibleSkills.map((skill) => {
+            const seleccionada = selectedSkills.find((item) => item.id === skill.id);
+
+            return (
+              <div
+                className={`profile-skill-option${seleccionada ? " is-selected" : ""}`}
+                key={skill.id}
+              >
+                <label className="profile-skill-check">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(seleccionada)}
+                    onChange={(event) => toggleSkill(skill.id, event.target.checked)}
+                  />
+                  <span>{skill.nombre}</span>
+                </label>
+                {seleccionada && (
+                  <select
+                    className="profile-skill-level"
+                    aria-label={`Nivel de ${skill.nombre}`}
+                    value={seleccionada.nivel ?? "intermedio"}
+                    onChange={(event) => changeLevel(skill.id, event.target.value as NivelHabilidad)}
+                  >
+                    {NIVELES_HABILIDAD.map((nivel) => (
+                      <option key={nivel} value={nivel}>
+                        {ETIQUETAS_NIVEL[nivel]}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            );
+          })
         ) : (
           <p className="profile-muted">No hay habilidades en esta categoría.</p>
         )}
       </div>
       <p className="profile-muted">
-        {selectedSkillIds.length} {selectedSkillIds.length === 1 ? "habilidad seleccionada" : "habilidades seleccionadas"}
+        {selectedSkills.length} {selectedSkills.length === 1 ? "habilidad seleccionada" : "habilidades seleccionadas"}
       </p>
       {error && (
         <p className="profile-field-error" id="profile-skills-error" role="alert">

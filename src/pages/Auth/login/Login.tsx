@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, SyntheticEvent } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "../../../components/button";
 import { Input } from "../../../components/input";
 import { Spinner } from "../../../components/spinner";
@@ -14,9 +14,7 @@ import { GoogleLogo } from "../../../components/GoogleLogo";
 import { dashboardPorRol } from "../../../routes/rutasPorRol";
 
 const GOOGLE_PENDIENTE_KEY = "first_gig_google_pendiente";
-const GOOGLE_CONOCIDO_PREFIX = "first_gig_google_conocido_";
 const ROL_INTENT_KEY = "first_gig_rol_intent";
-const NEEDS_ROLE_SELECTION_KEY = "first_gig_needs_role_selection";
 
 type RolGoogle = "cliente" | "freelancer";
 
@@ -38,13 +36,8 @@ function correoDesdeIdToken(credential: string): string {
   }
 }
 
-function claveGoogleConocido(email: string): string {
-  return `${GOOGLE_CONOCIDO_PREFIX}${email.trim().toLocaleLowerCase()}`;
-}
-
 export function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { guardarSesion } = useAuth();
   const { iniciarSesion, loading, error, limpiarError } = useLogin();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -62,19 +55,17 @@ export function Login() {
     googleLoadingRef.current = googleLoading;
   }, [googleLoading]);
 
-  const procesarResultadoGoogle = useCallback((resultado: ResultadoGoogle) => {
+  const procesarResultadoGoogle = useCallback((resultado: ResultadoGoogle, rolSolicitado?: RolGoogle) => {
     if (resultado.tipo === "onboarding") {
       sessionStorage.setItem(GOOGLE_PENDIENTE_KEY, JSON.stringify({ idToken: resultado.idToken, email: resultado.email }));
       navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
       return;
     }
-    const email = resultado.sesion.user.email.value;
-    if (email) {
-      try {
-        localStorage.setItem(claveGoogleConocido(email), "true");
-      } catch {
-        // La sesión sigue funcionando aunque el navegador no permita persistir la marca.
-      }
+    if (rolSolicitado && resultado.sesion.user.rol !== rolSolicitado) {
+      setGoogleError(
+        `Esa cuenta de Google ya está registrada como ${resultado.sesion.user.rol}. No es posible cambiar el rol desde aquí. Usa otra cuenta de Google o regístrate con correo como freelancer.`,
+      );
+      return;
     }
     try {
       // La cuenta ya tiene rol: no debe arrastrar la intención de un alta anterior.
@@ -95,7 +86,9 @@ export function Login() {
     setGoogleError("");
     try {
       const resultado = await loginConGoogleUseCase.execute(credential, options);
-      procesarResultadoGoogle(resultado);
+      const rolSolicitado: RolGoogle | undefined =
+        options?.rolId === 2 ? "freelancer" : options?.rolId === 3 ? "cliente" : undefined;
+      procesarResultadoGoogle(resultado, rolSolicitado);
     } catch (e) {
       setGoogleError(e instanceof Error ? e.message : "No se pudo continuar con Google.");
     } finally {
@@ -105,21 +98,11 @@ export function Login() {
 
   const handleGoogleCredential = useCallback((credential: string) => {
     const email = correoDesdeIdToken(credential);
-    if (email) {
-      try {
-        if (localStorage.getItem(claveGoogleConocido(email)) === "true") {
-          void continuarConGoogle(credential);
-          return;
-        }
-      } catch {
-        // Sin almacenamiento local, se muestra el selector una vez.
-      }
-    }
     setGoogleRol(null);
     setGoogleCedula("");
     setGoogleError("");
     setGooglePendiente({ credential, email });
-  }, [continuarConGoogle]);
+  }, []);
 
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleGoogleCredential);
 
@@ -197,13 +180,6 @@ export function Login() {
     const sesion = await iniciarSesion({ email: form.email.trim(), password: form.password });
     if (sesion) {
       guardarSesion(sesion);
-      const needsRoleSelection =
-        sessionStorage.getItem(NEEDS_ROLE_SELECTION_KEY) === "1" ||
-        Boolean((location.state as { needsRoleSelection?: boolean } | null)?.needsRoleSelection);
-      if (needsRoleSelection) {
-        navigate("/seleccionar-rol", { replace: true });
-        return;
-      }
       navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
@@ -296,6 +272,12 @@ export function Login() {
         </div>
         {errorGoogle && !errorGoogle.toLocaleLowerCase().includes("configur") && (
           <p className="error" role="alert">{errorGoogle}</p>
+        )}
+        {googleLoading && !googlePendiente && (
+          <p className="google-login-status" role="status">Conectando con Google...</p>
+        )}
+        {googleError && !googlePendiente && (
+          <p className="error" role="alert">{googleError}</p>
         )}
 
         <div className="links">

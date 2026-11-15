@@ -1,0 +1,133 @@
+.fg-dialog-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--fg-scrim);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  backdrop-filter: blur(8px) saturate(120%);
+  animation: fg-dialog-backdrop-in 160ms var(--fg-ease);
+}
+
+.fg-dialog {
+  display: grid;
+  width: min(460px, 100%);
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--fg-line);
+  border-radius: 20px;
+  background: var(--fg-surface);
+  box-shadow: var(--fg-shadow-lg);
+  animation: fg-dialog-in 180ms var(--fg-ease);
+}
+
+.fg-dialog__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--fg-accent-soft);
+  color: var(--fg-accent);
+}
+
+.fg-dialog__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.fg-dialog--danger .fg-dialog__icon {
+  background: var(--fg-danger-soft);
+  color: var(--fg-danger);
+}
+
+.fg-dialog__body {
+  display: grid;
+  gap: 8px;
+}
+
+.fg-dialog__title {
+  margin: 0;
+  color: var(--fg-text);
+  font-family: var(--fg-font-display);
+  font-size: 1.2rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.fg-dialog__description {
+  margin: 0;
+  color: var(--fg-text-secondary);
+  font-size: var(--fg-text-sm);
+  line-height: 1.6;
+}
+
+.fg-dialog__content {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--fg-line);
+  border-radius: var(--fg-r-md);
+  background: var(--fg-surface-2);
+  color: var(--fg-text-secondary);
+  font-size: var(--fg-text-sm);
+  line-height: 1.5;
+}
+
+.fg-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+@keyframes fg-dialog-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fg-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .fg-dialog-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .fg-dialog {
+    width: 100%;
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .fg-dialog__actions {
+    flex-direction: column-reverse;
+  }
+
+  .fg-dialog__actions .ui-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-dialog-backdrop,
+  .fg-dialog {
+    animation: none;
+  }
+}

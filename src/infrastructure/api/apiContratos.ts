@@ -54,12 +54,10 @@ export interface RespuestaListadoCalificaciones {
   miCalificacion: Calificacion | null;
 }
 
-export type EstadoContratoFinal = "completado" | "cancelado";
-
 /**
  * Módulo de API — Contratos y calificaciones.
- * Backend: GET /api/contratos, GET /api/contratos/:id,
- *         PATCH /api/contratos/:id/estado, GET/POST /api/contratos/:id/calificaciones
+ * Backend: /api/contratos, /api/contratos/:id, /api/contratos/:id/estado,
+ *         /api/contratos/:id/calificaciones
  */
 
 export async function getContracts(token: string): Promise<{ total: number; contratos: Contrato[] }> {
@@ -82,27 +80,26 @@ export async function getContract(token: string, id: number): Promise<Contrato> 
   return data;
 }
 
-export async function updateContractStatus(
-  token: string,
-  id: number,
-  estado: EstadoContratoFinal,
-): Promise<RespuestaContrato> {
+export async function completeContract(token: string, id: number): Promise<RespuestaContrato> {
   const { data } = await apiFetch<RespuestaContrato>({
     method: "PATCH",
     path: `/contratos/${id}/estado`,
     token,
-    body: { estado },
-    mensajeError: "No se pudo actualizar el estado del contrato",
+    body: { estado: "completado" },
+    mensajeError: "No se pudo completar el contrato",
   });
   return data;
 }
 
-export async function completeContract(token: string, id: number): Promise<RespuestaContrato> {
-  return updateContractStatus(token, id, "completado");
-}
-
 export async function cancelContract(token: string, id: number): Promise<RespuestaContrato> {
-  return updateContractStatus(token, id, "cancelado");
+  const { data } = await apiFetch<RespuestaContrato>({
+    method: "PATCH",
+    path: `/contratos/${id}/estado`,
+    token,
+    body: { estado: "cancelado" },
+    mensajeError: "No se pudo cancelar el contrato",
+  });
+  return data;
 }
 
 export async function getContractRatings(token: string, contratoId: number): Promise<RespuestaListadoCalificaciones> {

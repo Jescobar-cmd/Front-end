@@ -724,6 +724,14 @@ body:has(.auth-screen) {
   opacity: 0.001;
 }
 
+.google-login-status {
+  margin: 0;
+  text-align: center;
+  color: rgba(8, 24, 37, 0.62);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .auth-code-input {
   text-align: center;
   font-size: 1.25rem !important;

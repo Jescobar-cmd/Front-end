@@ -1,4 +1,4 @@
-@import "../../styles/fg-design-system.css";
+﻿@import "../../styles/fg-design-system.css";
 
 .fg-skip {
   position: fixed;
@@ -7,7 +7,7 @@
   left: 0.75rem;
   padding: 0.7rem 1rem;
   border-radius: 0.75rem;
-  background: var(--fg-accent, #165a7d);
+  background: var(--fg-accent);
   color: #fff;
   font-weight: 700;
   text-decoration: none;
@@ -19,18 +19,18 @@
 }
 
 .fg-main {
-  width: min(1440px, 100%);
+  width: min(var(--fg-container), 100%);
   min-width: 0;
   margin: 0 auto;
-  padding: 1.35rem clamp(1.1rem, 2.2vw, 2rem) 2.5rem;
+  padding: clamp(20px, 3vw, 34px) clamp(16px, 3vw, 34px) 48px;
 }
 
 .fg-main > .so-page,
 .fg-main > .profile-page,
 .fg-main > .cc-page {
   width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 0;
 }
 

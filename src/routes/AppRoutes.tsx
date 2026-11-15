@@ -1,11 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
 import { RestablecerPassword } from "../pages/Auth/restablecer_password";
 import { VerificarCuenta } from "../pages/Auth/verificar_cuenta";
 import { CompletarPerfilGoogle } from "../pages/Auth/google_perfil/CompletarPerfilGoogle";
-import { SeleccionarRol } from "../pages/Auth/seleccionar_rol";
 import { RutaProtegida } from "./RutaProtegida";
 import { RutaPublica } from "./RutaPublica";
 import { useAuth } from "../context/AuthContext";
@@ -13,7 +12,11 @@ import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 import { InternalLayout } from "../features/layout/InternalLayout";
-import { ClientProfilePage, FreelancerProfilePage, PublicProfilePage } from "../features/profile";
+import {
+  ClientProfilePage,
+  FreelancerProfilePage,
+  ProfessionalProfilePage,
+} from "../features/profile";
 import {
   ChatPage,
   ConversationDetailPage,
@@ -25,13 +28,40 @@ import {
   FreelancerMarketplacePage,
   FreelancerServicesPage,
 } from "../pages/services-offers";
+import { FreelancerDirectoryPage } from "../features/freelancers";
 import { CreateProjectPage, CreateServicePage } from "../features/services-offers/CreatePages";
 import { ClientOffersRoute } from "./ClientOffersRoute";
+import { ModeracionLayout } from "../features/moderacion/ModeracionLayout";
+import { DashboardModeracionPage } from "../features/moderacion/pages/DashboardModeracionPage";
+import { ReportesPage } from "../features/moderacion/pages/ReportesPage";
+import { ReporteDetallePage } from "../features/moderacion/pages/ReporteDetallePage";
+import { DisputasPage } from "../features/moderacion/pages/DisputasPage";
+import { DisputaDetallePage } from "../features/moderacion/pages/DisputaDetallePage";
+import { LiquidacionesPage } from "../features/moderacion/pages/LiquidacionesPage";
+import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesPage";
+import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
+import { SecurityPage } from "../features/account/SecurityPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   return <Navigate to={dashboardPorRol(user.rol)} replace />;
+}
+
+function MiPerfilRedirect() {
+  const { user, cargando } = useAuth();
+  if (cargando) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.rol === "administrador" || user.rol === "moderador") {
+    return <Navigate to={dashboardPorRol(user.rol)} replace />;
+  }
+  if (user.id !== undefined) return <Navigate to={`/perfil/${user.id}`} replace />;
+  return <Navigate to={user.rol === "cliente" ? "/perfil/cliente" : "/perfil/freelancer"} replace />;
+}
+
+function LegacyProfileRedirect() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/perfil/${id}` : "/"} replace />;
 }
 
 export function AppRoutes() {
@@ -47,7 +77,17 @@ export function AppRoutes() {
       <Route path="/confirm" element={<VerificarCuenta />} />
       <Route path="/reset-password" element={<RestablecerPassword />} />
       <Route path="/google/completar-perfil" element={<CompletarPerfilGoogle />} />
-      <Route path="/seleccionar-rol" element={<RutaProtegida permitirSeleccionRol><SeleccionarRol /></RutaProtegida>} />
+      <Route path="/seleccionar-rol" element={<Navigate to="/dashboard" replace />} />
+
+      <Route path="/perfil" element={<MiPerfilRedirect />} />
+
+      {/* El perfil profesional es público: el layout se comparte, pero la ruta
+          no queda detrás de RutaProtegida. El backend aún exige JWT para los
+          datos, así que la página muestra un acceso a login cuando no hay sesión. */}
+      <Route element={<InternalLayout />}>
+        <Route path="/perfil/:id" element={<ProfessionalProfilePage />} />
+        <Route path="/perfil/usuario/:id" element={<LegacyProfileRedirect />} />
+      </Route>
 
       <Route path="/dashboard" element={<RutaProtegida><RedireccionDashboard /></RutaProtegida>} />
 
@@ -69,6 +109,31 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/moderador"
+          element={
+            <RutaProtegida roles={["moderador", "administrador"]}>
+              <Navigate to="/moderacion" replace />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/administrador"
+          element={
+            <RutaProtegida roles={["administrador"]}>
+              <Navigate to="/moderacion" replace />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/cuenta/seguridad"
+          element={
+            <RutaProtegida>
+              <SecurityPage />
+            </RutaProtegida>
+          }
+        />
+        <Route path="/cambiar-password" element={<Navigate to="/cuenta/seguridad" replace />} />
+        <Route
           path="/perfil/freelancer"
           element={
             <RutaProtegida roles={["freelancer"]}>
@@ -84,11 +149,18 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
-        <Route path="/perfil/usuario/:id" element={<PublicProfilePage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
+        <Route
+          path="/talento"
+          element={
+            <RutaProtegida>
+              <FreelancerDirectoryPage />
+            </RutaProtegida>
+          }
+        />
         <Route
           path="/servicios"
           element={
@@ -145,6 +217,24 @@ export function AppRoutes() {
             </RutaProtegida>
           }
         />
+      </Route>
+
+      {/* Panel de moderación: shell propio, sin el header del marketplace. */}
+      <Route
+        element={
+          <RutaProtegida roles={["moderador", "administrador"]}>
+            <ModeracionLayout />
+          </RutaProtegida>
+        }
+      >
+        <Route path="/moderacion" element={<DashboardModeracionPage />} />
+        <Route path="/moderacion/reportes" element={<ReportesPage />} />
+        <Route path="/moderacion/reportes/:id" element={<ReporteDetallePage />} />
+        <Route path="/moderacion/disputas" element={<DisputasPage />} />
+        <Route path="/moderacion/disputas/:id" element={<DisputaDetallePage />} />
+        <Route path="/moderacion/liquidaciones" element={<LiquidacionesPage />} />
+        <Route path="/moderacion/notificaciones" element={<NotificacionesPage />} />
+        <Route path="/moderacion/usuarios" element={<UsuariosPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
