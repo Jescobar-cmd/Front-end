@@ -84,7 +84,10 @@ export function ContractsPage() {
           <h1>Contratos</h1>
           <p className="cc-subtitle">Consulta acuerdos, estados y calificaciones.</p>
         </div>
-        <Link className="cc-link-button cc-secondary-button" to="/chat">Ir al chat</Link>
+        <div className="cc-actions">
+          <Link className="cc-link-button cc-secondary-button" to="/facturas">Facturas</Link>
+          <Link className="cc-link-button cc-secondary-button" to="/chat">Ir al chat</Link>
+        </div>
       </header>
       {error && <p className="cc-alert" role="alert">{error}</p>}
       {loading ? <section className="cc-panel"><p className="cc-muted">Cargando contratos…</p></section> : contracts.length === 0 ? (

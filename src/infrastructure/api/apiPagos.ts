@@ -21,6 +21,32 @@ export interface PagoEscrow {
   fechaPago: string;
 }
 
+export interface FacturaSandbox {
+  id: number;
+  numeroFactura: string | null;
+  /** Identificador académico. No es un CUFE emitido por DIAN. */
+  uuidDemo: string | null;
+  cufe: string | null;
+  ambiente: "sandbox";
+  moneda: string;
+  subtotal: number;
+  comisionCliente: number;
+  total: number;
+  descripcion: string | null;
+  compradorNombre: string | null;
+  compradorDocumento: string | null;
+  fechaEmision: string | null;
+  estado: string;
+  urlPdf: string | null;
+}
+
+export interface PagoConFactura extends PagoEscrow {
+  montoBase: number;
+  comisionCliente: number;
+  contrato: { id: number; titulo: string; estado: string };
+  factura: FacturaSandbox | null;
+}
+
 export interface PreferenciaPago {
   preferenciaId: string;
   /** URL de Mercado Pago Checkout Pro, o de la pasarela simulada en desarrollo. */
@@ -58,4 +84,18 @@ export async function simularPagoContrato(token: string, contratoId: number): Pr
     mensajeError: "No se pudo simular el pago",
   });
   return data;
+}
+
+export async function listarPagosConFacturas(
+  token: string,
+  rol: "cliente" | "freelancer",
+): Promise<PagoConFactura[]> {
+  const path = rol === "cliente" ? "/cliente/pagos" : "/freelancer/pagos";
+  const { data } = await apiFetch<{ total: number; pagos: PagoConFactura[] }>({
+    method: "GET",
+    path,
+    token,
+    mensajeError: "No se pudieron cargar los comprobantes",
+  });
+  return data.pagos;
 }

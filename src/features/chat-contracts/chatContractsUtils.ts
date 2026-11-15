@@ -90,7 +90,7 @@ export function pagoEstadoLabel(value: string): string {
 }
 
 export function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("es", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 2 }).format(amount);
 }
 
 export function roleLabel(role: number | string | undefined): string {

@@ -45,6 +45,7 @@ import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesP
 import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
 import { UsuarioDetallePage } from "../features/moderacion/pages/UsuarioDetallePage";
 import { SecurityPage } from "../features/account/SecurityPage";
+import { InvoicesPage } from "../features/invoices/InvoicesPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -171,6 +172,10 @@ export function AppRoutes() {
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
+        <Route
+          path="/facturas"
+          element={<RutaProtegida roles={["cliente", "freelancer"]}><InvoicesPage /></RutaProtegida>}
+        />
         <Route path="/contratos/:contractId" element={<ContratoLegacyRedirect />} />
         <Route path="/pago/simulado" element={<PagoSimuladoPage />} />
         <Route
