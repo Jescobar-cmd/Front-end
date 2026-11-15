@@ -23,19 +23,6 @@ interface GooglePendiente {
   email: string;
 }
 
-function correoDesdeIdToken(credential: string): string {
-  try {
-    const payload = credential.split(".")[1];
-    if (!payload) return "";
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-    const data = JSON.parse(atob(padded)) as { email?: unknown };
-    return typeof data.email === "string" ? data.email : "";
-  } catch {
-    return "";
-  }
-}
-
 export function Login() {
   const navigate = useNavigate();
   const { guardarSesion } = useAuth();
@@ -55,9 +42,29 @@ export function Login() {
     googleLoadingRef.current = googleLoading;
   }, [googleLoading]);
 
-  const procesarResultadoGoogle = useCallback((resultado: ResultadoGoogle, rolSolicitado?: RolGoogle) => {
+  const procesarResultadoGoogle = useCallback((
+    resultado: ResultadoGoogle,
+    credential: string,
+    rolSolicitado?: RolGoogle,
+  ) => {
+    if (resultado.tipo === "requiere_rol") {
+      // Solo las cuentas nuevas eligen rol; las existentes entran con el suyo.
+      setGoogleRol(null);
+      setGoogleCedula("");
+      setGoogleError("");
+      setGooglePendiente({ credential, email: resultado.email });
+      return;
+    }
     if (resultado.tipo === "onboarding") {
       sessionStorage.setItem(GOOGLE_PENDIENTE_KEY, JSON.stringify({ idToken: resultado.idToken, email: resultado.email }));
+      if (resultado.rol) {
+        try {
+          // La cuenta ya tiene rol registrado: se preselecciona en completar perfil.
+          sessionStorage.setItem(ROL_INTENT_KEY, resultado.rol);
+        } catch {
+          // Sin sessionStorage el usuario lo elige de nuevo.
+        }
+      }
       navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
       return;
     }
@@ -67,6 +74,7 @@ export function Login() {
       );
       return;
     }
+    setGooglePendiente(null);
     try {
       // La cuenta ya tiene rol: no debe arrastrar la intención de un alta anterior.
       sessionStorage.removeItem(ROL_INTENT_KEY);
@@ -88,7 +96,7 @@ export function Login() {
       const resultado = await loginConGoogleUseCase.execute(credential, options);
       const rolSolicitado: RolGoogle | undefined =
         options?.rolId === 2 ? "freelancer" : options?.rolId === 3 ? "cliente" : undefined;
-      procesarResultadoGoogle(resultado, rolSolicitado);
+      procesarResultadoGoogle(resultado, credential, rolSolicitado);
     } catch (e) {
       setGoogleError(e instanceof Error ? e.message : "No se pudo continuar con Google.");
     } finally {
@@ -96,13 +104,10 @@ export function Login() {
     }
   }, [googleLoading, procesarResultadoGoogle]);
 
+  // Primero se intenta entrar sin rol: el backend solo lo pide si la cuenta es nueva.
   const handleGoogleCredential = useCallback((credential: string) => {
-    const email = correoDesdeIdToken(credential);
-    setGoogleRol(null);
-    setGoogleCedula("");
-    setGoogleError("");
-    setGooglePendiente({ credential, email });
-  }, []);
+    void continuarConGoogle(credential);
+  }, [continuarConGoogle]);
 
   const { contenedorRef, error: errorGoogle } = useGoogleLogin(handleGoogleCredential);
 
