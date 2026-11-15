@@ -33,6 +33,7 @@ import { CreateProjectPage, CreateServicePage } from "../features/services-offer
 import { ClientOffersRoute } from "./ClientOffersRoute";
 import { RoleHomePage } from "../features/account/RoleHomePage";
 import { SecurityPage } from "../features/account/SecurityPage";
+import { NotificationsPage } from "../features/notifications/NotificationsPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -125,6 +126,7 @@ export function AppRoutes() {
           }
         />
         <Route path="/cambiar-password" element={<Navigate to="/cuenta/seguridad" replace />} />
+        <Route path="/notificaciones" element={<NotificationsPage />} />
         <Route
           path="/perfil/freelancer"
           element={
