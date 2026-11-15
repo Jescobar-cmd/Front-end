@@ -17,7 +17,12 @@ export function CategoryBar() {
   const { user } = useAuth();
   const { setQuery } = useInternalSearch();
   const esFreelancer = user?.rol === "freelancer";
+  // Moderación y administración no tienen catálogo de mercado: la barra
+  // solo mostraría enlaces a secciones que su rol no puede abrir.
+  const esPanel = user?.rol === "moderador" || user?.rol === "administrador";
   const destino = esFreelancer ? "/dashboard/freelancer/ofertas" : "/servicios";
+
+  if (esPanel) return null;
 
   return (
     <nav className="category-bar" aria-label="Categorías principales">

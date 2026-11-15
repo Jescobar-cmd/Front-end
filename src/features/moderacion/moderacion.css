@@ -1,277 +1,99 @@
 /* Panel de moderación — estilos locales del módulo.
-   Reutiliza los tokens y primitivas de src/styles/fg-design-system.css. */
-
-body:has(.mod-shell) {
-  background: var(--fg-bg);
-}
+   Se monta dentro del InternalLayout (AppHeader + CategoryBar) y reutiliza
+   los tokens y primitivas de src/styles/fg-design-system.css. */
 
 .mod-shell {
   display: grid;
-  min-height: 100vh;
-  grid-template-columns: 264px minmax(0, 1fr);
-  background: var(--fg-bg);
-  color: var(--fg-text);
+  gap: 18px;
 }
 
-/* ---------- Sidebar ---------- */
+/* ---------- Subnavigation ---------- */
 
-.mod-sidebar {
+.mod-subnav {
   position: sticky;
-  top: 0;
-  display: flex;
-  height: 100vh;
-  flex-direction: column;
-  gap: 28px;
-  overflow-y: auto;
-  padding: 24px 18px;
-  border-right: 1px solid var(--fg-line);
-  background: var(--fg-surface);
+  z-index: 30;
+  /* La CategoryBar se oculta para moderación/admin, así que solo se descuenta
+     la altura del AppHeader. */
+  top: calc(var(--fg-header-h) + 8px);
 }
 
-.mod-sidebar__brand {
+.mod-subnav__inner {
   display: flex;
+  width: 100%;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-radius: var(--fg-r-sm);
-  color: var(--fg-text);
-  text-decoration: none;
-}
-
-.mod-sidebar__brand .auth-brand__gig {
-  color: var(--fg-accent);
-}
-
-.mod-sidebar__brand-tag {
-  padding: 4px 9px;
+  gap: 4px;
+  padding: 6px;
+  overflow-x: auto;
   border: 1px solid var(--fg-line);
   border-radius: var(--fg-r-pill);
-  background: var(--fg-surface-2);
-  color: var(--fg-text-secondary);
-  font-size: 0.68rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  background: var(--fg-surface);
+  box-shadow: var(--fg-shadow-sm);
+  scrollbar-width: none;
 }
 
-.mod-nav {
-  display: grid;
-  gap: 4px;
+.mod-subnav__inner::-webkit-scrollbar {
+  display: none;
 }
 
-.mod-nav__label {
-  margin: 0 0 6px;
-  padding: 0 12px;
-  color: var(--fg-text-tertiary);
-  font-size: 0.68rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.mod-nav__link {
-  display: flex;
-  min-height: 44px;
+.mod-subnav__link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 38px;
   align-items: center;
-  gap: 11px;
-  padding: 0 12px;
-  border: 1px solid transparent;
-  border-radius: var(--fg-r-md);
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: var(--fg-r-pill);
   color: var(--fg-text-secondary);
   font-size: var(--fg-text-sm);
   font-weight: 650;
   text-decoration: none;
+  white-space: nowrap;
   transition:
     background var(--fg-transition),
-    border-color var(--fg-transition),
     color var(--fg-transition);
 }
 
-.mod-nav__link:hover {
+.mod-subnav__link:hover {
   background: var(--fg-fill);
   color: var(--fg-text);
 }
 
-.mod-nav__link.is-active {
-  border-color: var(--fg-accent-soft-strong);
-  background: var(--fg-accent-soft);
-  color: var(--fg-accent);
+.mod-subnav__link.is-active {
+  background: var(--fg-accent);
+  color: var(--fg-accent-contrast);
 }
 
-.mod-nav__icon {
+.mod-subnav__icon {
   display: grid;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex: none;
   place-items: center;
 }
 
-.mod-nav__icon svg {
-  width: 20px;
-  height: 20px;
+.mod-subnav__icon svg {
+  width: 18px;
+  height: 18px;
 }
 
-.mod-nav__text {
-  min-width: 0;
-  flex: 1;
-}
-
-.mod-nav__badge {
+.mod-subnav__badge {
   display: inline-grid;
-  min-width: 22px;
-  height: 22px;
+  min-width: 20px;
+  height: 20px;
   place-items: center;
   padding: 0 6px;
   border-radius: var(--fg-r-pill);
-  background: var(--fg-accent);
-  color: var(--fg-accent-contrast);
-  font-size: 0.7rem;
+  background: var(--fg-danger);
+  color: var(--fg-danger-contrast);
+  font-size: 0.66rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
-.mod-sidebar__footer {
-  display: grid;
-  gap: 3px;
-  margin-top: auto;
-  padding: 14px 12px 4px;
-  border-top: 1px solid var(--fg-line);
-}
-
-.mod-sidebar__user {
-  color: var(--fg-text);
-  font-size: var(--fg-text-sm);
-  font-weight: 700;
-}
-
-.mod-sidebar__role {
-  color: var(--fg-text-tertiary);
-  font-size: var(--fg-text-xs);
-}
-
-/* ---------- Workspace, topbar and footer ---------- */
-
-.mod-workspace {
-  display: flex;
-  min-width: 0;
-  min-height: 100vh;
-  flex-direction: column;
-}
-
-.mod-topbar {
-  position: sticky;
-  z-index: 40;
-  top: 0;
-  display: flex;
-  min-height: 68px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 0 clamp(16px, 3vw, 34px);
-  border-bottom: 1px solid var(--fg-glass-border);
-  background: var(--fg-glass);
-  -webkit-backdrop-filter: var(--fg-glass-blur);
-  backdrop-filter: var(--fg-glass-blur);
-}
-
-.mod-topbar__context {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--fg-text-secondary);
-  font-size: var(--fg-text-sm);
-  font-weight: 650;
-}
-
-.mod-topbar__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--fg-action);
-  box-shadow: 0 0 0 4px var(--fg-action-soft);
-}
-
-.mod-topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mod-bell {
-  position: relative;
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--fg-text-secondary);
-  text-decoration: none;
-  transition: background var(--fg-transition), color var(--fg-transition);
-}
-
-.mod-bell:hover {
-  background: var(--fg-fill);
-  color: var(--fg-text);
-}
-
-.mod-bell svg {
-  width: 21px;
-  height: 21px;
-}
-
-.mod-bell__count {
-  position: absolute;
-  top: 3px;
-  right: 1px;
-  display: grid;
-  min-width: 19px;
-  height: 19px;
-  place-items: center;
-  padding: 0 5px;
-  border: 2px solid var(--fg-surface);
-  border-radius: var(--fg-r-pill);
-  background: var(--fg-danger);
-  color: var(--fg-danger-contrast);
-  font-size: 0.62rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.mod-main {
-  width: min(var(--fg-container), 100%);
-  min-width: 0;
-  flex: 1;
-  margin: 0 auto;
-  padding: clamp(22px, 3vw, 34px) clamp(16px, 3vw, 34px) 56px;
-}
-
-.mod-main:focus {
-  outline: none;
-}
-
-.mod-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px clamp(16px, 3vw, 34px);
-  border-top: 1px solid var(--fg-line);
-  color: var(--fg-text-tertiary);
-  font-size: var(--fg-text-xs);
-}
-
-.mod-footer__link {
-  padding: 4px;
-  border: 0;
-  background: transparent;
-  color: var(--fg-text-secondary);
-  font: inherit;
-  font-weight: 650;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.mod-subnav__link.is-active .mod-subnav__badge {
+  background: var(--fg-accent-contrast);
+  color: var(--fg-accent);
 }
 
 /* ---------- Page structure ---------- */
@@ -1412,7 +1234,7 @@ body:has(.mod-shell) {
 
 .mod-suspended {
   display: grid;
-  min-height: 100vh;
+  min-height: 62vh;
   place-items: center;
   padding: 24px;
   background:
@@ -1473,13 +1295,10 @@ body:has(.mod-shell) {
 
 /* ---------- Focus states ---------- */
 
-.mod-nav__link:focus-visible,
-.mod-sidebar__brand:focus-visible,
+.mod-subnav__link:focus-visible,
 .mod-stat-card:focus-visible,
 .mod-quick-link:focus-visible,
-.mod-bell:focus-visible,
 .mod-back:focus-visible,
-.mod-footer__link:focus-visible,
 .mod-pager__button:focus-visible,
 .mod-link:focus-visible,
 .mod-check input:focus-visible,
@@ -1502,63 +1321,6 @@ body:has(.mod-shell) {
 }
 
 @media (max-width: 900px) {
-  .mod-shell {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .mod-sidebar {
-    position: static;
-    z-index: 45;
-    height: auto;
-    flex-direction: row;
-    align-items: center;
-    gap: 14px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 10px 16px;
-    border-right: 0;
-    border-bottom: 1px solid var(--fg-line);
-  }
-
-  .mod-sidebar__brand {
-    flex: none;
-  }
-
-  .mod-sidebar__brand-tag,
-  .mod-sidebar__footer,
-  .mod-nav__label {
-    display: none;
-  }
-
-  .mod-nav {
-    display: flex;
-    gap: 4px;
-  }
-
-  .mod-nav__link {
-    min-height: 38px;
-    padding: 0 11px;
-    white-space: nowrap;
-  }
-
-  .mod-nav__icon {
-    width: 18px;
-    height: 18px;
-  }
-
-  .mod-nav__icon svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  .mod-topbar {
-    position: static;
-  }
-
-  .mod-main {
-    padding-top: 20px;
-  }
-
   .mod-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1714,7 +1476,7 @@ body:has(.mod-shell) {
 @media (prefers-reduced-motion: reduce) {
   .mod-stat-card,
   .mod-quick-link,
-  .mod-nav__link,
+  .mod-subnav__link,
   .mod-toast,
   .mod-stat-card--skeleton,
   .mod-panel--skeleton,

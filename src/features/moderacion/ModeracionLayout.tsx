@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Brand } from "../../components/Brand";
-import { ProfileMenu } from "../../components/ProfileMenu";
+import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CUENTA_SUSPENDIDA_EVENT, moderacionApi } from "../../infrastructure/api/apiModeracion";
 import type { ModeradorDashboard } from "../../infrastructure/api/apiModeracion";
@@ -17,8 +15,7 @@ type IconName =
   | "disputas"
   | "liquidaciones"
   | "notificaciones"
-  | "usuarios"
-  | "bell";
+  | "usuarios";
 
 function NavIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -65,12 +62,6 @@ function NavIcon({ name }: { name: IconName }) {
         <path d="M17.6 14.2A6.2 6.2 0 0 1 21.2 20" />
       </>
     ),
-    bell: (
-      <>
-        <path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6" />
-        <path d="M10.5 19a2 2 0 0 0 3 0" />
-      </>
-    ),
   };
 
   return (
@@ -97,8 +88,7 @@ interface NavItem {
 }
 
 export function ModeracionLayout() {
-  const { token, user, cerrarSesion } = useAuth();
-  const navigate = useNavigate();
+  const { token } = useAuth();
   const [dashboard, setDashboard] = useState<ModeradorDashboard | null>(null);
   const [cargandoContadores, setCargandoContadores] = useState(true);
   const [errorContadores, setErrorContadores] = useState("");
@@ -160,11 +150,6 @@ export function ModeracionLayout() {
     };
   }, [token, recargarContadores, recargarNoLeidas]);
 
-  const salir = () => {
-    cerrarSesion();
-    navigate("/login", { replace: true });
-  };
-
   if (suspendida) {
     return <CuentaSuspendida />;
   }
@@ -197,6 +182,7 @@ export function ModeracionLayout() {
     },
     { to: "/moderacion/usuarios", label: "Usuarios", icon: "usuarios" },
   ];
+
   return (
     <ToastProvider>
       <ModeracionPanelContext.Provider
@@ -210,83 +196,32 @@ export function ModeracionLayout() {
         }}
       >
         <div className="mod-shell">
-          <a className="fg-skip" href="#contenido-moderacion">
-            Saltar al contenido
-          </a>
-
-          <aside className="mod-sidebar" aria-label="Navegación de moderación">
-            <Link className="mod-sidebar__brand" to="/moderacion" aria-label="FirstGig, panel de moderación">
-              <Brand />
-              <span className="mod-sidebar__brand-tag">Moderación</span>
-            </Link>
-
-            <nav className="mod-nav" aria-label="Secciones del panel">
-              <p className="mod-nav__label">Operación</p>
+          <nav className="mod-subnav" aria-label="Secciones del panel de moderación">
+            <div className="mod-subnav__inner">
               {items.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
-                  className={({ isActive }) => `mod-nav__link${isActive ? " is-active" : ""}`}
+                  className={({ isActive }) =>
+                    `mod-subnav__link${isActive ? " is-active" : ""}`
+                  }
                 >
-                  <span className="mod-nav__icon">
+                  <span className="mod-subnav__icon">
                     <NavIcon name={item.icon} />
                   </span>
-                  <span className="mod-nav__text">{item.label}</span>
+                  <span className="mod-subnav__text">{item.label}</span>
                   {item.badge && item.badge > 0 ? (
-                    <span className="mod-nav__badge" aria-label={`${item.badge} pendientes`}>
+                    <span className="mod-subnav__badge" aria-label={`${item.badge} pendientes`}>
                       {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   ) : null}
                 </NavLink>
               ))}
-            </nav>
-
-            <div className="mod-sidebar__footer">
-              <span className="mod-sidebar__user">{user?.nombre ?? "Moderación"}</span>
-              <span className="mod-sidebar__role">Sesión protegida</span>
             </div>
-          </aside>
+          </nav>
 
-          <div className="mod-workspace">
-            <header className="mod-topbar">
-              <div className="mod-topbar__context">
-                <span className="mod-topbar__dot" aria-hidden="true" />
-                <span>Panel de moderación</span>
-              </div>
-
-              <div className="mod-topbar__actions">
-                <Link
-                  className="mod-bell"
-                  to="/moderacion/notificaciones"
-                  aria-label={
-                    noLeidas > 0
-                      ? `Notificaciones, ${noLeidas} sin leer`
-                      : "Notificaciones, ninguna sin leer"
-                  }
-                >
-                  <NavIcon name="bell" />
-                  {noLeidas > 0 ? (
-                    <span className="mod-bell__count" aria-hidden="true">
-                      {noLeidas > 99 ? "99+" : noLeidas}
-                    </span>
-                  ) : null}
-                </Link>
-                <ProfileMenu />
-              </div>
-            </header>
-
-            <main id="contenido-moderacion" className="mod-main" tabIndex={-1}>
-              <Outlet />
-            </main>
-
-            <footer className="mod-footer">
-              <span>FIRST GIG · Moderación</span>
-              <button type="button" className="mod-footer__link" onClick={salir}>
-                Cerrar sesión
-              </button>
-            </footer>
-          </div>
+          <Outlet />
         </div>
       </ModeracionPanelContext.Provider>
     </ToastProvider>
