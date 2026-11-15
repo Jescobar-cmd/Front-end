@@ -210,7 +210,8 @@ export interface PublicacionModerada {
   tipo: TipoPublicacion;
   titulo: string;
   descripcion: string;
-  precio: number;
+  /** Servicios: precio del servicio. Proyectos: presupuesto, puede ser null. */
+  precio: number | null;
   estado: string;
   autor: AutorPublicacionModerada;
   categoria: string | null;
@@ -591,7 +592,7 @@ export const moderacionApi = {
     motivo: string,
   ): Promise<void> {
     await pedir<unknown>({
-      method: "POST",
+      method: "PATCH",
       token,
       path: `/moderador/publicaciones/${tipo}/${id}/retirar`,
       body: { motivo },
@@ -604,7 +605,7 @@ export const moderacionApi = {
     id: number,
   ): Promise<void> {
     await pedir<unknown>({
-      method: "POST",
+      method: "PATCH",
       token,
       path: `/moderador/publicaciones/${tipo}/${id}/reactivar`,
     });
