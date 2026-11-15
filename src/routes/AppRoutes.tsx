@@ -12,6 +12,8 @@ import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 import { InternalLayout } from "../features/layout/InternalLayout";
+import { ClientDashboard } from "../features/dashboard/ClientDashboard";
+import { FreelancerDashboard } from "../features/dashboard/FreelancerDashboard";
 import {
   ClientProfilePage,
   FreelancerProfilePage,
@@ -109,6 +111,22 @@ export function AppRoutes() {
           element={
             <RutaProtegida roles={["cliente"]}>
               <InicioCliente />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/freelancer/panel"
+          element={
+            <RutaProtegida roles={["freelancer"]}>
+              <FreelancerDashboard />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/cliente/panel"
+          element={
+            <RutaProtegida roles={["cliente"]}>
+              <ClientDashboard />
             </RutaProtegida>
           }
         />

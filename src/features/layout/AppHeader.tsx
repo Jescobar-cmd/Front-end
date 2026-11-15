@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Brand } from "../../components/Brand";
 import { ProfileMenu } from "../../components/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
-import { dashboardPorRol } from "../../routes/rutasPorRol";
+import { dashboardPorRol, panelPorRol } from "../../routes/rutasPorRol";
 import { NotificationsBell } from "../notifications/NotificationsBell";
 import { useNotificaciones } from "../notifications/NotificationsContext";
 import { CategoryBar } from "./CategoryBar";
@@ -29,6 +29,7 @@ export function AppHeader({
   const { user } = useAuth();
   const { mensajesNoLeidos } = useNotificaciones();
   const esFreelancer = user?.rol === "freelancer";
+  const panelPath = user ? panelPorRol(user.rol) : undefined;
   const brandPath = user ? dashboardPorRol(user.rol) : "/";
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value);
@@ -61,6 +62,14 @@ export function AppHeader({
         <div className="app-header__right">
           {user ? (
             <>
+              {panelPath && (
+                <Link className="app-header__icon-link" to={panelPath} aria-label="Mi panel" title="Mi panel">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 20h16" />
+                    <path d="M7 16v-4M12 16V7M17 16v-6" />
+                  </svg>
+                </Link>
+              )}
               <NotificationsBell />
               <Link
                 className="app-header__icon-link"

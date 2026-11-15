@@ -8,3 +8,10 @@ const INICIO_POR_ROL: Record<Rol, string> = {
 };
 
 export const dashboardPorRol = (rol: Rol): string => INICIO_POR_ROL[rol];
+
+const PANEL_POR_ROL: Partial<Record<Rol, string>> = {
+  freelancer: "/dashboard/freelancer/panel",
+  cliente: "/dashboard/cliente/panel",
+};
+
+export const panelPorRol = (rol: Rol): string | undefined => PANEL_POR_ROL[rol];
