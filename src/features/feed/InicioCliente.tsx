@@ -1,8 +1,5 @@
-import { FeedView } from "./FeedView";
-import { useFeedData } from "./useFeedData";
-import "./feed.css";
+import { ClientDashboard } from "../dashboard/ClientDashboard";
 
 export function InicioCliente() {
-  const datos = useFeedData("cliente");
-  return <FeedView datos={datos} />;
+  return <ClientDashboard />;
 }

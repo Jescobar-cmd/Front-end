@@ -41,6 +41,7 @@ import { LiquidacionesPage } from "../features/moderacion/pages/LiquidacionesPag
 import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesPage";
 import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
 import { SecurityPage } from "../features/account/SecurityPage";
+import { NotificationsPage } from "../features/notifications/NotificationsPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -133,6 +134,7 @@ export function AppRoutes() {
           }
         />
         <Route path="/cambiar-password" element={<Navigate to="/cuenta/seguridad" replace />} />
+        <Route path="/notificaciones" element={<NotificationsPage />} />
         <Route
           path="/perfil/freelancer"
           element={

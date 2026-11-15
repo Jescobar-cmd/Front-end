@@ -1,8 +1,5 @@
-import { FeedView } from "./FeedView";
-import { useFeedData } from "./useFeedData";
-import "./feed.css";
+import { FreelancerDashboard } from "../dashboard/FreelancerDashboard";
 
 export function InicioFreelancer() {
-  const datos = useFeedData("freelancer");
-  return <FeedView datos={datos} />;
+  return <FreelancerDashboard />;
 }
