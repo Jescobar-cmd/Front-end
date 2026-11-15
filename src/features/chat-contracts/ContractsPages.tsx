@@ -331,6 +331,11 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
               {pago?.estado === "reembolsado" && (
                 <p className="cc-muted">Este pago fue reembolsado al cliente.</p>
               )}
+              {(pago?.estado === "retenido" || pago?.estado === "liberado") && (
+                <p className="cc-muted">
+                  <Link to="/facturas">Ver comprobante emitido</Link>
+                </p>
+              )}
               {isPendingPayment(contract.estado) && user?.rol === "cliente" && (
                 <div className="cc-actions">
                   <button className="cc-primary-button" type="button" disabled={payBusy} onClick={() => void startPayment()}>

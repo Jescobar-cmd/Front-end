@@ -1225,3 +1225,22 @@
     min-height: 280px;
   }
 }
+
+@media print {
+  .cc-header,
+  .cc-actions,
+  .cc-alert,
+  .cc-back-link {
+    display: none !important;
+  }
+
+  .cc-page {
+    padding: 0;
+  }
+
+  .cc-panel {
+    box-shadow: none;
+    border: 1px solid #d2d2d7;
+    break-inside: avoid;
+  }
+}
