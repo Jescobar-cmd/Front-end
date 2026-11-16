@@ -26,6 +26,8 @@ import {
 } from "../pages/services-offers";
 import { CreateProjectPage, CreateServicePage } from "../features/services-offers/CreatePages";
 import { ClientOffersRoute } from "./ClientOffersRoute";
+import { Landing } from "../pages/Landing";
+import { PublicServicesPage } from "../features/services-offers";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -33,10 +35,18 @@ function RedireccionDashboard() {
   return <Navigate to={dashboardPorRol(user.rol)} replace />;
 }
 
+function RutaInicio() {
+  const { user, cargando } = useAuth();
+  if (cargando) return null;
+  if (user) return <Navigate to={dashboardPorRol(user.rol)} replace />;
+  return <Landing />;
+}
+
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<RutaInicio />} />
+      <Route path="/explorar-servicios" element={<PublicServicesPage />} />
       <Route path="/login" element={<RutaPublica><Login /></RutaPublica>} />
       <Route path="/registro" element={<RutaPublica><Registro /></RutaPublica>} />
       <Route path="/recuperar-password" element={<RecuperarPassword />} />
