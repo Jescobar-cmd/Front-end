@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
+﻿import { Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { Registro } from "../pages/Auth/registro";
 import { Login } from "../pages/Auth/login";
 import { RecuperarPassword } from "../pages/Auth/recuperar_password";
@@ -50,11 +50,20 @@ import { UsuarioDetallePage } from "../features/moderacion/pages/UsuarioDetalleP
 import { SecurityPage } from "../features/account/SecurityPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { InvoicesPage } from "../features/invoices/InvoicesPage";
+import { Landing } from "../pages/Landing";
+import { PublicServicesPage } from "../features/services-offers";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   return <Navigate to={dashboardPorRol(user.rol)} replace />;
+}
+
+function RutaInicio() {
+  const { user, cargando } = useAuth();
+  if (cargando) return null;
+  if (user) return <Navigate to={dashboardPorRol(user.rol)} replace />;
+  return <Landing />;
 }
 
 function MiPerfilRedirect() {
@@ -73,8 +82,6 @@ function LegacyProfileRedirect() {
   return <Navigate to={id ? `/perfil/${id}` : "/"} replace />;
 }
 
-// El backend (back_urls de Mercado Pago y enlaces de notificaciones) usa
-// /contratos/:id; la ruta canónica del frontend es /contracts/:id.
 function ContratoLegacyRedirect() {
   const { contractId } = useParams();
   const [searchParams] = useSearchParams();
@@ -90,7 +97,8 @@ function ContratoLegacyRedirect() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<RutaInicio />} />
+      <Route path="/explorar-servicios" element={<PublicServicesPage />} />
       <Route path="/login" element={<RutaPublica><Login /></RutaPublica>} />
       <Route path="/registro" element={<RutaPublica><Registro /></RutaPublica>} />
       <Route path="/recuperar-password" element={<RecuperarPassword />} />
@@ -104,9 +112,6 @@ export function AppRoutes() {
 
       <Route path="/perfil" element={<MiPerfilRedirect />} />
 
-      {/* El perfil profesional es público: el layout se comparte, pero la ruta
-          no queda detrás de RutaProtegida. El backend aún exige JWT para los
-          datos, así que la página muestra un acceso a login cuando no hay sesión. */}
       <Route element={<InternalLayout />}>
         <Route path="/perfil/:id" element={<ProfessionalProfilePage />} />
         <Route path="/perfil/usuario/:id" element={<LegacyProfileRedirect />} />

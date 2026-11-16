@@ -4,4 +4,5 @@ export {
   FreelancerMarketplacePage,
   FreelancerServicesPage,
   ServicesOffersPage,
+  PublicServicesPage,
 } from "../../features/services-offers";

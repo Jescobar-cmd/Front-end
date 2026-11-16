@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { Brand } from "../../components/Brand";
+import { dashboardPorRol } from "../../routes/rutasPorRol";
 import {
   acceptProposal,
   changeOfferStatus,
@@ -46,14 +48,21 @@ const PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 type CatalogSkill = Habilidad;
 
-export function useCatalogs(token: string) {
+export function useCatalogs(token?: string) {
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [skills, setSkills] = useState<CatalogSkill[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!token);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    if (!token) {
+      setCategories([]);
+      setSkills([]);
+      setError("");
+      setLoading(false);
+      return;
+    }
     let active = true;
     setLoading(true);
     setError("");
@@ -1597,8 +1606,9 @@ export function FreelancerServices({ token }: { token: string }) {
   );
 }
 
-export function ClientServices({ token }: { token: string }) {
+export function ClientServices({ token, publicMode = false }: { token?: string; publicMode?: boolean }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [services, setServices] = useState<Servicio[]>([]);
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [page, setPage] = useState(1);
@@ -1612,6 +1622,14 @@ export function ClientServices({ token }: { token: string }) {
   const [actionError, setActionError] = useState("");
   const [reload, setReload] = useState(0);
   const catalogs = useCatalogs(token);
+
+  useEffect(() => {
+    const q = searchParams.get("q") ?? searchParams.get("query") ?? "";
+    const cat = searchParams.get("categoriaId") ?? searchParams.get("categoryId") ?? "";
+    if (q) setQuery(q);
+    if (cat) setCategoryId(cat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     setPage(1);
@@ -1652,6 +1670,10 @@ export function ClientServices({ token }: { token: string }) {
 
   async function startConversation() {
     if (!selected || creatingConversation) return;
+    if (!token) {
+      navigate("/login", { state: { from: "/explorar-servicios" } });
+      return;
+    }
     setCreatingConversation(true);
     setActionError("");
     try {
@@ -1664,8 +1686,12 @@ export function ClientServices({ token }: { token: string }) {
     }
   }
 
-  return (
-    <PageShell eyebrow="Servicios" title="Encuentra servicios de freelancers" description="Servicios con precio claro, categoría y conversación directa desde el perfil del freelancer.">
+  const content = (
+    <PageShell
+      eyebrow={publicMode ? "FirstGig" : "Explorar talento"}
+      title={publicMode ? "Explora servicios" : "Encuentra talento verificado"}
+      description={publicMode ? "Descubre servicios publicados por freelancers y encuentra el talento ideal para tu proyecto." : "Talento con portafolio, servicios claros y conversación directa desde cada perfil."}
+    >
       {selected ? (
         <div className="service-detail">
           {actionError && <Notice error={actionError} />}
@@ -1772,7 +1798,7 @@ export function ClientServices({ token }: { token: string }) {
                   disabled={creatingConversation || selected.estado?.toLowerCase() !== "activo"}
                   onClick={() => void startConversation()}
                 >
-                  {creatingConversation ? "Abriendo conversación…" : "Continuar"}
+                  {creatingConversation ? "Abriendo conversación…" : token ? "Continuar" : "Iniciar sesión para continuar"}
                 </button>
                 <button
                   className={buttonClassName({ variant: "secondary", block: true })}
@@ -1780,8 +1806,9 @@ export function ClientServices({ token }: { token: string }) {
                   disabled={creatingConversation || selected.estado?.toLowerCase() !== "activo"}
                   onClick={() => void startConversation()}
                 >
-                  Contactar
+                  {token ? "Contactar" : "Iniciar sesión para contactar"}
                 </button>
+                {!token && <p className="so-muted">Inicia sesión o regístrate para contactar a este freelancer.</p>}
                 {selected.estado?.toLowerCase() !== "activo" && <p className="so-muted">Este servicio no está disponible para nuevos contactos.</p>}
                 <p className="service-pricing__note">El backend actual maneja un precio único. Los paquetes Estándar y Premium se habilitarán cuando existan en la API.</p>
               </aside>
@@ -1834,6 +1861,23 @@ export function ClientServices({ token }: { token: string }) {
       )}
     </PageShell>
   );
+
+  if (publicMode) {
+    return (
+      <main className="so-page">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "1rem 0", flexWrap: "wrap" }}>
+          <Link className="app-header__brand" to="/" aria-label="FirstGig, ir al inicio"><Brand /></Link>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <Link className={buttonClassName({ variant: "secondary", size: "sm" })} to="/login">Iniciar sesión</Link>
+            <Link className={buttonClassName({ variant: "primary", size: "sm" })} to="/registro">Registrarse</Link>
+          </div>
+        </div>
+        {content}
+      </main>
+    );
+  }
+
+  return content;
 }
 
 export function ClientServicesOffersPage({ onContractPath }: { onContractPath?: (path: string) => void } = {}) {
@@ -1841,7 +1885,15 @@ export function ClientServicesOffersPage({ onContractPath }: { onContractPath?: 
 }
 
 export function ClientServicesPage() {
-  return <AuthGate role="cliente">{(token) => <ClientServices token={token} />}</AuthGate>;
+  const { user, token, cargando } = useAuth();
+  if (cargando) return <main className="so-page"><p role="status">Comprobando tu sesión…</p></main>;
+  if (!token || !user) return <ClientServices publicMode />;
+  if (user.rol === "cliente") return <ClientServices token={token} />;
+  return <Navigate to={dashboardPorRol(user.rol)} replace />;
+}
+
+export function PublicServicesPage() {
+  return <ClientServices publicMode />;
 }
 
 export function FreelancerMarketplacePage() {
