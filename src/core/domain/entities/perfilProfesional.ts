@@ -95,6 +95,7 @@ export interface ServicePackage {
   entrega: string | null;
   revisiones: number | null;
   imagenUrl: string | null;
+  videoUrl: string | null;
   categoria: string | null;
   estado: string;
 }

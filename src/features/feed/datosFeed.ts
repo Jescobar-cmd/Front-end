@@ -8,6 +8,7 @@ export interface PiezaFeed {
   detalle: string;
   etiquetas: string[];
   imagenUrl?: string;
+  videoUrl?: string;
   precio?: number | null;
   etiquetaPrecio?: "Precio" | "Presupuesto";
   autorId?: number;
