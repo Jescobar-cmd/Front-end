@@ -1,0 +1,318 @@
+/* ============================================================
+   FirstGig Motion System
+   - Solo transform/opacity/background-position: GPU, sin reflow.
+   - Entradas con stagger, hovers con elevación + brillo de acento.
+   - Todo respeta prefers-reduced-motion (ver bloque final).
+   ============================================================ */
+
+:root {
+  --fg-motion-fast: 140ms;
+  --fg-motion-base: 240ms;
+  --fg-motion-slow: 520ms;
+  --fg-ease-out: cubic-bezier(0.22, 0.8, 0.22, 1);
+  --fg-ease-spring: cubic-bezier(0.34, 1.45, 0.44, 1);
+  --fg-ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+  --fg-stagger: 55ms;
+}
+
+/* ---------- Keyframes ---------- */
+
+@keyframes fg-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fg-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  60% {
+    transform: scale(1.015) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fg-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fg-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fg-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Brillo que cruza el botón al hover (sheen). Solo en hover: costo cero en reposo. */
+@keyframes fg-sheen {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(240%) skewX(-18deg);
+  }
+}
+
+/* ---------- Entradas de página ---------- */
+
+.cc-page,
+.so-page,
+.profile-page,
+.mod-page,
+.account-page {
+  animation: fg-page-in var(--fg-motion-slow) var(--fg-ease-glide) both;
+}
+
+/* ---------- Entradas escalonadas de tarjetas ---------- */
+
+.feed-grid > *,
+.fl-grid > *,
+.so-discovery-grid > *,
+.cc-contract-list > *,
+.mod-contract-list > * {
+  animation: fg-rise var(--fg-motion-slow) var(--fg-ease-spring) both;
+}
+
+.feed-grid > :nth-child(2),
+.fl-grid > :nth-child(2),
+.so-discovery-grid > :nth-child(2),
+.cc-contract-list > :nth-child(2),
+.mod-contract-list > :nth-child(2) {
+  animation-delay: var(--fg-stagger);
+}
+
+.feed-grid > :nth-child(3),
+.fl-grid > :nth-child(3),
+.so-discovery-grid > :nth-child(3),
+.cc-contract-list > :nth-child(3),
+.mod-contract-list > :nth-child(3) {
+  animation-delay: calc(var(--fg-stagger) * 2);
+}
+
+.feed-grid > :nth-child(4),
+.fl-grid > :nth-child(4),
+.so-discovery-grid > :nth-child(4),
+.cc-contract-list > :nth-child(4),
+.mod-contract-list > :nth-child(4) {
+  animation-delay: calc(var(--fg-stagger) * 3);
+}
+
+.feed-grid > :nth-child(5),
+.fl-grid > :nth-child(5),
+.so-discovery-grid > :nth-child(5),
+.cc-contract-list > :nth-child(5),
+.mod-contract-list > :nth-child(5) {
+  animation-delay: calc(var(--fg-stagger) * 4);
+}
+
+.feed-grid > :nth-child(6),
+.fl-grid > :nth-child(6),
+.so-discovery-grid > :nth-child(6),
+.cc-contract-list > :nth-child(6),
+.mod-contract-list > :nth-child(6) {
+  animation-delay: calc(var(--fg-stagger) * 5);
+}
+
+.feed-grid > :nth-child(n + 7),
+.fl-grid > :nth-child(n + 7),
+.so-discovery-grid > :nth-child(n + 7),
+.cc-contract-list > :nth-child(n + 7),
+.mod-contract-list > :nth-child(n + 7) {
+  animation-delay: calc(var(--fg-stagger) * 6);
+}
+
+/* ---------- Hover: elevación + brillo de acento ---------- */
+
+.feed-card,
+.fl-card,
+.so-card,
+.so-discovery-card,
+.cc-contract-card {
+  position: relative;
+  transition:
+    transform var(--fg-motion-base) var(--fg-ease-out),
+    box-shadow var(--fg-motion-base) var(--fg-ease-out),
+    border-color var(--fg-motion-base) ease;
+  will-change: transform;
+}
+
+.feed-card:hover,
+.fl-card:hover,
+.so-card:hover,
+.so-discovery-card:hover,
+.cc-contract-card:hover {
+  transform: translateY(-4px) scale(1.008);
+  box-shadow:
+    var(--fg-shadow-md),
+    0 0 0 1px var(--fg-accent-soft-strong, rgba(11, 74, 107, 0.18));
+  border-color: var(--fg-accent-soft-strong, #d3e4ec);
+}
+
+/* ---------- Press: feedback táctil en botones ---------- */
+
+.cc-primary-button,
+.cc-secondary-button,
+.cc-danger-button,
+.so-button,
+.btn-primary,
+.ui-button,
+.mod-btn,
+.mod-subnav__link,
+.so-link-button,
+.cc-link-button {
+  transition:
+    transform var(--fg-motion-fast) var(--fg-ease-spring),
+    background-color var(--fg-motion-fast) ease,
+    color var(--fg-motion-fast) ease,
+    border-color var(--fg-motion-fast) ease,
+    box-shadow var(--fg-motion-fast) ease;
+}
+
+.cc-primary-button:active,
+.cc-secondary-button:active,
+.cc-danger-button:active,
+.so-button:active,
+.btn-primary:active,
+.ui-button:active,
+.mod-btn:active,
+.cc-link-button:active {
+  transform: scale(0.95);
+}
+
+/* Sheen en el CTA primario: un destello de luz cruza el botón al hover.
+   overflow:hidden lo recorta dentro del border-radius. */
+.cc-primary-button,
+.btn-primary,
+.so-button--action {
+  position: relative;
+  overflow: hidden;
+}
+
+.cc-primary-button::after,
+.btn-primary::after,
+.so-button--action::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.cc-primary-button:hover::after,
+.btn-primary:hover::after,
+.so-button--action:hover::after {
+  animation: fg-sheen 0.7s var(--fg-ease-out);
+}
+
+/* ---------- Diálogos y menús: entrada con resorte ---------- */
+
+[role="dialog"],
+.cc-modal,
+.ui-modal,
+.profile-menu__panel {
+  animation: fg-pop var(--fg-motion-base) var(--fg-ease-spring) both;
+}
+
+/* ---------- Skeletons: shimmer en lugar de spinner ---------- */
+
+.fl-card--skeleton,
+.so-discovery-card--skeleton,
+.skeleton,
+.fg-skeleton {
+  background-image: linear-gradient(
+    100deg,
+    var(--fg-fill, #f2f2f7) 30%,
+    var(--fg-fill-strong, #e5e5ea) 50%,
+    var(--fg-fill, #f2f2f7) 70%
+  );
+  background-size: 200% 100%;
+  animation: fg-shimmer 1.4s linear infinite;
+}
+
+.fg-pulse {
+  animation: fg-pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* ---------- Scrollbar suave ---------- */
+
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--fg-line-strong, #d1d1d6) transparent;
+  }
+}
+
+/* ---------- Accesibilidad: movimiento reducido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .feed-card:hover,
+  .fl-card:hover,
+  .so-card:hover,
+  .so-discovery-card:hover,
+  .cc-contract-card:hover {
+    transform: none;
+  }
+
+  .cc-primary-button:active,
+  .cc-secondary-button:active,
+  .cc-danger-button:active,
+  .so-button:active,
+  .btn-primary:active,
+  .ui-button:active,
+  .mod-btn:active {
+    transform: none;
+  }
+
+  .cc-primary-button::after,
+  .btn-primary::after,
+  .so-button--action::after {
+    display: none;
+  }
+}
