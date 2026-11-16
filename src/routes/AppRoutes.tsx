@@ -24,6 +24,7 @@ import {
   ConversationDetailPage,
   ContractDetailPage,
   ContractsPage,
+  LiquidacionesFreelancerPage,
   PagoSimuladoPage,
 } from "../features/chat-contracts";
 import {
@@ -243,6 +244,14 @@ export function AppRoutes() {
           element={
             <RutaProtegida roles={["freelancer"]}>
               <FreelancerServicesPage />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/freelancer/liquidaciones"
+          element={
+            <RutaProtegida roles={["freelancer"]}>
+              <LiquidacionesFreelancerPage />
             </RutaProtegida>
           }
         />
