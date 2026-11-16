@@ -9,13 +9,15 @@ import {
   cancelContract,
   getContract,
   getContractDeliveries,
+  getContractDisputes,
   getContractRatings,
   getContracts,
+  openDispute,
   rateContract,
   rejectDelivery,
   submitDelivery,
 } from "../../infrastructure/api/apiContratos";
-import type { Calificacion, Contrato, EntregaContrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
+import type { Calificacion, Contrato, DisputaContrato, EntregaContrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
 import { consultarPagoContrato, iniciarPagoContrato } from "../../infrastructure/api/apiPagos";
 import type { PagoEscrow } from "../../infrastructure/api/apiPagos";
 import { errorMessage, formatDate, formatMoney, isActive, isCancelled, isCompleted, isPendingPayment, pagoEstadoLabel, statusLabel } from "./chatContractsUtils";
@@ -150,6 +152,11 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
   const [pago, setPago] = useState<PagoEscrow | null>(null);
   const [ratings, setRatings] = useState<RatingState | null>(null);
   const [entregas, setEntregas] = useState<EntregaContrato[]>([]);
+  const [disputas, setDisputas] = useState<DisputaContrato[]>([]);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeMotivo, setDisputeMotivo] = useState("");
+  const [disputeDescripcion, setDisputeDescripcion] = useState("");
+  const [disputeEvidencia, setDisputeEvidencia] = useState("");
   const [deliveryMensaje, setDeliveryMensaje] = useState("");
   const [deliveryArchivo, setDeliveryArchivo] = useState("");
   const [deliveryEnlace, setDeliveryEnlace] = useState("");
@@ -187,13 +194,15 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
       getContractRatings(token, id),
       consultarPagoContrato(token, id).catch(() => null),
       getContractDeliveries(token, id).catch(() => null),
+      getContractDisputes(token, id).catch(() => null),
     ])
-      .then(([details, ratingList, pagoContrato, entregasContrato]) => {
+      .then(([details, ratingList, pagoContrato, entregasContrato, disputasContrato]) => {
         if (cancelled) return;
         setContract(details);
         setRatings(ratingList);
         setPago(pagoContrato);
         setEntregas(entregasContrato?.entregas ?? []);
+        setDisputas(disputasContrato?.disputas ?? []);
       })
       .catch((requestError: unknown) => {
         if (!cancelled) setError(errorMessage(requestError, "No se pudo cargar el contrato."));
@@ -295,6 +304,41 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
       setRefreshKey((key) => key + 1);
     } catch (requestError) {
       setError(errorMessage(requestError, "No se pudo actualizar la entrega."));
+    } finally {
+      setDeliveryBusy(false);
+    }
+  };
+
+  const disputaAbierta = disputas.some((disputa) => disputa.estado === "abierta" || disputa.estado === "en_revision");
+
+  const enviarDisputa = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token || !contract || !isActive(contract.estado) || disputaAbierta) return;
+    const motivo = disputeMotivo.trim();
+    const descripcion = disputeDescripcion.trim();
+    if (motivo.length < 3 || motivo.length > 120) {
+      setError("El motivo debe tener entre 3 y 120 caracteres.");
+      return;
+    }
+    if (descripcion.length < 10 || descripcion.length > 2000) {
+      setError("La descripción debe tener entre 10 y 2000 caracteres.");
+      return;
+    }
+    setDeliveryBusy(true);
+    setError("");
+    try {
+      await openDispute(token, contract.id, {
+        motivo,
+        descripcion,
+        ...(disputeEvidencia.trim() ? { evidenciaUrl: disputeEvidencia.trim() } : {}),
+      });
+      setDisputeOpen(false);
+      setDisputeMotivo("");
+      setDisputeDescripcion("");
+      setDisputeEvidencia("");
+      setRefreshKey((key) => key + 1);
+    } catch (requestError) {
+      setError(errorMessage(requestError, "No se pudo abrir la disputa."));
     } finally {
       setDeliveryBusy(false);
     }
@@ -480,6 +524,63 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
                       {entrega.enlaceUrl && <p><a href={entrega.enlaceUrl} target="_blank" rel="noreferrer">Abrir enlace</a></p>}
                       {entrega.archivoUrl && <p><a href={entrega.archivoUrl} target="_blank" rel="noreferrer">Ver archivo</a></p>}
                       {entrega.estado === "rechazada" && entrega.observacionRevision && <p className="cc-muted">Observación: {entrega.observacionRevision}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {isActive(contract.estado) && (
+            <section className="cc-panel" aria-labelledby="cc-disputes-title">
+              <div className="cc-panel-heading">
+                <div><p className="cc-eyebrow">RESOLUCIÓN DE CONFLICTOS</p><h2 id="cc-disputes-title">Disputas</h2></div>
+                {disputaAbierta && <span className="cc-status">En revisión por moderación</span>}
+              </div>
+
+              {disputaAbierta ? (
+                <p className="cc-muted">Este contrato tiene una disputa abierta. Un moderador de FirstGig la está revisando y te contactará por notificaciones.</p>
+              ) : disputeOpen ? (
+                <form className="cc-form" onSubmit={enviarDisputa}>
+                  <h3>Abrir disputa</h3>
+                  <p className="cc-muted">Describe el problema con el otro participante. Un moderador revisará el caso y decidirá la resolución del pago en escrow.</p>
+                  <label>
+                    Motivo <span className="cc-muted">(3-120 caracteres)</span>
+                    <input type="text" required minLength={3} maxLength={120} value={disputeMotivo} onChange={(event) => setDisputeMotivo(event.target.value)} placeholder="Ej. El cliente no aprueba la entrega" />
+                  </label>
+                  <label>
+                    Descripción <span className="cc-muted">(10-2000 caracteres)</span>
+                    <textarea rows={4} required minLength={10} maxLength={2000} value={disputeDescripcion} onChange={(event) => setDisputeDescripcion(event.target.value)} placeholder="Explica qué pasó, cuándo y qué esperabas…" />
+                  </label>
+                  <label>
+                    URL de evidencia <span className="cc-muted">(opcional)</span>
+                    <input type="url" value={disputeEvidencia} onChange={(event) => setDisputeEvidencia(event.target.value)} placeholder="https://…" />
+                  </label>
+                  <div className="cc-actions">
+                    <button className="cc-primary-button" type="submit" disabled={deliveryBusy}>{deliveryBusy ? "Enviando…" : "Enviar disputa a moderación"}</button>
+                    <button className="cc-secondary-button" type="button" disabled={deliveryBusy} onClick={() => setDisputeOpen(false)}>Cancelar</button>
+                  </div>
+                </form>
+              ) : (
+                <div className="cc-actions">
+                  <button className="cc-secondary-button" type="button" onClick={() => setDisputeOpen(true)}>Solicitar revisión de un moderador</button>
+                </div>
+              )}
+
+              {disputas.length > 0 && (
+                <ul className="cc-rating-list">
+                  {disputas.map((disputa) => (
+                    <li key={disputa.id}>
+                      <div className="cc-rating-heading">
+                        <strong>{disputa.motivo}</strong>
+                        <time>{formatDate(disputa.fechaApertura)}</time>
+                      </div>
+                      <p>{disputa.descripcion}</p>
+                      <p className="cc-muted">
+                        Estado: {disputa.estado === "abierta" ? "Abierta" : disputa.estado === "en_revision" ? "En revisión" : disputa.estado === "resuelta" ? "Resuelta" : "Rechazada"}
+                        {disputa.resolucion ? ` · Resolución: ${disputa.resolucion}` : ""}
+                      </p>
+                      {disputa.evidenciaUrl && <p><a href={disputa.evidenciaUrl} target="_blank" rel="noreferrer">Ver evidencia</a></p>}
                     </li>
                   ))}
                 </ul>

@@ -76,6 +76,28 @@ export interface DatosEntrega {
   enlaceUrl?: string;
 }
 
+export type EstadoDisputa = "abierta" | "en_revision" | "resuelta" | "rechazada";
+
+export interface DisputaContrato {
+  id: number;
+  contratoId: number;
+  abiertaPorId: number;
+  motivo: string;
+  descripcion: string;
+  evidenciaUrl: string | null;
+  estado: EstadoDisputa;
+  resolucion: string | null;
+  resueltaPorId: number | null;
+  fechaApertura: string;
+  fechaResolucion: string | null;
+}
+
+export interface DatosDisputa {
+  motivo: string;
+  descripcion: string;
+  evidenciaUrl?: string;
+}
+
 /**
  * Módulo de API — Contratos y calificaciones.
  * Backend: /api/contratos, /api/contratos/:id, /api/contratos/:id/estado,
@@ -183,6 +205,27 @@ export async function rejectDelivery(token: string, contratoId: number, observac
     token,
     body: { observacion },
     mensajeError: "No se pudo rechazar la entrega",
+  });
+  return data;
+}
+
+export async function getContractDisputes(token: string, contratoId: number): Promise<{ total: number; disputas: DisputaContrato[] }> {
+  const { data } = await apiFetch<{ total: number; disputas: DisputaContrato[] }>({
+    method: "GET",
+    path: `/contratos/${contratoId}/disputas`,
+    token,
+    mensajeError: "No se pudieron cargar las disputas",
+  });
+  return data;
+}
+
+export async function openDispute(token: string, contratoId: number, datos: DatosDisputa): Promise<{ mensaje: string; disputa: DisputaContrato }> {
+  const { data } = await apiFetch<{ mensaje: string; disputa: DisputaContrato }>({
+    method: "POST",
+    path: `/contratos/${contratoId}/disputas`,
+    token,
+    body: datos,
+    mensajeError: "No se pudo abrir la disputa",
   });
   return data;
 }
