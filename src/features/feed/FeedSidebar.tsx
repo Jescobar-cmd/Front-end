@@ -10,6 +10,7 @@ type IconName =
   | "briefcase"
   | "message"
   | "contract"
+  | "wallet"
   | "user"
   | "plus"
   | "chevronLeft"
@@ -43,6 +44,7 @@ function itemsPorRol(esFreelancer: boolean): ItemSidebar[] {
       { id: "marketplace", icono: "compass", label: "Explorar proyectos", href: "/dashboard/freelancer/ofertas" },
       { id: "chat", icono: "message", label: "Mensajes", href: "/chat" },
       { id: "contratos", icono: "contract", label: "Contratos", href: "/contracts" },
+      { id: "ganancias", icono: "wallet", label: "Ganancias", href: "/dashboard/freelancer/liquidaciones" },
       { id: "perfil", icono: "user", label: "Perfil", href: "/perfil/freelancer" },
     ];
   }
@@ -90,6 +92,13 @@ function Icono({ name }: { name: IconName }) {
         <path d="M7 3.5h7l4 4v13H7z" />
         <path d="M14 3.5v4h4" />
         <path d="M10 12h5M10 15.5h5" />
+      </>
+    ),
+    wallet: (
+      <>
+        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 15.5z" />
+        <path d="M4 7.5V6a2 2 0 0 1 2-2h12" />
+        <circle cx="16.5" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
       </>
     ),
     user: (
