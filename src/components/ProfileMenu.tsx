@@ -3,10 +3,10 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { rolLabel } from "../core/domain/entities/user";
-import { dashboardPorRol } from "../routes/rutasPorRol";
+import { dashboardPorRol, panelPorRol } from "../routes/rutasPorRol";
 import "./ProfileMenu.css";
 
-type IconName = "chevron" | "user" | "contract" | "logout" | "lock" | "shield";
+type IconName = "chevron" | "user" | "contract" | "logout" | "lock" | "shield" | "chart";
 
 function Icono({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -35,6 +35,12 @@ function Icono({ name }: { name: IconName }) {
       <>
         <rect x="5" y="10" width="14" height="10" rx="2" />
         <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </>
+    ),
+    chart: (
+      <>
+        <path d="M4 20h16" />
+        <path d="M7 16v-4M12 16V7M17 16v-6" />
       </>
     ),
     shield: (
@@ -76,6 +82,7 @@ export function ProfileMenu() {
   const rolVisible = user ? rolLabel(user.rol) : "Cliente";
   const handle = `@${nombreVisible.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ".").replace(/[^a-z0-9._]/g, "") || "usuario"}`;
   const perfilPath = user && esAdminOModerador ? dashboardPorRol(user.rol) : "/perfil";
+  const panelPath = user ? panelPorRol(user.rol) : undefined;
   const inicial = nombreVisible.charAt(0).toLocaleUpperCase();
 
   useEffect(() => {
@@ -193,6 +200,17 @@ export function ProfileMenu() {
               <Icono name={esAdminOModerador ? "shield" : "user"} />
               <span>{esAdminOModerador ? "Ir a mi panel" : "Ver mi perfil"}</span>
             </Link>
+            {panelPath && (
+              <Link
+                className="profile-menu__item"
+                to={panelPath}
+                role="menuitem"
+                onClick={() => setAbierto(false)}
+              >
+                <Icono name="chart" />
+                <span>Mi panel</span>
+              </Link>
+            )}
             <Link
               className="profile-menu__item"
               to="/contracts"

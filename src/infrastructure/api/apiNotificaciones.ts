@@ -1,6 +1,5 @@
 import { apiFetch } from "./client";
-
-export type RolNotificaciones = "cliente" | "freelancer";
+import type { Rol } from "../../core/domain/entities/user";
 
 export interface Notificacion {
   id: number;
@@ -13,7 +12,7 @@ export interface Notificacion {
   fechaCreacion: string;
 }
 
-export interface NotificacionesPaginadas {
+export interface NotificacionPaginada {
   page: number;
   limit: number;
   total: number;
@@ -21,50 +20,83 @@ export interface NotificacionesPaginadas {
   items: Notificacion[];
 }
 
-function rutaNotificaciones(rol: RolNotificaciones): string {
-  return rol === "freelancer" ? "/freelancer/notificaciones" : "/cliente/notificaciones";
+export interface RespuestaNotificacionLeida {
+  mensaje: string;
+  notificacion: Notificacion;
+}
+
+export interface RespuestaNotificacionesLeidas {
+  mensaje: string;
+  actualizadas: number;
+}
+
+export interface FiltrosNotificaciones {
+  page?: number;
+  limit?: number;
+  soloNoLeidas?: boolean;
 }
 
 /**
- * Módulo de API — Notificaciones del usuario autenticado.
- * Backend: GET /api/{cliente|freelancer}/notificaciones,
- *          PATCH .../notificaciones/leidas,
- *          PATCH .../notificaciones/:id/leida
+ * El backend expone las notificaciones en la ruta del rol autenticado.
+ * Administrador y moderador comparten el panel de moderación.
  */
+const RUTA_POR_ROL: Record<Rol, string> = {
+  administrador: "/moderador/notificaciones",
+  moderador: "/moderador/notificaciones",
+  cliente: "/cliente/notificaciones",
+  freelancer: "/freelancer/notificaciones",
+};
 
-export async function getNotifications(
+function rutaNotificaciones(rol: Rol): string {
+  const ruta = RUTA_POR_ROL[rol];
+  if (!ruta) {
+    throw new Error("El rol actual no tiene una bandeja de notificaciones disponible.");
+  }
+  return ruta;
+}
+
+export async function listarNotificaciones(
   token: string,
-  rol: RolNotificaciones,
-  filtros: { page?: number; limit?: number; soloNoLeidas?: boolean } = {},
-): Promise<NotificacionesPaginadas> {
+  rol: Rol,
+  filtros: FiltrosNotificaciones = {},
+): Promise<NotificacionPaginada> {
   const params = new URLSearchParams();
-  if (filtros.page) params.set("page", String(filtros.page));
-  if (filtros.limit) params.set("limit", String(filtros.limit));
+  params.set("page", String(filtros.page ?? 1));
+  params.set("limit", String(filtros.limit ?? 20));
   if (filtros.soloNoLeidas) params.set("soloNoLeidas", "true");
-  const query = params.toString();
-  const { data } = await apiFetch<NotificacionesPaginadas>({
+
+  const { data } = await apiFetch<NotificacionPaginada>({
     method: "GET",
-    path: `${rutaNotificaciones(rol)}${query ? `?${query}` : ""}`,
+    path: `${rutaNotificaciones(rol)}?${params.toString()}`,
     token,
     mensajeError: "No se pudieron cargar las notificaciones",
   });
   return data;
 }
 
-export async function markAllNotificationsRead(token: string, rol: RolNotificaciones): Promise<void> {
-  await apiFetch({
+export async function marcarNotificacionLeida(
+  token: string,
+  rol: Rol,
+  notificacionId: number,
+): Promise<RespuestaNotificacionLeida> {
+  const { data } = await apiFetch<RespuestaNotificacionLeida>({
+    method: "PATCH",
+    path: `${rutaNotificaciones(rol)}/${notificacionId}/leida`,
+    token,
+    mensajeError: "No se pudo marcar la notificación como leída",
+  });
+  return data;
+}
+
+export async function marcarTodasNotificacionesLeidas(
+  token: string,
+  rol: Rol,
+): Promise<RespuestaNotificacionesLeidas> {
+  const { data } = await apiFetch<RespuestaNotificacionesLeidas>({
     method: "PATCH",
     path: `${rutaNotificaciones(rol)}/leidas`,
     token,
-    mensajeError: "No se pudieron marcar las notificaciones",
+    mensajeError: "No se pudieron marcar las notificaciones como leídas",
   });
-}
-
-export async function markNotificationRead(token: string, rol: RolNotificaciones, id: number): Promise<void> {
-  await apiFetch({
-    method: "PATCH",
-    path: `${rutaNotificaciones(rol)}/${id}/leida`,
-    token,
-    mensajeError: "No se pudo marcar la notificación",
-  });
+  return data;
 }

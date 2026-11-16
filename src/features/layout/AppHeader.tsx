@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { Brand } from "../../components/Brand";
 import { ProfileMenu } from "../../components/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
-import { dashboardPorRol } from "../../routes/rutasPorRol";
+import { dashboardPorRol, panelPorRol } from "../../routes/rutasPorRol";
+import { NotificationsBell } from "../notifications/NotificationsBell";
+import { useNotificaciones } from "../notifications/NotificationsContext";
 import { CategoryBar } from "./CategoryBar";
-import { NotificationsBell } from "./NotificationsBell";
 
 function SearchIcon() {
   return (
@@ -26,7 +27,9 @@ export function AppHeader({
   onSubmit: () => void;
 }) {
   const { user } = useAuth();
+  const { mensajesNoLeidos } = useNotificaciones();
   const esFreelancer = user?.rol === "freelancer";
+  const panelPath = user ? panelPorRol(user.rol) : undefined;
   const brandPath = user ? dashboardPorRol(user.rol) : "/";
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value);
@@ -58,15 +61,38 @@ export function AppHeader({
 
         <div className="app-header__right">
           {user ? (
-            <Link className="app-header__icon-link" to="/chat" aria-label="Mensajes">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 9 9 0 0 1-3.8-.8L3 21l1.8-4.1a8 8 0 0 1-1.3-4.4A8.4 8.4 0 0 1 12 4.2a8.4 8.4 0 0 1 9 7.3Z" />
-              </svg>
-            </Link>
+            <>
+              {panelPath && (
+                <Link className="app-header__icon-link" to={panelPath} aria-label="Mi panel" title="Mi panel">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 20h16" />
+                    <path d="M7 16v-4M12 16V7M17 16v-6" />
+                  </svg>
+                </Link>
+              )}
+              <NotificationsBell />
+              <Link
+                className="app-header__icon-link"
+                to="/chat"
+                aria-label={
+                  mensajesNoLeidos > 0
+                    ? `Mensajes, ${mensajesNoLeidos} sin leer`
+                    : "Mensajes"
+                }
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 9 9 0 0 1-3.8-.8L3 21l1.8-4.1a8 8 0 0 1-1.3-4.4A8.4 8.4 0 0 1 12 4.2a8.4 8.4 0 0 1 9 7.3Z" />
+                </svg>
+                {mensajesNoLeidos > 0 ? (
+                  <span className="app-header__badge" aria-hidden="true">
+                    {mensajesNoLeidos > 99 ? "99+" : mensajesNoLeidos}
+                  </span>
+                ) : null}
+              </Link>
+            </>
           ) : (
             <Link className="app-header__login" to="/login">Iniciar sesión</Link>
           )}
-          {user && <NotificationsBell />}
           <ProfileMenu />
         </div>
       </div>

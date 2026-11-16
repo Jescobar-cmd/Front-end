@@ -12,6 +12,8 @@ import { dashboardPorRol } from "./rutasPorRol";
 import { InicioCliente } from "../features/feed/InicioCliente";
 import { InicioFreelancer } from "../features/feed/InicioFreelancer";
 import { InternalLayout } from "../features/layout/InternalLayout";
+import { ClientDashboard } from "../features/dashboard/ClientDashboard";
+import { FreelancerDashboard } from "../features/dashboard/FreelancerDashboard";
 import {
   ClientProfilePage,
   FreelancerProfilePage,
@@ -46,8 +48,8 @@ import { NotificacionesPage } from "../features/moderacion/pages/NotificacionesP
 import { UsuariosPage } from "../features/moderacion/pages/UsuariosPage";
 import { UsuarioDetallePage } from "../features/moderacion/pages/UsuarioDetallePage";
 import { SecurityPage } from "../features/account/SecurityPage";
+import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { InvoicesPage } from "../features/invoices/InvoicesPage";
-import { NotificacionesPage as NotificacionesUsuarioPage } from "../features/notifications/NotificacionesPage";
 
 function RedireccionDashboard() {
   const { user } = useAuth();
@@ -130,6 +132,22 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/freelancer/panel"
+          element={
+            <RutaProtegida roles={["freelancer"]}>
+              <FreelancerDashboard />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/dashboard/cliente/panel"
+          element={
+            <RutaProtegida roles={["cliente"]}>
+              <ClientDashboard />
+            </RutaProtegida>
+          }
+        />
+        <Route
           path="/dashboard/moderador"
           element={
             <RutaProtegida roles={["moderador", "administrador"]}>
@@ -154,6 +172,7 @@ export function AppRoutes() {
           }
         />
         <Route path="/cambiar-password" element={<Navigate to="/cuenta/seguridad" replace />} />
+        <Route path="/notificaciones" element={<NotificationsPage />} />
         <Route
           path="/perfil/freelancer"
           element={

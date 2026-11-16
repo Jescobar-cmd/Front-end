@@ -49,7 +49,8 @@ export interface Sesion {
 
 export type ResultadoGoogle =
   | { tipo: "sesion"; sesion: Sesion }
-  | { tipo: "onboarding"; idToken: string; email: string };
+  | { tipo: "onboarding"; idToken: string; email: string; rol?: "cliente" | "freelancer" }
+  | { tipo: "requiere_rol"; email: string };
 
 export interface Perfil {
   id: number;

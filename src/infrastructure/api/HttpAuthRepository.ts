@@ -108,7 +108,9 @@ export class HttpAuthRepository implements AuthRepositoryPort {
     options?: LoginGoogleOptions | 2 | 3,
   ): Promise<ResultadoGoogle> {
     const normalized = typeof options === "number" ? { rolId: options } : options;
-    const { status, data } = await apiFetch<SesionDto & { needsOnboarding?: boolean; email?: string }>({
+    const { status, data } = await apiFetch<
+      SesionDto & { needsOnboarding?: boolean; needsRole?: boolean; email?: string }
+    >({
       method: "POST",
       path: "/auth/google",
       body: {
@@ -118,8 +120,17 @@ export class HttpAuthRepository implements AuthRepositoryPort {
       },
       mensajeError: "No se pudo iniciar sesión con Google",
     });
+    if (data.needsRole) {
+      return { tipo: "requiere_rol", email: data.email ?? "" };
+    }
     if (status === 202 || data.needsOnboarding) {
-      return { tipo: "onboarding", idToken, email: data.email ?? "" };
+      const rol = data.rol !== undefined && data.rol !== null ? rolDesdeId(data.rol) : undefined;
+      return {
+        tipo: "onboarding",
+        idToken,
+        email: data.email ?? "",
+        ...(rol === "cliente" || rol === "freelancer" ? { rol } : {}),
+      };
     }
     return { tipo: "sesion", sesion: await sesionDesdeDto(data) };
   }
