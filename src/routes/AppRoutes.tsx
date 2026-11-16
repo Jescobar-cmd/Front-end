@@ -190,7 +190,6 @@ export function AppRoutes() {
           }
         />
         <Route path="/chat" element={<ChatPage />} />
-        <Route path="/notificaciones" element={<NotificacionesUsuarioPage />} />
         <Route path="/chat/:conversationId" element={<ConversationDetailPage />} />
         <Route path="/contracts" element={<ContractsPage />} />
         <Route path="/contracts/:contractId" element={<ContractDetailPage />} />
