@@ -1262,3 +1262,62 @@
   margin: 0 0 8px;
   line-height: 1.5;
 }
+
+.cc-notification-list {
+  margin: 0;
+}
+
+.cc-notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cc-notification-item:hover .cc-notification-body strong {
+  color: var(--fg-accent, #0b4a6b);
+}
+
+.cc-notification-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.cc-notification-list li.is-unread .cc-notification-dot {
+  background: var(--fg-accent, #0b4a6b);
+}
+
+.cc-notification-list li.is-read .cc-notification-body {
+  opacity: 0.65;
+}
+
+.cc-notification-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cc-notification-body strong {
+  font-size: 0.95rem;
+}
+
+.cc-notification-body span {
+  line-height: 1.5;
+}
+
+.cc-notification-body time {
+  font-size: 0.78rem;
+  color: var(--fg-text-tertiary, #8e8e93);
+}

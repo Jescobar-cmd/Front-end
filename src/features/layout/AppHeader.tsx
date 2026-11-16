@@ -5,6 +5,7 @@ import { ProfileMenu } from "../../components/ProfileMenu";
 import { useAuth } from "../../context/AuthContext";
 import { dashboardPorRol } from "../../routes/rutasPorRol";
 import { CategoryBar } from "./CategoryBar";
+import { NotificationsBell } from "./NotificationsBell";
 
 function SearchIcon() {
   return (
@@ -65,6 +66,7 @@ export function AppHeader({
           ) : (
             <Link className="app-header__login" to="/login">Iniciar sesión</Link>
           )}
+          {user && <NotificationsBell />}
           <ProfileMenu />
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
+import { ReportDialog } from "../../components/ReportDialog";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -94,6 +95,7 @@ export function ProfessionalProfilePage() {
   const [projectToDelete, setProjectToDelete] = useState<PortfolioProject | null>(null);
   const [deletingProject, setDeletingProject] = useState(false);
   const [toast, setToast] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const sectionRefs = useRef<Partial<Record<ProfileSectionId, HTMLElement | null>>>({});
   const serviceIdParam = Number(searchParams.get("servicioId"));
@@ -626,13 +628,16 @@ export function ProfessionalProfilePage() {
                 Editar perfil
               </Button>
             ) : (
-              <Button
-                variant="secondary"
-                onClick={handleContact}
-                disabled={contactLoading || contactDisabled}
-              >
-                {contactLoading ? "Abriendo conversación…" : "Contactar"}
-              </Button>
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handleContact}
+                  disabled={contactLoading || contactDisabled}
+                >
+                  {contactLoading ? "Abriendo conversación…" : "Contactar"}
+                </Button>
+                {token ? <Button variant="ghost" onClick={() => setReportOpen(true)}>Reportar</Button> : null}
+              </>
             )}
             {links.length > 0 ? (
               <div className="pp-cta__links">
@@ -650,6 +655,16 @@ export function ProfessionalProfilePage() {
 
       {selectedProject ? (
         <ProjectDetailModal project={selectedProject} onClose={() => setSelectedProject(null)} />
+      ) : null}
+
+      {token && profile ? (
+        <ReportDialog
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          targetLabel={profile.nombre}
+          usuarioReportadoId={profile.id}
+          onReported={() => setToast({ tone: "success", message: "Reporte enviado. Un moderador lo revisará." })}
+        />
       ) : null}
 
       <ConfirmDialog

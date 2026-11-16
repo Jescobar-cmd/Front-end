@@ -176,6 +176,16 @@ export async function getMyProposals(token: string): Promise<{ total: number; pr
   return data;
 }
 
+export async function withdrawProposal(token: string, propuestaId: number): Promise<{ mensaje: string; propuesta: Propuesta }> {
+  const { data } = await apiFetch<{ mensaje: string; propuesta: Propuesta }>({
+    method: "PATCH",
+    path: `/freelancer/propuestas/${propuestaId}/retirar`,
+    token,
+    mensajeError: "No se pudo retirar la propuesta",
+  });
+  return data;
+}
+
 export async function getMarketOffers(
   token: string,
   filtros: FiltrosMarketOferta = {},

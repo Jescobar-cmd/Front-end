@@ -188,6 +188,22 @@ export async function submitDelivery(token: string, contratoId: number, datos: D
   return data;
 }
 
+export async function updateDelivery(
+  token: string,
+  contratoId: number,
+  entregaId: number,
+  datos: DatosEntrega,
+): Promise<{ mensaje: string; entrega: EntregaContrato }> {
+  const { data } = await apiFetch<{ mensaje: string; entrega: EntregaContrato }>({
+    method: "PATCH",
+    path: `/contratos/${contratoId}/entregas/${entregaId}`,
+    token,
+    body: datos,
+    mensajeError: "No se pudo actualizar la entrega",
+  });
+  return data;
+}
+
 export async function approveDelivery(token: string, contratoId: number): Promise<{ mensaje: string; contrato: Contrato; entrega: EntregaContrato }> {
   const { data } = await apiFetch<{ mensaje: string; contrato: Contrato; entrega: EntregaContrato }>({
     method: "PATCH",

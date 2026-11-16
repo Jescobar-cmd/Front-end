@@ -16,6 +16,7 @@ import {
   rateContract,
   rejectDelivery,
   submitDelivery,
+  updateDelivery,
 } from "../../infrastructure/api/apiContratos";
 import type { Calificacion, Contrato, DisputaContrato, EntregaContrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
 import { consultarPagoContrato, iniciarPagoContrato } from "../../infrastructure/api/apiPagos";
@@ -160,6 +161,7 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
   const [deliveryMensaje, setDeliveryMensaje] = useState("");
   const [deliveryArchivo, setDeliveryArchivo] = useState("");
   const [deliveryEnlace, setDeliveryEnlace] = useState("");
+  const [editingEntregaId, setEditingEntregaId] = useState<number | null>(null);
   const [rejectObservacion, setRejectObservacion] = useState("");
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [score, setScore] = useState("5");
@@ -276,16 +278,28 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
     setDeliveryBusy(true);
     setError("");
     try {
-      await submitDelivery(token, contract.id, datos);
+      if (editingEntregaId !== null) {
+        await updateDelivery(token, contract.id, editingEntregaId, datos);
+      } else {
+        await submitDelivery(token, contract.id, datos);
+      }
       setDeliveryMensaje("");
       setDeliveryArchivo("");
       setDeliveryEnlace("");
+      setEditingEntregaId(null);
       setRefreshKey((key) => key + 1);
     } catch (requestError) {
       setError(errorMessage(requestError, "No se pudo registrar la entrega."));
     } finally {
       setDeliveryBusy(false);
     }
+  };
+
+  const empezarEdicionEntrega = (entrega: EntregaContrato) => {
+    setEditingEntregaId(entrega.id);
+    setDeliveryMensaje(entrega.mensaje ?? "");
+    setDeliveryArchivo(entrega.archivoUrl ?? "");
+    setDeliveryEnlace(entrega.enlaceUrl ?? "");
   };
 
   const resolverEntrega = async (accion: "aprobar" | "rechazar") => {
@@ -485,13 +499,18 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
                 </div>
               )}
 
-              {entregaPendiente && esFreelancer && (
-                <p className="cc-muted">Tu entrega está en revisión por el cliente desde el {formatDate(entregaPendiente.fechaEntrega)}.</p>
+              {entregaPendiente && esFreelancer && editingEntregaId === null && (
+                <>
+                  <p className="cc-muted">Tu entrega está en revisión por el cliente desde el {formatDate(entregaPendiente.fechaEntrega)}.</p>
+                  <div className="cc-actions">
+                    <button className="cc-secondary-button" type="button" onClick={() => empezarEdicionEntrega(entregaPendiente)}>Editar entrega</button>
+                  </div>
+                </>
               )}
 
-              {!entregaPendiente && esFreelancer && (
+              {esFreelancer && (!entregaPendiente || editingEntregaId !== null) && (
                 <form className="cc-form" onSubmit={submitEntrega}>
-                  <h3>Enviar entrega al cliente</h3>
+                  <h3>{editingEntregaId !== null ? "Editar entrega en revisión" : "Enviar entrega al cliente"}</h3>
                   <label>
                     Mensaje <span className="cc-muted">(opcional)</span>
                     <textarea rows={3} maxLength={2000} value={deliveryMensaje} onChange={(event) => setDeliveryMensaje(event.target.value)} placeholder="Resume lo que estás entregando…" />
@@ -504,7 +523,15 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
                     Enlace de entrega <span className="cc-muted">(opcional)</span>
                     <input type="url" value={deliveryEnlace} onChange={(event) => setDeliveryEnlace(event.target.value)} placeholder="https://…" />
                   </label>
-                  <div className="cc-form-footer"><span className="cc-muted">{deliveryMensaje.length}/2000</span><button className="cc-primary-button" type="submit" disabled={deliveryBusy}>{deliveryBusy ? "Enviando…" : "Enviar entrega"}</button></div>
+                  <div className="cc-form-footer">
+                    <span className="cc-muted">{deliveryMensaje.length}/2000</span>
+                    <div className="cc-actions">
+                      {editingEntregaId !== null && (
+                        <button className="cc-secondary-button" type="button" disabled={deliveryBusy} onClick={() => { setEditingEntregaId(null); setDeliveryMensaje(""); setDeliveryArchivo(""); setDeliveryEnlace(""); }}>Cancelar edición</button>
+                      )}
+                      <button className="cc-primary-button" type="submit" disabled={deliveryBusy}>{deliveryBusy ? "Guardando…" : editingEntregaId !== null ? "Guardar cambios" : "Enviar entrega"}</button>
+                    </div>
+                  </div>
                 </form>
               )}
 

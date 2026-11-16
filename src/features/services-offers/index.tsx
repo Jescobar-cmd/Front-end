@@ -15,6 +15,7 @@ import {
   rejectProposal,
   sendProposal,
   updateOffer,
+  withdrawProposal,
 } from "../../infrastructure/api/apiOfertas";
 import type { OfertaMarketplace, Propuesta } from "../../infrastructure/api/apiOfertas";
 import {
@@ -35,6 +36,7 @@ import { useInternalSearch } from "../layout/InternalSearchContext";
 import { Badge } from "../../components/ui/Badge";
 import { buttonClassName } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { ReportDialog } from "../../components/ReportDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ImageUploader } from "../../components/ui/ImageUploader";
 import { ServiceCard } from "../../components/ui/ServiceCard";
@@ -1090,6 +1092,9 @@ export function FreelancerMarketplace({ token }: { token: string }) {
   const [myLoading, setMyLoading] = useState(false);
   const [myError, setMyError] = useState("");
   const [myReload, setMyReload] = useState(0);
+  const [proposalToWithdraw, setProposalToWithdraw] = useState<Propuesta | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [offerReportOpen, setOfferReportOpen] = useState(false);
   const catalogs = useCatalogs(token);
 
   useEffect(() => {
@@ -1167,6 +1172,25 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     }
   }
 
+  async function confirmWithdrawProposal() {
+    if (!proposalToWithdraw || withdrawing) return;
+    setWithdrawing(true);
+    setMyError("");
+    try {
+      await withdrawProposal(token, proposalToWithdraw.id);
+      setMyProposalList((actuales) =>
+        actuales.map((propuesta) =>
+          propuesta.id === proposalToWithdraw.id ? { ...propuesta, estado: "retirada" } : propuesta,
+        ),
+      );
+      setProposalToWithdraw(null);
+    } catch (reason) {
+      setMyError(errorMessage(reason));
+    } finally {
+      setWithdrawing(false);
+    }
+  }
+
   async function startProjectChat() {
     if (!selected || chatLoading) return;
     setChatLoading(true);
@@ -1191,6 +1215,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
               <button className="so-button so-button--outline" type="button" disabled={chatLoading} onClick={() => void startProjectChat()}>
                 {chatLoading ? "Abriendo chat…" : "Abrir chat del proyecto"}
               </button>
+              <button className="so-button so-button--outline" type="button" onClick={() => setOfferReportOpen(true)}>Reportar proyecto</button>
             </div>
             <section className="so-surface so-proposal-form">
               <h3>Enviar una propuesta</h3>
@@ -1263,10 +1288,34 @@ export function FreelancerMarketplace({ token }: { token: string }) {
               <h3>{proposal.proyecto?.titulo ?? `Oferta #${proposal.proyecto?.id ?? "—"}`}</h3>
               <p>{proposal.mensaje || "Sin mensaje adicional."}</p>
               <div className="so-card__meta"><strong>{money(proposal.montoPropuesto)}</strong></div>
+              {proposal.estado === "pendiente" && (
+                <div className="so-card__actions">
+                  <button className="so-button so-button--outline" type="button" onClick={() => setProposalToWithdraw(proposal)}>Retirar propuesta</button>
+                </div>
+              )}
             </article>
           ))}</div>
         )}
       </Panel>
+      <ConfirmDialog
+        open={proposalToWithdraw !== null}
+        title="Retirar propuesta"
+        description={`¿Seguro que quieres retirar tu propuesta${proposalToWithdraw?.proyecto?.titulo ? ` para "${proposalToWithdraw.proyecto.titulo}"` : ""}? El cliente ya no podrá aceptarla.`}
+        confirmLabel="Retirar propuesta"
+        tone="danger"
+        loading={withdrawing}
+        onConfirm={() => void confirmWithdrawProposal()}
+        onCancel={() => setProposalToWithdraw(null)}
+      />
+      {selected ? (
+        <ReportDialog
+          open={offerReportOpen}
+          onClose={() => setOfferReportOpen(false)}
+          targetLabel={selected.titulo}
+          proyectoId={selected.id}
+          onReported={() => setSelected(null)}
+        />
+      ) : null}
     </PageShell>
   );
 }
