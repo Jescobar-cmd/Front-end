@@ -1573,18 +1573,42 @@ export function FreelancerServices({ token }: { token: string }) {
               />
             ) : (
               <div className="so-list">{services.map((service) => (
-                <article className="so-card" key={service.id}>
-                  <div className="so-card__top"><span className="so-badge">{statusLabel(service.estado)}</span><span className="so-muted">{service.categoria?.nombre ?? "Sin categoría"}</span></div>
-                  <h3>{service.titulo}</h3><p className="so-clamp">{service.descripcion}</p>
-                  <div className="so-card__meta"><strong>{money(service.precio)}</strong></div>
-                  <div className="so-form__actions">
-                    {service.estado !== "eliminado" && <>
-                      <button className="so-button so-button--outline" type="button" onClick={() => setEditing(service)}>Editar</button>
-                      {service.estado === "activo"
-                        ? <button className="so-button so-button--quiet" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "pausado")}>Pausar</button>
-                        : <button className="so-button so-button--action" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "activo")}>Activar</button>}
-                      <button className="so-button so-button--danger" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "eliminado")}>Eliminar</button>
-                    </>}
+                <article className="so-card marketplace-card" key={service.id}>
+                  <div className="marketplace-card__cover">
+                    {service.imagenUrl ? (
+                      <img src={service.imagenUrl} alt={`Imagen de ${service.titulo}`} loading="lazy" />
+                    ) : (
+                      <div className="marketplace-card__cover-placeholder">
+                        <span>{service.categoria?.nombre ?? "Servicio"}</span>
+                      </div>
+                    )}
+                    {service.categoria ? (
+                      <span className="marketplace-card__cover-badge">
+                        <Badge tone="blue">{service.categoria.nombre}</Badge>
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="marketplace-card__body">
+                    <div className="so-card__top">
+                      <span className="so-badge">{statusLabel(service.estado)}</span>
+                      <span className="so-muted">{service.categoria?.nombre ?? "Sin categoría"}</span>
+                    </div>
+                    <h3 className="marketplace-card__title">{service.titulo}</h3>
+                    <p className="so-clamp">{service.descripcion}</p>
+                    <div className="marketplace-card__meta">
+                      <span className="marketplace-card__price">
+                        <strong>{money(service.precio)}</strong>
+                      </span>
+                    </div>
+                    <div className="so-form__actions">
+                      {service.estado !== "eliminado" && <>
+                        <button className="so-button so-button--outline" type="button" onClick={() => setEditing(service)}>Editar</button>
+                        {service.estado === "activo"
+                          ? <button className="so-button so-button--quiet" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "pausado")}>Pausar</button>
+                          : <button className="so-button so-button--action" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "activo")}>Activar</button>}
+                        <button className="so-button so-button--danger" type="button" disabled={busyId === service.id} onClick={() => void changeStatus(service, "eliminado")}>Eliminar</button>
+                      </>}
+                    </div>
                   </div>
                 </article>
               ))}</div>
