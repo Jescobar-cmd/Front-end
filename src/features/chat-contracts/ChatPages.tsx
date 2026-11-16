@@ -50,7 +50,7 @@ function useConversationList(token?: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent = false) => {
     if (!token) {
       setConversations([]);
       setError("Tu sesión no está disponible. Inicia sesión para ver tus conversaciones.");
@@ -58,7 +58,7 @@ function useConversationList(token?: string | null) {
       return;
     }
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError("");
     try {
       const response = await getConversations(token);
@@ -76,6 +76,8 @@ function useConversationList(token?: string | null) {
 
   useEffect(() => {
     void refresh();
+    const timer = window.setInterval(() => void refresh(true), 10000);
+    return () => window.clearInterval(timer);
   }, [refresh]);
 
   return { conversations, loading, error, refresh };
@@ -347,7 +349,7 @@ export function ConversationDetailPage({
       } finally {
         inFlight = false;
         if (!cancelled) {
-          const delay = failures > 0 ? Math.min(30000, 2000 * 2 ** (failures - 1)) : 4000;
+          const delay = failures > 0 ? Math.min(30000, 2000 * 2 ** (failures - 1)) : 2000;
           timer = setTimeout(() => void poll(needsInitial), delay);
         }
       }
