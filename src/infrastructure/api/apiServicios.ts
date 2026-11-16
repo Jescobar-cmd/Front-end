@@ -71,7 +71,7 @@ function aQuery(filtros: Record<string, number | string | undefined>): string {
  *         GET /api/freelancer/servicios
  */
 
-export async function listServices(token: string, filtros: FiltrosListadoServicio = {}): Promise<{
+export async function listServices(token: string | undefined, filtros: FiltrosListadoServicio = {}): Promise<{
   page: number;
   limit: number;
   total: number;
@@ -90,17 +90,17 @@ export async function listServices(token: string, filtros: FiltrosListadoServici
       ...(filtros.categoriaId !== undefined ? { categoriaId: filtros.categoriaId } : {}),
       ...(filtros.q !== undefined ? { q: filtros.q } : {}),
     })}`,
-    token,
+    ...(token ? { token } : {}),
     mensajeError: "No se pudo cargar los servicios",
   });
   return data;
 }
 
-export async function getService(token: string, id: number): Promise<Servicio> {
+export async function getService(token: string | undefined, id: number): Promise<Servicio> {
   const { data } = await apiFetch<Servicio>({
     method: "GET",
     path: `/servicios/${id}`,
-    token,
+    ...(token ? { token } : {}),
     mensajeError: "No se pudo cargar el servicio",
   });
   return data;
