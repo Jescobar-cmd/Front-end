@@ -1244,3 +1244,21 @@
     break-inside: avoid;
   }
 }
+
+.cc-delivery-review {
+  border: 1px solid var(--fg-line);
+  border-radius: var(--fg-radius-md, 14px);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--fg-fill, #f7f9fb);
+}
+
+.cc-delivery-review h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.cc-delivery-review p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}

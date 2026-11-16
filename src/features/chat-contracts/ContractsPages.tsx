@@ -5,14 +5,17 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import {
+  approveDelivery,
   cancelContract,
-  completeContract,
   getContract,
+  getContractDeliveries,
   getContractRatings,
   getContracts,
   rateContract,
+  rejectDelivery,
+  submitDelivery,
 } from "../../infrastructure/api/apiContratos";
-import type { Calificacion, Contrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
+import type { Calificacion, Contrato, EntregaContrato, RespuestaListadoCalificaciones } from "../../infrastructure/api/apiContratos";
 import { consultarPagoContrato, iniciarPagoContrato } from "../../infrastructure/api/apiPagos";
 import type { PagoEscrow } from "../../infrastructure/api/apiPagos";
 import { errorMessage, formatDate, formatMoney, isActive, isCancelled, isCompleted, isPendingPayment, pagoEstadoLabel, statusLabel } from "./chatContractsUtils";
@@ -54,13 +57,12 @@ export function ContractsPage() {
     return () => { cancelled = true; };
   }, [token, refreshKey]);
 
-  const changeState = async (contract: Contrato, action: "complete" | "cancel"): Promise<boolean> => {
-    if (!token || !isActive(contract.estado)) return false;
+  const changeState = async (contract: Contrato, action: "cancel"): Promise<boolean> => {
+    if (!token || !isPendingPayment(contract.estado)) return false;
     setBusyId(contract.id);
     setError("");
     try {
-      if (action === "complete") await completeContract(token, contract.id);
-      else await cancelContract(token, contract.id);
+      await cancelContract(token, contract.id);
       setRefreshKey((key) => key + 1);
       return true;
     } catch (requestError) {
@@ -114,11 +116,8 @@ export function ContractsPage() {
               <p className="cc-muted">{contract.contexto?.tipo ?? "Acuerdo"} · Inicio: {formatDate(contract.fechaInicio)}</p>
               <div className="cc-actions">
                 <Link className="cc-secondary-button cc-link-button" to={`/contracts/${contract.id}`}>Ver detalle</Link>
-                {isActive(contract.estado) && (
-                  <>
-                    <button className="cc-primary-button" type="button" disabled={busyId === contract.id} onClick={() => void changeState(contract, "complete")}>Completar</button>
-                    <button className="cc-danger-button" type="button" disabled={busyId === contract.id} onClick={() => setContractToCancel(contract)}>Cancelar</button>
-                  </>
+                {isPendingPayment(contract.estado) && (
+                  <button className="cc-danger-button" type="button" disabled={busyId === contract.id} onClick={() => setContractToCancel(contract)}>Cancelar</button>
                 )}
               </div>
             </article>
@@ -150,10 +149,17 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
   const [contract, setContract] = useState<Contrato | null>(null);
   const [pago, setPago] = useState<PagoEscrow | null>(null);
   const [ratings, setRatings] = useState<RatingState | null>(null);
+  const [entregas, setEntregas] = useState<EntregaContrato[]>([]);
+  const [deliveryMensaje, setDeliveryMensaje] = useState("");
+  const [deliveryArchivo, setDeliveryArchivo] = useState("");
+  const [deliveryEnlace, setDeliveryEnlace] = useState("");
+  const [rejectObservacion, setRejectObservacion] = useState("");
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [score, setScore] = useState("5");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [deliveryBusy, setDeliveryBusy] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [error, setError] = useState("");
@@ -180,12 +186,14 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
       getContract(token, id),
       getContractRatings(token, id),
       consultarPagoContrato(token, id).catch(() => null),
+      getContractDeliveries(token, id).catch(() => null),
     ])
-      .then(([details, ratingList, pagoContrato]) => {
+      .then(([details, ratingList, pagoContrato, entregasContrato]) => {
         if (cancelled) return;
         setContract(details);
         setRatings(ratingList);
         setPago(pagoContrato);
+        setEntregas(entregasContrato?.entregas ?? []);
       })
       .catch((requestError: unknown) => {
         if (!cancelled) setError(errorMessage(requestError, "No se pudo cargar el contrato."));
@@ -220,13 +228,12 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
     };
   }, [volvioDePasarela, token, id]);
 
-  const changeState = async (action: "complete" | "cancel"): Promise<boolean> => {
-    if (!token || !contract || !isActive(contract.estado)) return false;
+  const changeState = async (action: "cancel"): Promise<boolean> => {
+    if (!token || !contract || !isPendingPayment(contract.estado)) return false;
     setBusy(true);
     setError("");
     try {
-      if (action === "complete") await completeContract(token, contract.id);
-      else await cancelContract(token, contract.id);
+      await cancelContract(token, contract.id);
       setRefreshKey((key) => key + 1);
       return true;
     } catch (requestError) {
@@ -239,6 +246,58 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
 
   const confirmCancel = async () => {
     if (await changeState("cancel")) setConfirmCancelOpen(false);
+  };
+
+  const esFreelancer = user?.rol === "freelancer";
+  const esCliente = user?.rol === "cliente";
+  const entregaPendiente = entregas.find((entrega) => entrega.estado === "enviada") ?? null;
+
+  const submitEntrega = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token || !contract || !isActive(contract.estado) || !esFreelancer) return;
+    const datos = {
+      ...(deliveryMensaje.trim() ? { mensaje: deliveryMensaje.trim() } : {}),
+      ...(deliveryArchivo.trim() ? { archivoUrl: deliveryArchivo.trim() } : {}),
+      ...(deliveryEnlace.trim() ? { enlaceUrl: deliveryEnlace.trim() } : {}),
+    };
+    if (!datos.mensaje && !datos.archivoUrl && !datos.enlaceUrl) {
+      setError("Debes enviar un mensaje, un archivo o un enlace de entrega.");
+      return;
+    }
+    setDeliveryBusy(true);
+    setError("");
+    try {
+      await submitDelivery(token, contract.id, datos);
+      setDeliveryMensaje("");
+      setDeliveryArchivo("");
+      setDeliveryEnlace("");
+      setRefreshKey((key) => key + 1);
+    } catch (requestError) {
+      setError(errorMessage(requestError, "No se pudo registrar la entrega."));
+    } finally {
+      setDeliveryBusy(false);
+    }
+  };
+
+  const resolverEntrega = async (accion: "aprobar" | "rechazar") => {
+    if (!token || !contract || !entregaPendiente) return;
+    if (accion === "rechazar" && rejectObservacion.trim().length < 3) {
+      setError("La observación debe tener al menos 3 caracteres.");
+      return;
+    }
+    setDeliveryBusy(true);
+    setError("");
+    try {
+      if (accion === "aprobar") await approveDelivery(token, contract.id);
+      else await rejectDelivery(token, contract.id, rejectObservacion.trim());
+      setRejectObservacion("");
+      setRejectingId(null);
+      setRefreshKey((key) => key + 1);
+    } catch (requestError) {
+      setError(errorMessage(requestError, "No se pudo actualizar la entrega."));
+    } finally {
+      setDeliveryBusy(false);
+    }
   };
 
   const startPayment = async () => {
@@ -307,9 +366,8 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
               <div><dt>Fecha de término</dt><dd>{formatDate(contract.fechaFin)}</dd></div>
               <div><dt>Estado</dt><dd>{contractStateDescription(contract)}</dd></div>
             </dl>
-            {isActive(contract.estado) && (
+            {isPendingPayment(contract.estado) && (
               <div className="cc-actions">
-                <button className="cc-primary-button" type="button" disabled={busy} onClick={() => void changeState("complete")}>Completar contrato</button>
                 <button className="cc-danger-button" type="button" disabled={busy} onClick={() => setConfirmCancelOpen(true)}>Cancelar contrato</button>
               </div>
             )}
@@ -345,6 +403,86 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
               )}
               {isPendingPayment(contract.estado) && user?.rol !== "cliente" && (
                 <p className="cc-muted">El cliente debe completar el pago para activar el contrato.</p>
+              )}
+            </section>
+          )}
+
+          {isActive(contract.estado) && (
+            <section className="cc-panel" aria-labelledby="cc-deliveries-title">
+              <div className="cc-panel-heading">
+                <div><p className="cc-eyebrow">TRABAJO ENTREGADO</p><h2 id="cc-deliveries-title">Entregas</h2></div>
+                {entregaPendiente && <span className="cc-status">En revisión</span>}
+              </div>
+
+              {entregaPendiente && esCliente && (
+                <div className="cc-delivery-review">
+                  <h3>Entrega pendiente de tu revisión</h3>
+                  {entregaPendiente.mensaje && <p>{entregaPendiente.mensaje}</p>}
+                  {entregaPendiente.archivoUrl && <p><a href={entregaPendiente.archivoUrl} target="_blank" rel="noreferrer">Ver archivo adjunto</a></p>}
+                  {entregaPendiente.enlaceUrl && <p><a href={entregaPendiente.enlaceUrl} target="_blank" rel="noreferrer">Abrir enlace de entrega</a></p>}
+                  <p className="cc-muted">Enviada el {formatDate(entregaPendiente.fechaEntrega)}</p>
+                  {rejectingId === entregaPendiente.id ? (
+                    <div className="cc-form">
+                      <label>
+                        ¿Qué debe corregir el freelancer? <span className="cc-muted">(obligatorio, máx. 1000)</span>
+                        <textarea rows={3} maxLength={1000} value={rejectObservacion} onChange={(event) => setRejectObservacion(event.target.value)} />
+                      </label>
+                      <div className="cc-actions">
+                        <button className="cc-primary-button" type="button" disabled={deliveryBusy} onClick={() => void resolverEntrega("rechazar")}>Confirmar rechazo</button>
+                        <button className="cc-secondary-button" type="button" disabled={deliveryBusy} onClick={() => { setRejectingId(null); setRejectObservacion(""); }}>Volver</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="cc-actions">
+                      <button className="cc-primary-button" type="button" disabled={deliveryBusy} onClick={() => void resolverEntrega("aprobar")}>Aprobar entrega y liberar pago</button>
+                      <button className="cc-secondary-button" type="button" disabled={deliveryBusy} onClick={() => setRejectingId(entregaPendiente.id)}>Solicitar cambios</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {entregaPendiente && esFreelancer && (
+                <p className="cc-muted">Tu entrega está en revisión por el cliente desde el {formatDate(entregaPendiente.fechaEntrega)}.</p>
+              )}
+
+              {!entregaPendiente && esFreelancer && (
+                <form className="cc-form" onSubmit={submitEntrega}>
+                  <h3>Enviar entrega al cliente</h3>
+                  <label>
+                    Mensaje <span className="cc-muted">(opcional)</span>
+                    <textarea rows={3} maxLength={2000} value={deliveryMensaje} onChange={(event) => setDeliveryMensaje(event.target.value)} placeholder="Resume lo que estás entregando…" />
+                  </label>
+                  <label>
+                    URL del archivo <span className="cc-muted">(opcional)</span>
+                    <input type="url" value={deliveryArchivo} onChange={(event) => setDeliveryArchivo(event.target.value)} placeholder="https://…" />
+                  </label>
+                  <label>
+                    Enlace de entrega <span className="cc-muted">(opcional)</span>
+                    <input type="url" value={deliveryEnlace} onChange={(event) => setDeliveryEnlace(event.target.value)} placeholder="https://…" />
+                  </label>
+                  <div className="cc-form-footer"><span className="cc-muted">{deliveryMensaje.length}/2000</span><button className="cc-primary-button" type="submit" disabled={deliveryBusy}>{deliveryBusy ? "Enviando…" : "Enviar entrega"}</button></div>
+                </form>
+              )}
+
+              {!entregaPendiente && esCliente && entregas.length === 0 && (
+                <p className="cc-muted">El freelancer aún no ha enviado la entrega. Te avisaremos cuando la envíe.</p>
+              )}
+
+              {entregas.length > 0 && (
+                <ul className="cc-rating-list">
+                  {entregas.map((entrega) => (
+                    <li key={entrega.id}>
+                      <div className="cc-rating-heading">
+                        <strong>{entrega.estado === "aprobada" ? "Aprobada" : entrega.estado === "rechazada" ? "Cambios solicitados" : "En revisión"}</strong>
+                        <time>{formatDate(entrega.fechaEntrega)}</time>
+                      </div>
+                      {entrega.mensaje && <p>{entrega.mensaje}</p>}
+                      {entrega.enlaceUrl && <p><a href={entrega.enlaceUrl} target="_blank" rel="noreferrer">Abrir enlace</a></p>}
+                      {entrega.archivoUrl && <p><a href={entrega.archivoUrl} target="_blank" rel="noreferrer">Ver archivo</a></p>}
+                      {entrega.estado === "rechazada" && entrega.observacionRevision && <p className="cc-muted">Observación: {entrega.observacionRevision}</p>}
+                    </li>
+                  ))}
+                </ul>
               )}
             </section>
           )}
