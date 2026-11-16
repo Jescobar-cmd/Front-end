@@ -54,6 +54,28 @@ export interface RespuestaListadoCalificaciones {
   miCalificacion: Calificacion | null;
 }
 
+export type EstadoEntrega = "enviada" | "aprobada" | "rechazada";
+
+export interface EntregaContrato {
+  id: number;
+  contratoId: number;
+  autorId: number;
+  mensaje: string | null;
+  archivoUrl: string | null;
+  enlaceUrl: string | null;
+  estado: EstadoEntrega;
+  observacionRevision: string | null;
+  fechaEntrega: string;
+  fechaRevision: string | null;
+  revisadoPorId: number | null;
+}
+
+export interface DatosEntrega {
+  mensaje?: string;
+  archivoUrl?: string;
+  enlaceUrl?: string;
+}
+
 /**
  * Módulo de API — Contratos y calificaciones.
  * Backend: /api/contratos, /api/contratos/:id, /api/contratos/:id/estado,
@@ -119,6 +141,48 @@ export async function rateContract(token: string, contratoId: number, datos: { p
     token,
     body: datos,
     mensajeError: "No se pudo registrar la calificación",
+  });
+  return data;
+}
+
+export async function getContractDeliveries(token: string, contratoId: number): Promise<{ total: number; entregas: EntregaContrato[] }> {
+  const { data } = await apiFetch<{ total: number; entregas: EntregaContrato[] }>({
+    method: "GET",
+    path: `/contratos/${contratoId}/entregas`,
+    token,
+    mensajeError: "No se pudieron cargar las entregas",
+  });
+  return data;
+}
+
+export async function submitDelivery(token: string, contratoId: number, datos: DatosEntrega): Promise<{ mensaje: string; entrega: EntregaContrato }> {
+  const { data } = await apiFetch<{ mensaje: string; entrega: EntregaContrato }>({
+    method: "POST",
+    path: `/contratos/${contratoId}/entregas`,
+    token,
+    body: datos,
+    mensajeError: "No se pudo registrar la entrega",
+  });
+  return data;
+}
+
+export async function approveDelivery(token: string, contratoId: number): Promise<{ mensaje: string; contrato: Contrato; entrega: EntregaContrato }> {
+  const { data } = await apiFetch<{ mensaje: string; contrato: Contrato; entrega: EntregaContrato }>({
+    method: "PATCH",
+    path: `/contratos/${contratoId}/aprobar-entrega`,
+    token,
+    mensajeError: "No se pudo aprobar la entrega",
+  });
+  return data;
+}
+
+export async function rejectDelivery(token: string, contratoId: number, observacion: string): Promise<{ mensaje: string; entrega: EntregaContrato }> {
+  const { data } = await apiFetch<{ mensaje: string; entrega: EntregaContrato }>({
+    method: "PATCH",
+    path: `/contratos/${contratoId}/rechazar-entrega`,
+    token,
+    body: { observacion },
+    mensajeError: "No se pudo rechazar la entrega",
   });
   return data;
 }
