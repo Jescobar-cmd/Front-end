@@ -1,6 +1,5 @@
 ﻿import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HeroIllustration } from "./HeroIllustration";
 
 const SEARCH_HINTS = ["diseño web", "marketing", "desarrollo de apps", "edición de video"];
 
@@ -63,8 +62,13 @@ export function Hero() {
               </button>
             </form>
           </div>
-          <div className="landing-hero__visual" aria-hidden="true">
-            <HeroIllustration />
+          <div className="landing-hero__visual">
+            <img
+              className="landing-hero__image"
+              src="/hero-servicio.jpg"
+              alt="Profesional trabajando en su laptop rodeada de tarjetas de búsqueda, verificación, reseñas y mensajes"
+              fetchPriority="high"
+            />
           </div>
         </div>
       </div>
