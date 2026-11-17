@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let activo = true;
-    (async () => {
+    void (async () => {"}
       const inicial = leerSesionGuardada();
       if (!inicial.token) {
         if (activo) setCargando(false);
