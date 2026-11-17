@@ -10,6 +10,7 @@ interface DatosBase {
   password: string;
   confirmPassword: string;
   mayorDeEdad: boolean;
+  terminosYCondiciones: boolean;
 }
 
 export type RegistroInput = DatosBase & {
@@ -23,6 +24,7 @@ export class RegistroUseCase {
 
   async execute(input: RegistroInput): Promise<{ email: string }> {
     if (!input.mayorDeEdad) throw new Error("Debes confirmar que eres mayor de 18 años");
+    if (!input.terminosYCondiciones) throw new Error("Debes aceptar los términos y condiciones");
     if (input.nombre.trim().length < 2) throw new Error("El nombre debe tener al menos 2 caracteres");
     if (input.apellido.trim().length < 2) throw new Error("El apellido debe tener al menos 2 caracteres");
     if (input.password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres");
@@ -40,6 +42,7 @@ export class RegistroUseCase {
       email: correo.value,
       password: input.password,
       rolId: input.rolId,
+      terminosYCondiciones: input.terminosYCondiciones,
       ...(input.telefono?.trim() ? { telefono: new Telefono(input.telefono).value } : {}),
       ...(input.documento?.trim() ? { cedula: new DocumentoIdentidad(input.documento).value } : {}),
     });

@@ -28,4 +28,6 @@ dist-ssr
 # Playwright
 playwright-report/
 test-results/
-coverage/
+
+# Reportes de cobertura
+coverage

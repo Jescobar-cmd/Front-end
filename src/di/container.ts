@@ -23,6 +23,10 @@ import { ObtenerPerfilPublicoUseCase } from "../core/application/use-cases/Obten
 import { HttpOfertasRepository } from "../infrastructure/api/HttpOfertasRepository";
 import { HttpPerfilRepository } from "../infrastructure/api/HttpPerfilRepository";
 
+import type { AuthRepositoryPort } from "../core/application/ports/AuthRepositoryPort";
+import type { OfertasRepositoryPort } from "../core/application/ports/OfertasRepositoryPort";
+import type { PerfilRepositoryPort } from "../core/application/ports/PerfilRepositoryPort";
+
 const authRepository = new HttpAuthRepository();
 const ofertasRepository = new HttpOfertasRepository();
 const perfilRepository = new HttpPerfilRepository();
@@ -51,3 +55,45 @@ export const actualizarMiPerfilUseCase = new ActualizarMiPerfilUseCase(perfilRep
 export const obtenerMiPerfilFreelancerUseCase = new ObtenerMiPerfilFreelancerUseCase(perfilRepository);
 export const actualizarMiPerfilFreelancerUseCase = new ActualizarMiPerfilFreelancerUseCase(perfilRepository);
 export const obtenerPerfilPublicoUseCase = new ObtenerPerfilPublicoUseCase(perfilRepository);
+
+/**
+ * Factory para inyección de dependencias. Permite sustituir los repositorios
+ * por mocks o implementaciones alternativas sin tocar los use-cases.
+ * Mantiene las exportaciones globales por defecto para no romper código existente.
+ */
+export function createContainer(
+  authRepo?: AuthRepositoryPort,
+  ofertasRepo?: OfertasRepositoryPort,
+  perfilRepo?: PerfilRepositoryPort,
+) {
+  const a = authRepo ?? authRepository;
+  const o = ofertasRepo ?? ofertasRepository;
+  const p = perfilRepo ?? perfilRepository;
+
+  return {
+    authRepository: a,
+    ofertasRepository: o,
+    perfilRepository: p,
+    registroUseCase: new RegistroUseCase(a),
+    loginUseCase: new LoginUseCase(a),
+    loginConGoogleUseCase: new LoginConGoogleUseCase(a),
+    solicitarRecuperacionUseCase: new SolicitarRecuperacionUseCase(a),
+    restablecerPasswordUseCase: new RestablecerPasswordUseCase(a),
+    verificarCuentaUseCase: new VerificarCuentaUseCase(a),
+    completarPerfilGoogleUseCase: new CompletarPerfilGoogleUseCase(a),
+    cambiarPasswordUseCase: new CambiarPasswordUseCase(a),
+    reenviarCodigoUseCase: new ReenviarCodigoUseCase(a),
+    obtenerPerfilUseCase: new ObtenerPerfilUseCase(a),
+    listarCategoriasUseCase: new ListarCategoriasUseCase(o),
+    listarMisOfertasUseCase: new ListarMisOfertasUseCase(o),
+    crearOfertaUseCase: new CrearOfertaUseCase(o),
+    obtenerOfertaUseCase: new ObtenerOfertaUseCase(o),
+    actualizarOfertaUseCase: new ActualizarOfertaUseCase(o),
+    cambiarEstadoOfertaUseCase: new CambiarEstadoOfertaUseCase(o),
+    obtenerMiPerfilUseCase: new ObtenerMiPerfilUseCase(p),
+    actualizarMiPerfilUseCase: new ActualizarMiPerfilUseCase(p),
+    obtenerMiPerfilFreelancerUseCase: new ObtenerMiPerfilFreelancerUseCase(p),
+    actualizarMiPerfilFreelancerUseCase: new ActualizarMiPerfilFreelancerUseCase(p),
+    obtenerPerfilPublicoUseCase: new ObtenerPerfilPublicoUseCase(p),
+  };
+}

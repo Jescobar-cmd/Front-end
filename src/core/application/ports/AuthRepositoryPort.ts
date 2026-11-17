@@ -7,6 +7,7 @@ export interface RegistroData {
   rolId: 2 | 3;
   telefono?: string;
   cedula?: string;
+  terminosYCondiciones: boolean;
 }
 
 export interface LoginData {
@@ -62,15 +63,27 @@ export interface Perfil {
   estado?: string;
 }
 
-export interface AuthRepositoryPort {
+export interface AuthRegistroPort {
   registrar(data: RegistroData): Promise<{ email: string }>;
-  verificarCuenta(data: VerificarData): Promise<void>;
-  reenviarCodigo(email: string): Promise<void>;
+}
+
+export interface AuthLoginPort {
   login(data: LoginData): Promise<Sesion>;
   loginConGoogle(idToken: string, options?: LoginGoogleOptions | 2 | 3): Promise<ResultadoGoogle>;
   completarPerfilGoogle(data: CompletarPerfilGoogleData): Promise<Sesion>;
+}
+
+export interface AuthPasswordPort {
   solicitarRecuperacion(email: string): Promise<void>;
   restablecerPassword(data: RestablecerData): Promise<void>;
   cambiarPassword(token: string, data: CambiarPasswordData): Promise<void>;
+}
+
+export interface AuthSessionPort {
+  verificarCuenta(data: VerificarData): Promise<void>;
+  reenviarCodigo(email: string): Promise<void>;
   obtenerPerfil(token: string): Promise<Perfil>;
 }
+
+export interface AuthRepositoryPort
+  extends AuthRegistroPort, AuthLoginPort, AuthPasswordPort, AuthSessionPort {}

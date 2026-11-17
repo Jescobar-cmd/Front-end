@@ -24,13 +24,13 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Instalar dependencias
         run: npm ci --ignore-scripts
 
-      - name: Tests unitarios con cobertura
+      - name: Tests con cobertura
         run: npm run test:coverage
 
       - name: Escaneo SonarCloud
