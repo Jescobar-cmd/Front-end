@@ -5,4 +5,9 @@ export default defineConfig({
     include: ["tests/**/*.test.ts", "src/**/*.test.ts"],
     exclude: ["e2e/**", "node_modules/**"],
   },
+  coverage: {
+    provider: "v8",
+    reporter: ["text", "lcov"],
+    reportsDirectory: "coverage",
+  },
 });

@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     // Valida el JWT contra GET /auth/me: si expiró (401) se cierra sesión
     let activo = true;
-    obtenerPerfilUseCase
+    void obtenerPerfilUseCase
       .execute(inicial.token)
       .then((sesion) => {
         if (!activo) return;

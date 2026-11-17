@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1794922372382" clover="3.2.0">
+  <project timestamp="1794922372382" name="All files">
+    <metrics statements="46" coveredstatements="44" conditionals="44" coveredconditionals="40" methods="18" coveredmethods="17" elements="108" coveredelements="101" complexity="0" loc="46" ncloc="46" packages="2" files="4" classes="4"/>
+    <package name="core.domain.value-objects">
+      <metrics statements="19" coveredstatements="18" conditionals="14" coveredconditionals="14" methods="6" coveredmethods="5"/>
+      <file name="Email.ts" path="C:\Users\fende\Front-Fist Gig\src\core\domain\value-objects\Email.ts">
+        <metrics statements="11" coveredstatements="10" conditionals="10" coveredconditionals="10" methods="4" coveredmethods="3"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="6" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="13" count="11" type="stmt"/>
+        <line num="14" count="11" type="cond" truecount="4" falsecount="0"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="16" count="6" type="stmt"/>
+        <line num="17" count="6" type="cond" truecount="4" falsecount="0"/>
+        <line num="18" count="27" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+      </file>
+      <file name="documento.ts" path="C:\Users\fende\Front-Fist Gig\src\core\domain\value-objects\documento.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
+        <line num="5" count="5" type="stmt"/>
+        <line num="6" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="9" count="2" type="stmt"/>
+      </file>
+      <file name="telefono.ts" path="C:\Users\fende\Front-Fist Gig\src\core\domain\value-objects\telefono.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
+        <line num="5" count="5" type="stmt"/>
+        <line num="6" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="9" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="features.chat-contracts">
+      <metrics statements="27" coveredstatements="26" conditionals="30" coveredconditionals="26" methods="12" coveredmethods="12"/>
+      <file name="chatContractsUtils.ts" path="C:\Users\fende\Front-Fist Gig\src\features\chat-contracts\chatContractsUtils.ts">
+        <metrics statements="27" coveredstatements="26" conditionals="30" coveredconditionals="26" methods="12" coveredmethods="12"/>
+        <line num="4" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="6" count="2" type="stmt"/>
+        <line num="7" count="2" type="stmt"/>
+        <line num="14" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="16" count="4" type="cond" truecount="5" falsecount="0"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="19" count="1" type="cond" truecount="1" falsecount="2"/>
+        <line num="23" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="25" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="26" count="0" type="stmt"/>
+        <line num="30" count="12" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="46" count="1" type="stmt"/>
+        <line num="50" count="1" type="stmt"/>
+        <line num="54" count="2" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="78" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="82" count="1" type="stmt"/>
+        <line num="83" count="1" type="stmt"/>
+        <line num="89" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="93" count="1" type="stmt"/>
+        <line num="97" count="3" type="cond" truecount="5" falsecount="0"/>
+        <line num="98" count="2" type="cond" truecount="5" falsecount="0"/>
+        <line num="99" count="1" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
