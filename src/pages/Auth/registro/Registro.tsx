@@ -14,6 +14,7 @@ export function Registro() {
   const [rol, setRol] = useState<"cliente" | "freelancer" | null>(null);
   const [rolError, setRolError] = useState("");
   const [mayorDeEdad, setMayorDeEdad] = useState(false);
+  const [terminosYCondiciones, setTerminosYCondiciones] = useState(false);
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -45,6 +46,7 @@ export function Registro() {
       password: form.password,
       confirmPassword: form.confirmPassword,
       mayorDeEdad,
+      terminosYCondiciones,
       rolId: rol === "freelancer" ? 2 : 3,
       telefono: form.telefono,
       ...(form.documento.trim() ? { documento: form.documento } : {}),
@@ -196,6 +198,15 @@ export function Registro() {
             onChange={(e) => setMayorDeEdad(e.target.checked)}
           />
           Tengo 18 años o más
+        </label>
+
+        <label className="auth-checkbox">
+          <input
+            type="checkbox"
+            checked={terminosYCondiciones}
+            onChange={(e) => setTerminosYCondiciones(e.target.checked)}
+          />
+          Acepto los <a href="/terminos-y-condiciones" target="_blank" rel="noopener noreferrer">términos y condiciones</a>
         </label>
 
         {error && (

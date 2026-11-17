@@ -16,17 +16,11 @@ declare global {
   }
 }
 
-// Bandera de módulo: initialize() debe ejecutarse una sola vez por carga de página,
-// incluso si StrictMode monta el efecto dos veces en desarrollo.
-let googleYaInicializado = false;
-// El callback de initialize() queda registrado a nivel de módulo. Así, si el
-// usuario vuelve al login después de navegar, el botón sigue entregando el
-// credential al callback vigente y no al de un montaje anterior.
-let googleCallbackActual: ((credential: string) => void) | null = null;
-
 export function useGoogleLogin(onCredential: (credential: string) => void) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const inicializadoRef = useRef(false);
+  const googleYaInicializadoRef = useRef(false);
+  const googleCallbackActualRef = useRef<((credential: string) => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const callbackRef = useRef(onCredential);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -36,12 +30,12 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
   }, [onCredential]);
 
   useEffect(() => {
-    googleCallbackActual = (credential) => {
+    googleCallbackActualRef.current = (credential) => {
       setError(null);
       callbackRef.current(credential);
     };
     return () => {
-      googleCallbackActual = null;
+      googleCallbackActualRef.current = null;
     };
   }, []);
 
@@ -51,14 +45,14 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
     const intentarInicializar = () => {
       if (!window.google || !contenedorRef.current) return false;
 
-      if (!googleYaInicializado) {
+      if (!googleYaInicializadoRef.current) {
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
-            googleCallbackActual?.(response.credential);
+            googleCallbackActualRef.current?.(response.credential);
           },
         });
-        googleYaInicializado = true;
+        googleYaInicializadoRef.current = true;
       }
 
       contenedorRef.current.replaceChildren();

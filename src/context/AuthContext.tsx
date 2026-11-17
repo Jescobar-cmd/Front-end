@@ -48,7 +48,7 @@ function aPlano(sesion: Sesion): SesionGuardada {
 
 function leerSesionGuardada(): { user: User | null; token: string | null } {
   try {
-    const almacenada = localStorage.getItem(STORAGE_KEY);
+    const almacenada = sessionStorage.getItem(STORAGE_KEY);
     if (!almacenada) return { user: null, token: null };
     const plana = JSON.parse(almacenada) as SesionGuardada;
     if (!plana?.token || !plana?.user?.email) return { user: null, token: null };
@@ -72,34 +72,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const inicial = leerSesionGuardada();
-    if (!inicial.token) {
-      setCargando(false);
-      return;
-    }
-    // Valida el JWT contra GET /auth/me: si expiró (401) se cierra sesión
     let activo = true;
-    obtenerPerfilUseCase
-      .execute(inicial.token)
-      .then((sesion) => {
+    (async () => {
+      const inicial = leerSesionGuardada();
+      if (!inicial.token) {
+        if (activo) setCargando(false);
+        return;
+      }
+      try {
+        const sesion = await obtenerPerfilUseCase.execute(inicial.token);
         if (!activo) return;
         setUser(sesion.user);
         setToken(sesion.token);
         const plana = sesionParaAlmacenamiento(sesion);
         if (plana) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(plana));
+          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(plana));
         }
-      })
-      .catch((error: unknown) => {
+      } catch (error) {
         if (!activo) return;
         console.error("Error al validar sesión:", error);
-        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
         setUser(null);
         setToken(null);
-      })
-      .finally(() => {
+      } finally {
         if (activo) setCargando(false);
-      });
+      }
+    })();
     return () => {
       activo = false;
     };
@@ -108,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const guardarSesion = useCallback((sesion: Sesion) => {
     setUser(sesion.user);
     setToken(sesion.token);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
   }, []);
 
   const actualizarNombre = useCallback((nombre: string) => {
@@ -123,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     setUser(actualizado);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         token,
         user: {
           id: actualizado.id,
@@ -142,13 +140,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sesion = await obtenerPerfilUseCase.execute(token);
     setUser(sesion.user);
     setToken(sesion.token);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
   }, [token]);
 
   const cerrarSesion = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
   }, []);
 
   return (
