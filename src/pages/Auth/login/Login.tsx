@@ -66,7 +66,7 @@ export function Login() {
           // Sin sessionStorage el usuario lo elige de nuevo.
         }
       }
-      navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
+      void navigate("/google/completar-perfil", { state: { idToken: resultado.idToken, email: resultado.email } });
       return;
     }
     if (rolSolicitado && resultado.sesion.user.rol !== rolSolicitado) {
@@ -186,7 +186,7 @@ export function Login() {
     const sesion = await iniciarSesion({ email: form.email.trim(), password: form.password });
     if (sesion) {
       guardarSesion(sesion);
-      navigate(dashboardPorRol(sesion.user.rol), { replace: true });
+      void navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
 

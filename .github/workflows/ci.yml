@@ -70,7 +70,7 @@ jobs:
           node-version: "22"
           cache: npm
       - name: Instalar Vercel CLI
-        run: npm i -g vercel@latest
+        run: npm i -g vercel@65.16.0 --ignore-scripts
       - name: Descargar configuracion del proyecto
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - name: Build de produccion
