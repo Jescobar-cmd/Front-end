@@ -39,7 +39,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
     return () => {
       activo = false;
     };
-  }, [token, indiceFeed]);
+  }, [token]);
 
   const tipoCuenta = usuarioSesion?.rol ?? tipoEsperado;
   const {

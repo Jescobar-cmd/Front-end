@@ -68,19 +68,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     // Valida el JWT contra GET /auth/me: si expiró (401) se cierra sesión
+    let activo = true;
     obtenerPerfilUseCase
       .execute(inicial.token)
       .then((sesion) => {
+        if (!activo) return;
         setUser(sesion.user);
         setToken(sesion.token);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        if (!activo) return;
+        console.error("Error al validar sesión:", error);
         localStorage.removeItem(STORAGE_KEY);
         setUser(null);
         setToken(null);
       })
-      .finally(() => setCargando(false));
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const guardarSesion = useCallback((sesion: Sesion) => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface AsyncResource<T> {
   data: T | null;
@@ -25,6 +25,11 @@ export function useAsyncResource<T>(
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0);
 
+  const cargarRef = useRef(cargar);
+  const mensajeErrorRef = useRef(mensajeError);
+  cargarRef.current = cargar;
+  mensajeErrorRef.current = mensajeError;
+
   useEffect(() => {
     if (!enabled) {
       setData(null);
@@ -38,12 +43,12 @@ export function useAsyncResource<T>(
     setError("");
 
     void Promise.resolve()
-      .then(cargar)
+      .then(cargarRef.current)
       .then((resultado) => {
         if (activo) setData(resultado);
       })
       .catch((reason: unknown) => {
-        if (activo) setError(mensajeDeError(reason, mensajeError));
+        if (activo) setError(mensajeDeError(reason, mensajeErrorRef.current));
       })
       .finally(() => {
         if (activo) setLoading(false);
@@ -52,7 +57,7 @@ export function useAsyncResource<T>(
     return () => {
       activo = false;
     };
-  }, [cargar, enabled, mensajeError, version]);
+  }, [enabled, version]);
 
   const recargar = useCallback(() => setVersion((actual) => actual + 1), []);
 

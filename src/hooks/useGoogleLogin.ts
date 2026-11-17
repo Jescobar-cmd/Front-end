@@ -29,6 +29,7 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
   const inicializadoRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const callbackRef = useRef(onCredential);
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     callbackRef.current = onCredential;
@@ -45,8 +46,7 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
   }, []);
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
+    if (!clientId || !contenedorRef.current) return;
 
     const intentarInicializar = () => {
       if (!window.google || !contenedorRef.current) return false;
@@ -61,7 +61,7 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
         googleYaInicializado = true;
       }
 
-      contenedorRef.current.innerHTML = "";
+      contenedorRef.current.replaceChildren();
       window.google.accounts.id.renderButton(contenedorRef.current, {
         type: "icon",
         shape: "circle",
@@ -80,16 +80,16 @@ export function useGoogleLogin(onCredential: (credential: string) => void) {
       intentos += 1;
       if (intentarInicializar()) {
         clearInterval(intervalo);
-      } else if (inicializadoRef.current) {
+      } else if (inicializadoRef.current || intentos >= 50) {
         clearInterval(intervalo);
-      } else if (intentos >= 50) {
-        clearInterval(intervalo);
-        setError("No se pudo cargar el inicio con Google. Intenta de nuevo.");
+        if (intentos >= 50) {
+          setError("No se pudo cargar el inicio con Google. Intenta de nuevo.");
+        }
       }
     }, 200);
 
     return () => clearInterval(intervalo);
-  }, []);
+  }, [clientId]);
 
   return { contenedorRef, error };
 }
