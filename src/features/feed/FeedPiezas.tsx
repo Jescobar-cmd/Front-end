@@ -33,6 +33,7 @@ export function FeedPiezaCard({ pieza }: { pieza: PiezaFeed }) {
       description={pieza.descripcion}
       category={pieza.categoria}
       imageUrl={pieza.imagenUrl}
+      hasVideo={Boolean(pieza.videoUrl)}
       authorName={pieza.autorNombre}
       authorPhoto={pieza.autorFoto}
       authorTitle={pieza.autorTitulo}

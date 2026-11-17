@@ -225,6 +225,7 @@ export function PublicProfilePage() {
                       description={servicio.descripcion}
                       category={servicio.categoria?.nombre}
                       imageUrl={servicio.imagenUrl}
+                      hasVideo={Boolean(servicio.videoUrl)}
                       authorName={profile.nombre}
                       authorPhoto={profile.fotoPerfil}
                       authorTitle={profile.freelancer?.tituloProfesional}

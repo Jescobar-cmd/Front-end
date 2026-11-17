@@ -4,6 +4,7 @@ export interface Servicio {
   descripcion: string;
   precio: number;
   imagenUrl: string | null;
+  videoUrl: string | null;
   estado: string;
   fechaCreacion: string;
   categoria: { id: number; nombre: string } | null;
@@ -22,6 +23,7 @@ export interface DatosServicio {
   precio: number;
   categoriaId?: number | null;
   imagenUrl?: string | null;
+  videoUrl?: string | null;
 }
 
 export interface DatosActualizacionServicio {
@@ -30,6 +32,7 @@ export interface DatosActualizacionServicio {
   precio?: number;
   categoriaId?: number | null;
   imagenUrl?: string | null;
+  videoUrl?: string | null;
 }
 
 export type EstadoServicio = "activo" | "pausado" | "eliminado";

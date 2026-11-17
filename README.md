@@ -9,8 +9,13 @@ en el backend como `GOOGLE_CLIENT_ID`.
 
 `VITE_API_URL` debe apuntar al backend e incluir el prefijo `/api`. En desarrollo se puede
 usar `http://localhost:4000/api`; los builds de producción rechazan hosts locales y direcciones
-privadas, y usan el backend público predeterminado si reciben uno de esos valores. En
-producción, configura la URL pública del backend como variable del entorno de compilación.
+privadas, y usan el backend público predeterminado si reciben uno de esos valores.
+
+En producción el frontend llama a `/api` en su propio origen y Vercel reenvía esas peticiones
+al backend con el rewrite de `vercel.json`. Esto evita los errores de CORS cuando el backend
+no tiene incluido el dominio del deployment en `FRONTEND_URL`. Si necesitas que el navegador
+llame directamente al backend, compila con `VITE_API_PROXY=false` y agrega el origen exacto
+del frontend a `FRONTEND_URL` en el backend.
 
 En producción, configura también `VITE_GOOGLE_CLIENT_ID` en el entorno de compilación de
 la plataforma del frontend y `FRONTEND_URL` en el backend con el origen público exacto del
@@ -54,8 +59,10 @@ validación (422) para marcarlos en el formulario. Un 403 por suspensión reempl
 por la pantalla "Cuenta suspendida". Los 409 muestran el mensaje del backend y refrescan el
 listado; los 429 muestran un aviso y bloquean temporalmente la acción.
 
-## Subida de imágenes
+## Subida de imágenes y videos
 
 Configura `VITE_CLOUDINARY_CLOUD_NAME` y `VITE_CLOUDINARY_UPLOAD_PRESET` en el entorno de
 compilación. El preset debe ser unsigned y limitar la subida a JPG, PNG y WebP de hasta 5 MB.
-El frontend nunca recibe ni almacena el API secret de Cloudinary.
+Para los videos de los servicios puedes usar `VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET`; si no
+se define, se reutiliza el preset de imágenes. Ese preset debe permitir MP4 y WebM de hasta
+50 MB. El frontend nunca recibe ni almacena el API secret de Cloudinary.

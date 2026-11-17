@@ -40,6 +40,9 @@ export function resolverEnlaceNotificacion(enlace: string | null | undefined, ro
       ? dashboardPorRol(rol)
       : "/notificaciones";
   }
+  if (valor.startsWith("/api/freelancer/liquidaciones") || valor.startsWith("/api/freelancer/pagos")) {
+    return rol === "freelancer" ? "/dashboard/freelancer/liquidaciones" : "/notificaciones";
+  }
   if (valor.startsWith("/api/freelancer/")) {
     return rol === "freelancer" ? dashboardPorRol(rol) : "/notificaciones";
   }

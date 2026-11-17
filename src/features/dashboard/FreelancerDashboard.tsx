@@ -187,6 +187,7 @@ export function FreelancerDashboard() {
           value={formatMoney(datos.saldoDisponible)}
           hint="Listo para retirar"
           icon="wallet"
+          to="/dashboard/freelancer/liquidaciones"
           tone="action"
         />
         <DashboardStat
@@ -231,6 +232,12 @@ export function FreelancerDashboard() {
             label: "Contratos",
             hint: "Revisa acuerdos y entregas",
             icon: "contract",
+          },
+          {
+            to: "/dashboard/freelancer/liquidaciones",
+            label: "Liquidaciones",
+            hint: "Cobra tu saldo disponible",
+            icon: "wallet",
           },
           {
             to: "/chat",
