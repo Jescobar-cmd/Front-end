@@ -121,7 +121,7 @@ export function PublicProfilePage() {
     setChatError("");
     try {
       const result = await createConversation(token, contexto);
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setChatError(errorMessage(reason));
     } finally {
@@ -225,6 +225,7 @@ export function PublicProfilePage() {
                       description={servicio.descripcion}
                       category={servicio.categoria?.nombre}
                       imageUrl={servicio.imagenUrl}
+                      hasVideo={Boolean(servicio.videoUrl)}
                       authorName={profile.nombre}
                       authorPhoto={profile.fotoPerfil}
                       authorTitle={profile.freelancer?.tituloProfesional}

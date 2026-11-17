@@ -15,14 +15,34 @@ function filtrosIguales(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function useFiltrosEstables<T>(filtros: T): T {
+  const ref = useRef(filtros);
+
+  if (!filtrosIguales(ref.current, filtros)) {
+    ref.current = filtros;
+  }
+
+  return ref.current;
+}
+
+type CargadorServicios<TFiltros> = (
+  token: string,
+  filtros: TFiltros
+) => Promise<Paginado<Servicio>>;
+
 /**
- * Servicios del catálogo (GET /api/servicios).
- * Sin token (preview) usa estado de error para forzar empty state controlado.
+ * Hook compartido por los listados de servicios.
+ * Evita duplicar el estado de carga, la cancelación y la recarga.
  */
-export function useListarServicios(token?: string, filtros: FiltrosListadoServicio = {}, vistaPrevia = false) {
+function useListadoServicios<TFiltros>(
+  token: string | undefined,
+  filtros: TFiltros,
+  vistaPrevia: boolean,
+  cargar: CargadorServicios<TFiltros>
+) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<Paginado<Servicio>>>({ estado: "cargando" });
-  const filtrosRef = useRef(filtros);
+  const filtrosEstables = useFiltrosEstables(filtros);
 
   useEffect(() => {
     if (vistaPrevia) {
@@ -35,15 +55,10 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
       return;
     }
 
-    if (filtrosIguales(filtrosRef.current, filtros)) {
-      return;
-    }
-    filtrosRef.current = filtros;
-
     let activo = true;
     setEstado({ estado: "cargando" });
 
-    listServices(token, filtros)
+    cargar(token, filtrosEstables)
       .then((datos) => {
         if (!activo) return;
         setEstado({ estado: "listo", datos });
@@ -56,7 +71,7 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
     return () => {
       activo = false;
     };
-  }, [token, indice, vistaPrevia]);
+  }, [token, indice, vistaPrevia, cargar, filtrosEstables]);
 
   const recargar = () => setIndice((n) => n + 1);
 
@@ -69,55 +84,18 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
 }
 
 /**
+ * Servicios del catálogo (GET /api/servicios).
+ * Sin token (preview) usa estado de error para forzar empty state controlado.
+ */
+export function useListarServicios(token?: string, filtros: FiltrosListadoServicio = {}, vistaPrevia = false) {
+  return useListadoServicios(token, filtros, vistaPrevia, listServices);
+}
+
+/**
  * Mis servicios del freelancer autenticado (GET /api/freelancer/servicios).
  */
 export function useListarMisServicios(token?: string, filtros: FiltrosMisServicio = {}, vistaPrevia = false) {
-  const [indice, setIndice] = useState(0);
-  const [estado, setEstado] = useState<EstadoLista<Paginado<Servicio>>>({ estado: "cargando" });
-  const filtrosRef = useRef(filtros);
-
-  useEffect(() => {
-    if (vistaPrevia) {
-      setEstado({ estado: "listo", datos: { page: 1, limit: 50, total: 0, items: [] } });
-      return;
-    }
-
-    if (!token) {
-      setEstado({ estado: "error", mensaje: "Sesión no disponible." });
-      return;
-    }
-
-    if (filtrosIguales(filtrosRef.current, filtros)) {
-      return;
-    }
-    filtrosRef.current = filtros;
-
-    let activo = true;
-    setEstado({ estado: "cargando" });
-
-    getMyServices(token, filtros)
-      .then((datos) => {
-        if (!activo) return;
-        setEstado({ estado: "listo", datos });
-      })
-      .catch((error: unknown) => {
-        if (!activo) return;
-        setEstado({ estado: "error", mensaje: aMensajeError(error) });
-      });
-
-    return () => {
-      activo = false;
-    };
-  }, [token, indice, vistaPrevia]);
-
-  const recargar = () => setIndice((n) => n + 1);
-
-  return {
-    servicios: estado.estado === "listo" ? estado.datos : null,
-    estado,
-    error: estado.estado === "error" ? estado.mensaje : null,
-    recargar,
-  };
+  return useListadoServicios(token, filtros, vistaPrevia, getMyServices);
 }
 
 /**

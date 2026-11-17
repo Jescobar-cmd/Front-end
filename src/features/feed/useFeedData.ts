@@ -80,6 +80,7 @@ export function useFeedData(tipoEsperado: TipoCuentaFeed) {
       detalle: `Servicio · ${servicio.estado ?? "activo"}`,
       etiquetas: [],
       imagenUrl: servicio.imagenUrl ?? undefined,
+      videoUrl: servicio.videoUrl ?? undefined,
       precio: servicio.precio,
       etiquetaPrecio: "Precio",
       autorId: servicio.freelancer.id,

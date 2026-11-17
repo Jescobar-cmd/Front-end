@@ -118,7 +118,7 @@ export function ProfileMenu() {
   const manejarCerrarSesion = () => {
     setAbierto(false);
     cerrarSesion();
-    navigate("/login", { replace: true });
+    void navigate("/login", { replace: true });
   };
 
   const manejarTecladoMenu = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -177,6 +177,7 @@ export function ProfileMenu() {
           id="profile-menu-panel"
           role="menu"
           aria-label="Cuenta"
+          tabIndex={-1}
           ref={panelRef}
           onKeyDown={manejarTecladoMenu}
         >

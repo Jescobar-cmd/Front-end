@@ -84,9 +84,11 @@ export async function createOffer(token: string, datos: DatosOferta): Promise<{ 
   return data;
 }
 
+const FILTROS_OFERTA_POR_DEFECTO: FiltrosOferta = { page: 1, limit: 20 };
+
 export async function getMyOffers(
   token: string,
-  filtros: FiltrosOferta = { page: 1, limit: 20 },
+  filtros: FiltrosOferta = FILTROS_OFERTA_POR_DEFECTO,
 ): Promise<OfertaPaginada> {
   const params = new URLSearchParams({
     page: String(filtros.page),

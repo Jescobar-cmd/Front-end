@@ -183,7 +183,7 @@ export function CreateProjectPage() {
             >
               Actualizar sesión
             </button>
-            <button className="so-button so-button--outline" type="button" onClick={() => { cerrarSesion(); navigate("/login", { replace: true }); }}>
+            <button className="so-button so-button--outline" type="button" onClick={() => { cerrarSesion(); void navigate("/login", { replace: true }); }}>
               Cerrar sesión
             </button>
           </div>
@@ -223,7 +223,7 @@ export function CreateServicePage() {
             >
               Actualizar sesión
             </button>
-            <button className="so-button so-button--outline" type="button" onClick={() => { cerrarSesion(); navigate("/login", { replace: true }); }}>
+            <button className="so-button so-button--outline" type="button" onClick={() => { cerrarSesion(); void navigate("/login", { replace: true }); }}>
               Cerrar sesión
             </button>
           </div>

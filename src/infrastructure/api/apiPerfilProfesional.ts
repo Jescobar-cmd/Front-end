@@ -56,6 +56,7 @@ export interface ServicioPublicoApi {
   descripcion: string;
   precio: number;
   imagenUrl: string | null;
+  videoUrl: string | null;
   estado: string;
   fechaCreacion: string;
   categoria: { id: number; nombre: string } | null;
@@ -174,6 +175,7 @@ function toPackage(servicio: ServicioPublicoApi): ServicePackage {
     entrega: null,
     revisiones: null,
     imagenUrl: servicio.imagenUrl,
+    videoUrl: servicio.videoUrl,
     categoria: servicio.categoria?.nombre ?? null,
     estado: servicio.estado,
   };
@@ -202,7 +204,7 @@ async function listarPortafolio(
   });
 
   return [...(data.items ?? [])]
-    .map(toProject)
+    .map((item, index) => toProject(item, index))
     .sort((a, b) => a.orden - b.orden);
 }
 

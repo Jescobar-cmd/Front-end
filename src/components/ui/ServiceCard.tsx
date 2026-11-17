@@ -25,6 +25,7 @@ export interface ServiceCardProps {
   description?: string | null;
   category?: string | null;
   imageUrl?: string | null;
+  hasVideo?: boolean;
   authorName?: string | null;
   authorPhoto?: string | null;
   authorTitle?: string | null;
@@ -49,6 +50,7 @@ export function ServiceCard({
   description,
   category,
   imageUrl,
+  hasVideo = false,
   authorName,
   authorPhoto,
   authorTitle,
@@ -82,6 +84,14 @@ export function ServiceCard({
     <article className="marketplace-card">
       <div className="marketplace-card__cover">
         {imageUrl ? <img src={imageUrl} alt="" loading="lazy" /> : <div className="marketplace-card__cover-placeholder">{eyebrow ?? "First Gig"}</div>}
+        {hasVideo ? (
+          <span className="marketplace-card__video-badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.5v13l11-6.5L8 5.5Z" />
+            </svg>
+            Video
+          </span>
+        ) : null}
         {category ? (
           <span className="marketplace-card__cover-badge">
             <Badge tone="green">{category}</Badge>

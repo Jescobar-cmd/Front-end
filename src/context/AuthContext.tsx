@@ -4,8 +4,10 @@ import { rolDesdeId, User } from "../core/domain/entities/user";
 import type { Rol } from "../core/domain/entities/user";
 import type { Sesion } from "../core/application/ports/AuthRepositoryPort";
 import { obtenerPerfilUseCase } from "../di/container";
+import { Email } from "../core/domain/value-objects/Email";
 
 const STORAGE_KEY = "first_gig_sesion";
+const FORMATO_JWT = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
 
 interface SesionGuardada {
   token: string;
@@ -23,6 +25,14 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+function sesionParaAlmacenamiento(sesion: Sesion): SesionGuardada | null {
+  if (!FORMATO_JWT.test(sesion.token)) return null;
+  if (typeof sesion.user.nombre !== "string" || !Email.isValid(sesion.user.email.value)) {
+    return null;
+  }
+  return aPlano(sesion);
+}
 
 function aPlano(sesion: Sesion): SesionGuardada {
   return {
@@ -75,7 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!activo) return;
         setUser(sesion.user);
         setToken(sesion.token);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(aPlano(sesion)));
+        const plana = sesionParaAlmacenamiento(sesion);
+        if (plana) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(plana));
+        }
       })
       .catch((error: unknown) => {
         if (!activo) return;

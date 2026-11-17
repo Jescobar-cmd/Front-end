@@ -16,7 +16,7 @@ import type {
 import { createConversation } from "../../infrastructure/api/apiChat";
 import type { ApiError } from "../../infrastructure/api/client";
 import { perfilProfesionalApi } from "../../infrastructure/api/apiPerfilProfesional";
-import { PackageCard } from "./PackageCard";
+import { ServiceShowcase } from "./ServiceShowcase";
 import { PortfolioManager } from "./PortfolioManager";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileSkeleton } from "./ProfileSkeleton";
@@ -219,7 +219,7 @@ export function ProfessionalProfilePage() {
   const handleContactFor = async (servicioId?: number) => {
     setContactError("");
     if (!user || !token) {
-      navigate(`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
+      void navigate(`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
       return;
     }
     if (user.rol !== "cliente") {
@@ -242,7 +242,7 @@ export function ProfessionalProfilePage() {
     setContactLoading(true);
     try {
       const result = await createConversation(token, { servicioId: target.servicioId });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setContactError(errorMessage(reason));
     } finally {
@@ -482,17 +482,14 @@ export function ProfessionalProfilePage() {
                 </Button>
               </div>
             ) : packages.length > 0 ? (
-              <div className="pp-packages">
-                {packages.slice(0, 3).map((pkg) => (
-                  <PackageCard
-                    key={pkg.id}
-                    pkg={pkg}
-                    onContact={() => void handleContactFor(pkg.servicioId)}
-                    contactDisabled={contactLoading || contactDisabled}
-                    manageHref={esPropio ? "/dashboard/freelancer/servicios" : undefined}
-                  />
-                ))}
-              </div>
+              <ServiceShowcase
+                packages={packages}
+                initialServiceId={Number.isNaN(serviceIdParam) ? null : serviceIdParam}
+                onContact={(servicioId) => void handleContactFor(servicioId)}
+                contactDisabled={contactLoading || contactDisabled}
+                contactLoading={contactLoading}
+                manageHref={esPropio ? "/dashboard/freelancer/servicios" : undefined}
+              />
             ) : esPropio ? (
               <EmptyState
                 title="Aún no hay servicios publicados"

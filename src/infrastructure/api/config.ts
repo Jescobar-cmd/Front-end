@@ -2,6 +2,12 @@
 // conectarse a localhost (Chrome muestra un permiso de red local en ese caso).
 export const DEFAULT_API_URL = "https://backend-2n7n.onrender.com/api";
 
+// En producción las peticiones salen por el mismo origen y Vercel las reenvía
+// al backend mediante el rewrite de vercel.json. Así el navegador no hace
+// preflight CORS y el login funciona aunque el backend no incluya el dominio
+// del deployment en FRONTEND_URL.
+const SAME_ORIGIN_API_URL = "/api";
+
 const configuredUrl = import.meta.env.VITE_API_URL?.trim();
 
 function esIpV4Privada(hostname: string): boolean {
@@ -51,12 +57,19 @@ function esUrlLocal(url: string): boolean {
 }
 
 // En desarrollo se permite apuntar a un backend local (por ejemplo
-// http://localhost:4000/api). Los builds de producción siguen rechazando hosts
-// locales y privados para no exponer la app a solicitudes de red local.
+// http://localhost:4000/api). Los builds de producción usan el proxy del mismo
+// origen salvo que se desactive explícitamente con VITE_API_PROXY=false.
 const permiteHostLocal = import.meta.env.DEV;
-const usableUrl =
-  configuredUrl && (permiteHostLocal || !esUrlLocal(configuredUrl))
+const usarProxyMismoOrigen =
+  import.meta.env.PROD && import.meta.env.VITE_API_PROXY !== "false";
+const usableUrl = usarProxyMismoOrigen
+  ? SAME_ORIGIN_API_URL
+  : configuredUrl && (permiteHostLocal || !esUrlLocal(configuredUrl))
     ? configuredUrl
     : DEFAULT_API_URL;
 
-export const API_URL = usableUrl.replace(/\/+$/, "");
+let apiUrl = usableUrl;
+while (apiUrl.endsWith("/")) {
+  apiUrl = apiUrl.slice(0, -1);
+}
+export const API_URL = apiUrl;

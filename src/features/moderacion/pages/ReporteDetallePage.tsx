@@ -149,7 +149,7 @@ export function ReporteDetallePage() {
       setDerivarAbierto(false);
       setNotaDerivacion("");
       void recargarContadores();
-      navigate(`/moderacion/disputas/${resultado.disputa.id}`);
+      void navigate(`/moderacion/disputas/${resultado.disputa.id}`);
     } catch (reason) {
       if (esApiError(reason) && reason.status === 422) {
         setErrorDerivacion(

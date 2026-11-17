@@ -42,6 +42,7 @@ import { ReportDialog } from "../../components/ReportDialog";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ImageUploader } from "../../components/ui/ImageUploader";
 import { ServiceCard } from "../../components/ui/ServiceCard";
+import { VideoUploader } from "../../components/ui/VideoUploader";
 import "./services-offers.css";
 
 const PAGE_SIZE = 20;
@@ -186,7 +187,7 @@ function AuthGate({ role, children }: { role: "cliente" | "freelancer"; children
             <button className="so-button so-button--quiet" type="button" onClick={() => navigate(user.rol === "freelancer" ? "/dashboard/freelancer" : "/dashboard/cliente")}>
               Ir a mi panel
             </button>
-            <button className="so-button so-button--quiet" type="button" onClick={() => { cerrarSesion(); navigate("/login", { replace: true }); }}>
+            <button className="so-button so-button--quiet" type="button" onClick={() => { cerrarSesion(); void navigate("/login", { replace: true }); }}>
               Cerrar sesión
             </button>
           </div>
@@ -365,6 +366,7 @@ function ServiceDiscoveryCard({
       description={service.descripcion}
       category={service.categoria?.nombre}
       imageUrl={service.imagenUrl}
+      hasVideo={Boolean(service.videoUrl)}
       authorName={service.freelancer?.nombre}
       authorPhoto={service.freelancer?.fotoPerfil}
       authorTitle={service.freelancer?.tituloProfesional}
@@ -485,6 +487,7 @@ function ListingPreview({
   amountLabel,
   amount,
   imageUrl,
+  hasVideo = false,
 }: {
   kind: "proyecto" | "servicio";
   title: string;
@@ -492,6 +495,7 @@ function ListingPreview({
   amountLabel: string;
   amount: string;
   imageUrl: string;
+  hasVideo?: boolean;
 }) {
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const imageFailed = failedImageUrl === imageUrl.trim();
@@ -513,6 +517,7 @@ function ListingPreview({
                   : "La imagen aparecerá aquí."}
             </span>
           )}
+          {hasVideo ? <span className="so-preview-card__video">Video</span> : null}
         </div>
         <div className="so-preview-card__content">
           <span className="so-badge">{kind === "proyecto" ? "Proyecto" : "Servicio"}</span>
@@ -944,13 +949,13 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
         const accepted = await acceptProposal(token, selected.id, proposal.id);
         const contractId = accepted.contrato && typeof accepted.contrato === "object" && "id" in accepted.contrato
           ? Number(accepted.contrato.id)
-          : NaN;
+          : Number.NaN;
         const path = Number.isInteger(contractId) && contractId > 0 ? `/contracts/${contractId}` : "/contracts";
         window.dispatchEvent(new CustomEvent("services-offers:contract-path", {
           detail: { path, contractId: Number.isInteger(contractId) && contractId > 0 ? contractId : undefined, offerId: selected.id, proposalId: proposal.id, contract: accepted.contrato },
         }));
         if (onContractPath) onContractPath(path);
-        else navigate(path);
+        else void navigate(path);
       } else {
         await rejectProposal(token, selected.id, proposal.id);
         setProposals((current) => current.map((item) => item.id === proposal.id ? { ...item, estado: "rechazada" } : item));
@@ -979,7 +984,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
         proyectoId: selected.id,
         freelancerId: proposal.freelancer.id,
       });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setActionError(errorMessage(reason));
     } finally {
@@ -1206,7 +1211,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     setSendError("");
     try {
       const result = await createConversation(token, { proyectoId: selected.id });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setSendError(errorMessage(reason));
     } finally {
@@ -1335,6 +1340,7 @@ interface ServiceFormValues {
   precio: string;
   categoriaId: string;
   imagenUrl: string;
+  videoUrl: string;
 }
 
 function serviceValues(service?: Servicio): ServiceFormValues {
@@ -1344,6 +1350,7 @@ function serviceValues(service?: Servicio): ServiceFormValues {
     precio: service ? String(service.precio) : "",
     categoriaId: service?.categoria?.id ? String(service.categoria.id) : "",
     imagenUrl: service?.imagenUrl ?? "",
+    videoUrl: service?.videoUrl ?? "",
   };
 }
 
@@ -1364,25 +1371,31 @@ export function ServiceForm({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
   const set = (key: keyof ServiceFormValues, value: string) => setValues((old) => ({ ...old, [key]: value }));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (imageUploading) return;
+    if (imageUploading || videoUploading) return;
     const price = Number(values.precio);
     if (values.titulo.trim().length < 5 || values.titulo.trim().length > 150) return setError("El título debe tener entre 5 y 150 caracteres.");
     if (values.descripcion.trim().length < 10 || values.descripcion.trim().length > 5000) return setError("La descripción debe tener entre 10 y 5000 caracteres.");
     if (!values.precio || !Number.isFinite(price) || price <= 0) return setError("El precio debe ser mayor que 0.");
     if (!validImageUrl(values.imagenUrl)) return setError("La imagen debe ser una URL HTTP o HTTPS válida.");
+    if (!validImageUrl(values.videoUrl)) return setError("El video debe ser una URL HTTP o HTTPS válida.");
     setSaving(true);
     setError("");
     try {
+      const videoUrl = values.videoUrl.trim() || null;
       const payload = {
         titulo: values.titulo.trim(),
         descripcion: values.descripcion.trim(),
         precio: price,
         categoriaId: values.categoriaId ? Number(values.categoriaId) : null,
         imagenUrl: values.imagenUrl.trim() || null,
+        // Solo se envía si existe: así los backends antiguos (schema estricto)
+        // siguen aceptando la creación/edición normal de servicios.
+        ...(videoUrl ? { videoUrl } : {}),
       };
       let saved: Servicio;
       if (initial) {
@@ -1393,6 +1406,7 @@ export function ServiceForm({
         if (payload.precio !== Number(previous.precio)) changed.precio = payload.precio;
         if (String(payload.categoriaId ?? "") !== previous.categoriaId) changed.categoriaId = payload.categoriaId;
         if (payload.imagenUrl !== (previous.imagenUrl || null)) changed.imagenUrl = payload.imagenUrl;
+        if (videoUrl !== (previous.videoUrl || null)) changed.videoUrl = videoUrl;
         if (Object.keys(changed).length === 0) {
           onSaved(initial);
           return;
@@ -1471,8 +1485,27 @@ export function ServiceForm({
                   value={values.imagenUrl ? [values.imagenUrl] : []}
                   onChange={(urls) => set("imagenUrl", urls[0] ?? "")}
                   onUploadingChange={setImageUploading}
-                  disabled={saving}
+                  disabled={saving || videoUploading}
                   helpText="JPG, PNG o WebP. Máximo 5 MB."
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="so-form-section">
+            <header className="so-form-section__heading">
+              <h2>Video de presentación <span className="so-optional">Opcional</span></h2>
+              <p>Muéstralo en tu oferta para que el cliente vea el trabajo antes de contratar.</p>
+            </header>
+            <div className="so-form__grid">
+              <div className="so-field so-field--wide">
+                <VideoUploader
+                  id="servicio-video"
+                  label="Video del servicio"
+                  value={values.videoUrl}
+                  onChange={(url) => set("videoUrl", url)}
+                  onUploadingChange={setVideoUploading}
+                  disabled={saving || imageUploading}
                 />
               </div>
             </div>
@@ -1481,7 +1514,7 @@ export function ServiceForm({
           {error && <p className="so-inline-error" role="alert">{error}</p>}
           <div className="so-form__actions">
             {onCancel && <button className="so-button so-button--quiet" type="button" disabled={saving} onClick={onCancel}>Cancelar</button>}
-            <button className="so-button so-button--action" type="submit" disabled={saving || imageUploading}>{imageUploading ? "Subiendo imagen…" : saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
+            <button className="so-button so-button--action" type="submit" disabled={saving || imageUploading || videoUploading}>{imageUploading ? "Subiendo imagen…" : videoUploading ? "Subiendo video…" : saving ? "Guardando…" : initial ? "Guardar cambios" : "Publicar servicio"}</button>
           </div>
         </div>
         <ListingPreview
@@ -1491,6 +1524,7 @@ export function ServiceForm({
           amountLabel="Precio"
           amount={pricePreview}
           imageUrl={values.imagenUrl}
+          hasVideo={Boolean(values.videoUrl.trim())}
         />
       </div>
     </form>
@@ -1695,14 +1729,14 @@ export function ClientServices({ token, publicMode = false }: { token?: string; 
   async function startConversation() {
     if (!selected || creatingConversation) return;
     if (!token) {
-      navigate("/login", { state: { from: "/explorar-servicios" } });
+      void navigate("/login", { state: { from: "/explorar-servicios" } });
       return;
     }
     setCreatingConversation(true);
     setActionError("");
     try {
       const result = await createConversation(token, { servicioId: selected.id });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setActionError(errorMessage(reason));
     } finally {
@@ -1755,7 +1789,17 @@ export function ClientServices({ token, publicMode = false }: { token?: string; 
                 </header>
 
                 <div className="service-gallery">
-                  {selected.imagenUrl ? (
+                  {selected.videoUrl ? (
+                    <video
+                      className="service-gallery__video"
+                      src={selected.videoUrl}
+                      poster={selected.imagenUrl ?? undefined}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      aria-label={`Video de presentación de ${selected.titulo}`}
+                    />
+                  ) : selected.imagenUrl ? (
                     <img src={selected.imagenUrl} alt={`Imagen de ${selected.titulo}`} />
                   ) : (
                     <div className="service-gallery__placeholder">

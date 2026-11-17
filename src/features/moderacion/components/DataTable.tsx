@@ -63,7 +63,7 @@ export function DataTable<T>({
         <tbody>
           {loading
             ? Array.from({ length: 5 }, (_, fila) => (
-                <tr key={`skeleton-${fila}`} aria-hidden="true">
+                <tr key={`skeleton-${fila}`}>
                   {columns.map((columna) => (
                     <td key={columna.key} data-label={columna.header}>
                       <span className="mod-skeleton mod-skeleton--line" />

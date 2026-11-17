@@ -621,6 +621,28 @@ body:has(.feed-layout) {
   left: 10px;
 }
 
+.marketplace-card__video-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(10, 18, 24, 0.74);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+.marketplace-card__video-badge svg {
+  flex: 0 0 auto;
+}
+
 .marketplace-card__body {
   display: flex;
   flex: 1;

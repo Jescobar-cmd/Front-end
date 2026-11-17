@@ -32,7 +32,7 @@ export function RestablecerPassword() {
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     const ok = await restablecer(form);
-    if (ok) navigate("/login", { replace: true });
+    if (ok) void navigate("/login", { replace: true });
   };
 
   return (
