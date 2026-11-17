@@ -79,7 +79,7 @@ export function CompletarPerfilGoogle() {
         // La sesión sigue funcionando aunque el navegador no permita persistir la marca.
       }
       guardarSesion(sesion);
-      navigate(dashboardPorRol(sesion.user.rol), { replace: true });
+      void navigate(dashboardPorRol(sesion.user.rol), { replace: true });
     }
   };
 

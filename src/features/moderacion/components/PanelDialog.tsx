@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 
@@ -28,6 +28,7 @@ export function PanelDialog({
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   const busyRef = useRef(busy);
 
@@ -79,11 +80,18 @@ export function PanelDialog({
       }
     };
 
+    const handleBackdropMouse = (event: globalThis.MouseEvent) => {
+      if (event.target === backdropRef.current && !busyRef.current) {
+        onCloseRef.current();
+      }
+    };
+    backdropRef.current?.addEventListener("mousedown", handleBackdropMouse);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
+      backdropRef.current?.removeEventListener("mousedown", handleBackdropMouse);
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };
@@ -91,12 +99,8 @@ export function PanelDialog({
 
   if (!open) return null;
 
-  const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget && !busy) onClose();
-  };
-
   return createPortal(
-    <div className="fg-dialog-backdrop" onMouseDown={handleBackdrop}>
+    <div className="fg-dialog-backdrop" ref={backdropRef}>
       <div
         ref={dialogRef}
         className="fg-dialog mod-dialog"

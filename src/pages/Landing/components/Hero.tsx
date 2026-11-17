@@ -18,7 +18,7 @@ export function Hero() {
     setLoading(true);
     // Deja ver el spinner sin cambiar la consulta ni el destino de búsqueda.
     window.setTimeout(() => {
-      navigate(term ? `/explorar-servicios?q=${encodeURIComponent(term)}` : "/explorar-servicios");
+      void navigate(term ? `/explorar-servicios?q=${encodeURIComponent(term)}` : "/explorar-servicios");
     }, 220);
   };
 

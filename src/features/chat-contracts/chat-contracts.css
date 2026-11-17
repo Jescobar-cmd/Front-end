@@ -21,7 +21,7 @@
 .cc-header h1, .cc-panel h2, .cc-panel h3 { color: var(--fg-text); }
 .cc-subtitle, .cc-muted { color: var(--fg-text-secondary); }
 .cc-eyebrow { margin: 0 0 8px; color: var(--fg-accent); font-size: .73rem; font-weight: 800; letter-spacing: .12em; }
-.cc-panel { padding: 24px; border: 1px solid var(--fg-line); border-radius: 20px; background: #fff; box-shadow: 0 12px 36px var(--fg-text)0a; }
+.cc-panel { padding: 24px; border: 1px solid var(--fg-line); border-radius: 20px; background: #fff; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08); }
 .cc-panel h2 { margin: 0 0 10px; font-size: 1.35rem; letter-spacing: -.025em; }
 .cc-chat-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); gap: 20px; align-items: start; }
 .cc-conversation-list, .cc-rating-list { margin: 12px 0 0; padding: 0; list-style: none; }

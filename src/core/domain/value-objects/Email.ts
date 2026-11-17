@@ -10,7 +10,12 @@ export class Email {
   }
 
   static isValid(value: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const arroba = value.indexOf("@");
+    if (arroba <= 0 || arroba !== value.lastIndexOf("@")) return false;
+    const dominio = value.slice(arroba + 1);
+    const punto = dominio.lastIndexOf(".");
+    if (punto <= 0 || punto === dominio.length - 1) return false;
+    return !value.split("").some((c) => c.charCodeAt(0) <= 32);
   }
 
   toString(): string {

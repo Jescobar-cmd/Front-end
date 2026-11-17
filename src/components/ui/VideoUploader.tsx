@@ -153,7 +153,7 @@ export function VideoUploader({
 
       {pending ? (
         <div className="fg-video-uploader__pending" role="status">
-          <video src={pending.previewUrl} muted preload="metadata" aria-hidden="true" />
+          <video src={pending.previewUrl} muted preload="metadata" aria-hidden="true" tabIndex={-1} />
           <div>
             <span>{pending.name}</span>
             <progress max={100} value={pending.progress} aria-label={`Subiendo ${pending.name}`} />

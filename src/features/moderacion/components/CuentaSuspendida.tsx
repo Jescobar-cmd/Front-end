@@ -8,7 +8,7 @@ export function CuentaSuspendida() {
 
   const salir = () => {
     cerrarSesion();
-    navigate("/login", { replace: true });
+    void navigate("/login", { replace: true });
   };
 
   return (

@@ -52,7 +52,7 @@ export function Registro() {
 
     if (!resultado) return;
     sessionStorage.setItem("first_gig_email_pendiente", resultado.email);
-    navigate("/verificar-cuenta", { state: { email: resultado.email } });
+    void navigate("/verificar-cuenta", { state: { email: resultado.email } });
   };
 
   return (

@@ -419,7 +419,7 @@ export function ContractDetailPage({ contractId }: { contractId?: number }) {
             </div>
             <dl className="cc-definition-list">
               <div><dt>Contexto</dt><dd>{contract.contexto.titulo ?? contract.contexto.tipo}</dd></div>
-              {contract.contexto.id && <div><dt>{contract.contexto.tipo === "servicio" ? "Servicio" : "Proyecto"}</dt><dd>#{contract.contexto.id}</dd></div>}
+              {Boolean(contract.contexto.id) && <div><dt>{contract.contexto.tipo === "servicio" ? "Servicio" : "Proyecto"}</dt><dd>#{contract.contexto.id}</dd></div>}
               <div><dt>Fecha de inicio</dt><dd>{formatDate(contract.fechaInicio)}</dd></div>
               <div><dt>Fecha de término</dt><dd>{formatDate(contract.fechaFin)}</dd></div>
               <div><dt>Estado</dt><dd>{contractStateDescription(contract)}</dd></div>

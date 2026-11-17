@@ -9,6 +9,7 @@ import { useGoogleLogin } from "../../../hooks/useGoogleLogin";
 import { useAuth } from "../../../context/AuthContext";
 import type { ResultadoGoogle } from "../../../core/application/ports/AuthRepositoryPort";
 import { loginConGoogleUseCase } from "../../../di/container";
+import { Email } from "../../../core/domain/value-objects/Email";
 import { Brand } from "../../../components/Brand";
 import { GoogleLogo } from "../../../components/GoogleLogo";
 import { dashboardPorRol } from "../../../routes/rutasPorRol";
@@ -82,7 +83,7 @@ export function Login() {
       // Sin sessionStorage la sesión sigue funcionando.
     }
     guardarSesion(resultado.sesion);
-    navigate(dashboardPorRol(resultado.sesion.user.rol), { replace: true });
+    void navigate(dashboardPorRol(resultado.sesion.user.rol), { replace: true });
   }, [guardarSesion, navigate]);
 
   const continuarConGoogle = useCallback(async (
@@ -157,9 +158,9 @@ export function Login() {
   useEffect(() => {
     if (!error || !/confirma tu cuenta/i.test(error)) return;
     const email = form.email.trim();
-    if (!email) return;
+    if (!email || !Email.isValid(email)) return;
     sessionStorage.setItem("first_gig_email_pendiente", email);
-    navigate("/verificar-cuenta", { state: { email, desdeLogin: true }, replace: true });
+    void navigate("/verificar-cuenta", { state: { email, desdeLogin: true }, replace: true });
   }, [error, form.email, navigate]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {

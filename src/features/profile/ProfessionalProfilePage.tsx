@@ -219,7 +219,7 @@ export function ProfessionalProfilePage() {
   const handleContactFor = async (servicioId?: number) => {
     setContactError("");
     if (!user || !token) {
-      navigate(`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
+      void navigate(`/login?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`);
       return;
     }
     if (user.rol !== "cliente") {
@@ -242,7 +242,7 @@ export function ProfessionalProfilePage() {
     setContactLoading(true);
     try {
       const result = await createConversation(token, { servicioId: target.servicioId });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setContactError(errorMessage(reason));
     } finally {

@@ -187,7 +187,7 @@ function AuthGate({ role, children }: { role: "cliente" | "freelancer"; children
             <button className="so-button so-button--quiet" type="button" onClick={() => navigate(user.rol === "freelancer" ? "/dashboard/freelancer" : "/dashboard/cliente")}>
               Ir a mi panel
             </button>
-            <button className="so-button so-button--quiet" type="button" onClick={() => { cerrarSesion(); navigate("/login", { replace: true }); }}>
+            <button className="so-button so-button--quiet" type="button" onClick={() => { cerrarSesion(); void navigate("/login", { replace: true }); }}>
               Cerrar sesión
             </button>
           </div>
@@ -949,13 +949,13 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
         const accepted = await acceptProposal(token, selected.id, proposal.id);
         const contractId = accepted.contrato && typeof accepted.contrato === "object" && "id" in accepted.contrato
           ? Number(accepted.contrato.id)
-          : NaN;
+          : Number.NaN;
         const path = Number.isInteger(contractId) && contractId > 0 ? `/contracts/${contractId}` : "/contracts";
         window.dispatchEvent(new CustomEvent("services-offers:contract-path", {
           detail: { path, contractId: Number.isInteger(contractId) && contractId > 0 ? contractId : undefined, offerId: selected.id, proposalId: proposal.id, contract: accepted.contrato },
         }));
         if (onContractPath) onContractPath(path);
-        else navigate(path);
+        else void navigate(path);
       } else {
         await rejectProposal(token, selected.id, proposal.id);
         setProposals((current) => current.map((item) => item.id === proposal.id ? { ...item, estado: "rechazada" } : item));
@@ -984,7 +984,7 @@ export function ClientOffers({ token, onContractPath }: { token: string; onContr
         proyectoId: selected.id,
         freelancerId: proposal.freelancer.id,
       });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setActionError(errorMessage(reason));
     } finally {
@@ -1211,7 +1211,7 @@ export function FreelancerMarketplace({ token }: { token: string }) {
     setSendError("");
     try {
       const result = await createConversation(token, { proyectoId: selected.id });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setSendError(errorMessage(reason));
     } finally {
@@ -1729,14 +1729,14 @@ export function ClientServices({ token, publicMode = false }: { token?: string; 
   async function startConversation() {
     if (!selected || creatingConversation) return;
     if (!token) {
-      navigate("/login", { state: { from: "/explorar-servicios" } });
+      void navigate("/login", { state: { from: "/explorar-servicios" } });
       return;
     }
     setCreatingConversation(true);
     setActionError("");
     try {
       const result = await createConversation(token, { servicioId: selected.id });
-      navigate(`/chat/${result.conversacion.id}`);
+      void navigate(`/chat/${result.conversacion.id}`);
     } catch (reason) {
       setActionError(errorMessage(reason));
     } finally {

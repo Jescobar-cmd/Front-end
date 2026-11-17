@@ -204,7 +204,7 @@ async function listarPortafolio(
   });
 
   return [...(data.items ?? [])]
-    .map(toProject)
+    .map((item, index) => toProject(item, index))
     .sort((a, b) => a.orden - b.orden);
 }
 

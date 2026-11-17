@@ -15,7 +15,7 @@ export function InternalLayout() {
   const esFreelancer = user?.rol === "freelancer";
 
   const buscar = useCallback(() => {
-    navigate(esFreelancer ? "/dashboard/freelancer/ofertas" : "/talento");
+    void navigate(esFreelancer ? "/dashboard/freelancer/ofertas" : "/talento");
   }, [esFreelancer, navigate]);
 
   const valorBusqueda = useMemo(() => ({ query, setQuery }), [query]);

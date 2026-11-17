@@ -54,7 +54,7 @@ export function ChatOfferCard({ message, isOwn, token, onChanged }: ChatOfferCar
       const result = await acceptChatOffer(token, offer.id);
       onChanged();
       setConfirmAcceptOpen(false);
-      navigate(result.contrato?.id ? `/contracts/${result.contrato.id}` : "/contracts");
+      void navigate(result.contrato?.id ? `/contracts/${result.contrato.id}` : "/contracts");
     } catch (cause) {
       setError(errorMessage(cause, "No se pudo aceptar la oferta."));
     } finally {

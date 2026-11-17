@@ -68,4 +68,8 @@ const usableUrl = usarProxyMismoOrigen
     ? configuredUrl
     : DEFAULT_API_URL;
 
-export const API_URL = usableUrl.replace(/\/+$/, "");
+let apiUrl = usableUrl;
+while (apiUrl.endsWith("/")) {
+  apiUrl = apiUrl.slice(0, -1);
+}
+export const API_URL = apiUrl;

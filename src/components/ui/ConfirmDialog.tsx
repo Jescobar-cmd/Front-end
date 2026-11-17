@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
 import "./ConfirmDialog.css";
@@ -55,6 +55,7 @@ export function ConfirmDialog({
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const onCancelRef = useRef(onCancel);
   const loadingRef = useRef(loading);
@@ -106,11 +107,18 @@ export function ConfirmDialog({
       }
     };
 
+    const handleBackdropMouse = (event: globalThis.MouseEvent) => {
+      if (event.target === backdropRef.current && !loadingRef.current) {
+        onCancelRef.current();
+      }
+    };
+    backdropRef.current?.addEventListener("mousedown", handleBackdropMouse);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
+      backdropRef.current?.removeEventListener("mousedown", handleBackdropMouse);
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };
@@ -118,12 +126,8 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
-  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget && !loading) onCancel();
-  };
-
   return createPortal(
-    <div className="fg-dialog-backdrop" onMouseDown={handleBackdropClick}>
+    <div className="fg-dialog-backdrop" ref={backdropRef}>
       <div
         className={`fg-dialog fg-dialog--${tone}`}
         ref={dialogRef}
