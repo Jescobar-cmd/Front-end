@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listServices, getMyServices, getService, createService, updateService, changeServiceStatus } from "../../../infrastructure/api/apiServicios";
 import type { EstadoServicio, FiltrosListadoServicio, FiltrosMisServicio, Paginado, RespuestaServicio, Servicio } from "../../../core/domain/entities/servicio";
 
@@ -11,6 +11,10 @@ function aMensajeError(error: unknown): string {
   return error instanceof Error ? error.message : "No se pudo cargar la información.";
 }
 
+function filtrosIguales(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 /**
  * Servicios del catálogo (GET /api/servicios).
  * Sin token (preview) usa estado de error para forzar empty state controlado.
@@ -18,6 +22,7 @@ function aMensajeError(error: unknown): string {
 export function useListarServicios(token?: string, filtros: FiltrosListadoServicio = {}, vistaPrevia = false) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<Paginado<Servicio>>>({ estado: "cargando" });
+  const filtrosRef = useRef(filtros);
 
   useEffect(() => {
     if (vistaPrevia) {
@@ -29,6 +34,11 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
       setEstado({ estado: "error", mensaje: "Sesión no disponible." });
       return;
     }
+
+    if (filtrosIguales(filtrosRef.current, filtros)) {
+      return;
+    }
+    filtrosRef.current = filtros;
 
     let activo = true;
     setEstado({ estado: "cargando" });
@@ -46,7 +56,7 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
     return () => {
       activo = false;
     };
-  }, [token, JSON.stringify(filtros), indice, vistaPrevia]);
+  }, [token, indice, vistaPrevia]);
 
   const recargar = () => setIndice((n) => n + 1);
 
@@ -64,6 +74,7 @@ export function useListarServicios(token?: string, filtros: FiltrosListadoServic
 export function useListarMisServicios(token?: string, filtros: FiltrosMisServicio = {}, vistaPrevia = false) {
   const [indice, setIndice] = useState(0);
   const [estado, setEstado] = useState<EstadoLista<Paginado<Servicio>>>({ estado: "cargando" });
+  const filtrosRef = useRef(filtros);
 
   useEffect(() => {
     if (vistaPrevia) {
@@ -75,6 +86,11 @@ export function useListarMisServicios(token?: string, filtros: FiltrosMisServici
       setEstado({ estado: "error", mensaje: "Sesión no disponible." });
       return;
     }
+
+    if (filtrosIguales(filtrosRef.current, filtros)) {
+      return;
+    }
+    filtrosRef.current = filtros;
 
     let activo = true;
     setEstado({ estado: "cargando" });
@@ -92,7 +108,7 @@ export function useListarMisServicios(token?: string, filtros: FiltrosMisServici
     return () => {
       activo = false;
     };
-  }, [token, JSON.stringify(filtros), indice, vistaPrevia]);
+  }, [token, indice, vistaPrevia]);
 
   const recargar = () => setIndice((n) => n + 1);
 
