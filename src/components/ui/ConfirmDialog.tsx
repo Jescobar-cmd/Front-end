@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
+import { useBackdropDismiss } from "../../hooks/useBackdropDismiss";
 import "./ConfirmDialog.css";
 
 interface ConfirmDialogProps {
@@ -63,6 +64,8 @@ export function ConfirmDialog({
   onCancelRef.current = onCancel;
   loadingRef.current = loading;
 
+  useBackdropDismiss(backdropRef, open, loading, onCancel);
+
   useEffect(() => {
     if (!open) return;
 
@@ -107,18 +110,11 @@ export function ConfirmDialog({
       }
     };
 
-    const handleBackdropMouse = (event: globalThis.MouseEvent) => {
-      if (event.target === backdropRef.current && !loadingRef.current) {
-        onCancelRef.current();
-      }
-    };
-    backdropRef.current?.addEventListener("mousedown", handleBackdropMouse);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
-      backdropRef.current?.removeEventListener("mousedown", handleBackdropMouse);
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };

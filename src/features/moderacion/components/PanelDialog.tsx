@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
+import { useBackdropDismiss } from "../../../hooks/useBackdropDismiss";
 
 interface PanelDialogProps {
   open: boolean;
@@ -34,6 +35,8 @@ export function PanelDialog({
 
   onCloseRef.current = onClose;
   busyRef.current = busy;
+
+  useBackdropDismiss(backdropRef, open, busy, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -80,18 +83,11 @@ export function PanelDialog({
       }
     };
 
-    const handleBackdropMouse = (event: globalThis.MouseEvent) => {
-      if (event.target === backdropRef.current && !busyRef.current) {
-        onCloseRef.current();
-      }
-    };
-    backdropRef.current?.addEventListener("mousedown", handleBackdropMouse);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
-      backdropRef.current?.removeEventListener("mousedown", handleBackdropMouse);
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };
